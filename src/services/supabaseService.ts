@@ -38,6 +38,7 @@ export interface Dog {
   titles?: Title[];
   pedigree_sire?: { parent: Dog & { titles?: Title[] } }[];
   pedigree_dam?: { parent: Dog & { titles?: Title[] } }[];
+  all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed }, relationship_type: 'SIRE' | 'DAM', generation: number }[];
   offspring_as_sire?: { offspring: Dog & { breed?: Breed } }[];
   offspring_as_dam?: { offspring: Dog & { breed?: Breed } }[];
   my_dogs?: MyDog[];
@@ -147,21 +148,14 @@ export const dogService = {
         *,
         breed:breeds(*),
         titles(*),
-        pedigree_sire:pedigree_relationships!fk_pedigree_dog(
+        all_ancestors:pedigree_relationships!fk_pedigree_dog(
           parent:dogs!fk_pedigree_parent(
             *,
             breed:breeds(*),
             titles(*)
           ),
-          relationship_type
-        ),
-        pedigree_dam:pedigree_relationships!fk_pedigree_dog(
-          parent:dogs!fk_pedigree_parent(
-            *,
-            breed:breeds(*),
-            titles(*)
-          ),
-          relationship_type
+          relationship_type,
+          generation
         ),
         my_dogs(*),
         offspring_as_sire:pedigree_relationships!fk_pedigree_parent(

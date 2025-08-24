@@ -89,32 +89,91 @@ function DogDetailsPage() {
     );
   };
 
-  // Build pedigree tree for father's line
+  // Build multi-generation pedigree tree for father's line
   const buildFatherTree = (): TreeNode<PedigreeData> | null => {
-    // Filter for SIRE relationships only
-    const sireRelationship = dog?.pedigree_sire?.find((rel: any) => rel.relationship_type === 'SIRE');
-    const sire = sireRelationship?.parent;
-    if (!sire) return null;
+    if (!dog?.all_ancestors) return null;
 
-    // TODO: In future iterations, we could recursively build deeper generations
-    // For now, we'll build a simple 2-generation tree
+    // Get the father (generation 1, SIRE)
+    const father = dog.all_ancestors.find(a => a.generation === 1 && a.relationship_type === 'SIRE');
+    if (!father) return null;
+
+    // Get all paternal ancestors (assuming the first half are paternal lineage)
+    const paternalAncestors = dog.all_ancestors.filter(a => a.generation >= 2).slice(0, Math.floor(dog.all_ancestors.filter(a => a.generation >= 2).length / 2));
+    
+    // Build children for the father
+    const fatherChildren: TreeNode<PedigreeData>[] = [];
+    
+    // Add generation 2 (grandparents)
+    const generation2Paternal = paternalAncestors.filter(a => a.generation === 2).slice(0, 2);
+    generation2Paternal.forEach(grandparent => {
+      const generation3Children = paternalAncestors
+        .filter(a => a.generation === 3)
+        .slice(0, 2)
+        .map(greatGrandparent => ({
+          data: dogToPedigreeData(greatGrandparent.parent, getRelationLabel(greatGrandparent.relationship_type, 3)),
+          children: []
+        }));
+
+      fatherChildren.push({
+        data: dogToPedigreeData(grandparent.parent, getRelationLabel(grandparent.relationship_type, 2)),
+        children: generation3Children
+      });
+    });
+
     return {
-      data: dogToPedigreeData(sire, 'Father'),
-      children: [] // Would add grandparents here in future
+      data: dogToPedigreeData(father.parent, 'Father'),
+      children: fatherChildren
     };
   };
 
-  // Build pedigree tree for mother's line
+  // Build multi-generation pedigree tree for mother's line  
   const buildMotherTree = (): TreeNode<PedigreeData> | null => {
-    // Filter for DAM relationships only
-    const damRelationship = dog?.pedigree_dam?.find((rel: any) => rel.relationship_type === 'DAM');
-    const dam = damRelationship?.parent;
-    if (!dam) return null;
+    if (!dog?.all_ancestors) return null;
+
+    // Get the mother (generation 1, DAM)
+    const mother = dog.all_ancestors.find(a => a.generation === 1 && a.relationship_type === 'DAM');
+    if (!mother) return null;
+
+    // Get all maternal ancestors (assuming the second half are maternal lineage)
+    const allGenerationTwoPlusAncestors = dog.all_ancestors.filter(a => a.generation >= 2);
+    const maternalAncestors = allGenerationTwoPlusAncestors.slice(Math.floor(allGenerationTwoPlusAncestors.length / 2));
+    
+    // Build children for the mother
+    const motherChildren: TreeNode<PedigreeData>[] = [];
+    
+    // Add generation 2 (grandparents)
+    const generation2Maternal = maternalAncestors.filter(a => a.generation === 2).slice(0, 2);
+    generation2Maternal.forEach(grandparent => {
+      const generation3Children = maternalAncestors
+        .filter(a => a.generation === 3)
+        .slice(0, 2)
+        .map(greatGrandparent => ({
+          data: dogToPedigreeData(greatGrandparent.parent, getRelationLabel(greatGrandparent.relationship_type, 3)),
+          children: []
+        }));
+
+      motherChildren.push({
+        data: dogToPedigreeData(grandparent.parent, getRelationLabel(grandparent.relationship_type, 2)),
+        children: generation3Children
+      });
+    });
 
     return {
-      data: dogToPedigreeData(dam, 'Mother'),
-      children: [] // Would add grandparents here in future
+      data: dogToPedigreeData(mother.parent, 'Mother'),
+      children: motherChildren
     };
+  };
+
+  // Helper function to get appropriate relation label
+  const getRelationLabel = (relationshipType: 'SIRE' | 'DAM', generation: number): string => {
+    if (generation === 1) {
+      return relationshipType === 'SIRE' ? 'Father' : 'Mother';
+    } else if (generation === 2) {
+      return relationshipType === 'SIRE' ? 'Grandfather' : 'Grandmother';
+    } else if (generation === 3) {
+      return relationshipType === 'SIRE' ? 'Great-Grandfather' : 'Great-Grandmother';
+    }
+    return 'Ancestor';
   };
 
   if (loading) {
@@ -294,7 +353,19 @@ function DogDetailsPage() {
             
             return (
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <Typography variant="h4" className="mb-6">Pedigree</Typography>
+                <Typography variant="h4" className="mb-6">Pedigree (3 Generations)</Typography>
+                {dog.all_ancestors && (
+                  <Typography variant="caption" color="muted" className="block mb-4">
+                    Total ancestors in database: {dog.all_ancestors.length}
+                    {dog.all_ancestors.length > 0 && (
+                      <span className="ml-2">
+                        (Gen 1: {dog.all_ancestors.filter(a => a.generation === 1).length}, 
+                         Gen 2: {dog.all_ancestors.filter(a => a.generation === 2).length}, 
+                         Gen 3: {dog.all_ancestors.filter(a => a.generation === 3).length})
+                      </span>
+                    )}
+                  </Typography>
+                )}
                 <div className="space-y-8">
                   {fatherTree && (
                     <div>

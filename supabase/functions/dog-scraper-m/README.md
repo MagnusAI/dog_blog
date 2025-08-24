@@ -9,6 +9,8 @@ This Edge Function scrapes dog data from hundeweb.dk and optionally syncs it to 
 - **Dogs**: Creates/updates dog records with full information mapping
 - **Titles**: Parses concatenated title strings into individual title records
 - **Pedigree**: Creates parent-child relationships (sire/dam) with placeholder parents
+- **🆕 Pedigree Trees**: Fetches and syncs complete genealogy trees (up to 4 generations)
+- **🆕 Ancestor Creation**: Automatically creates ancestor dog records from pedigree trees
 - **My Dogs**: Automatically marks scraped dogs as "owned" in my_dogs table
 - **Smart Sync**: Only updates changed data, avoids duplicates
 
@@ -93,6 +95,8 @@ GET/POST https://your-project.supabase.co/functions/v1/dog-scraper-m?sync=true&p
     "pedigreeProcessed": 36,
     "pedigreeCreated": 36,
     "pedigreeSkipped": 0,
+    "pedigreeTreesProcessed": 18,
+    "pedigreeAncestorsCreated": 142,
     "myDogsProcessed": 18,
     "myDogsCreated": 18,
     "myDogsUpdated": 0,
@@ -151,6 +155,38 @@ When parent dogs don't exist in the database, the function can automatically cre
 - **Breed Inheritance**: Uses same breed as child
 - **Title Parsing**: Includes parent titles if available
 - **Option to Disable**: Use `?placeholders=false` to skip
+
+### **🌳 Pedigree Tree Processing**
+
+The function now fetches complete pedigree trees (genealogy) for each dog and creates multi-generation relationships:
+
+#### **Tree Structure (sti field)**
+```
+"0"    → Direct father (SIRE, generation 1)
+"1"    → Direct mother (DAM, generation 1)
+"00"   → Father's father (SIRE, generation 2)
+"01"   → Father's mother (DAM, generation 2)
+"10"   → Mother's father (SIRE, generation 2)
+"11"   → Mother's mother (DAM, generation 2)
+"000"  → Father's father's father (SIRE, generation 3)
+...and so on up to 4 generations
+```
+
+#### **Automatic Ancestor Creation**
+- Creates dog records for all ancestors in the pedigree tree
+- Preserves genealogy structure up to 4 generations
+- Includes ancestor titles and colors when available
+- Links all relationships properly in the database
+
+#### **Enhanced Genealogy Data**
+```json
+{
+  "pedigreeTreesProcessed": 18,
+  "pedigreeAncestorsCreated": 142
+}
+```
+
+This means the function now builds complete family trees, not just direct parent relationships!
 
 ### **My Dogs Integration**
 

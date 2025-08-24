@@ -18,6 +18,7 @@ interface DbBreed {
 interface ScrapedDog {
   basicInfo: any;
   detailedInfo: any;
+  pedigreeTree?: any;
 }
 
 interface ScrapeResult {
@@ -79,6 +80,8 @@ interface SyncStats {
   pedigreeProcessed: number;
   pedigreeCreated: number;
   pedigreeSkipped: number;
+  pedigreeTreesProcessed: number;
+  pedigreeAncestorsCreated: number;
   myDogsProcessed: number;
   myDogsCreated: number;
   myDogsUpdated: number;
@@ -105,6 +108,8 @@ class DataSyncer {
       pedigreeProcessed: 0,
       pedigreeCreated: 0,
       pedigreeSkipped: 0,
+      pedigreeTreesProcessed: 0,
+      pedigreeAncestorsCreated: 0,
       myDogsProcessed: 0,
       myDogsCreated: 0,
       myDogsUpdated: 0,
@@ -546,6 +551,165 @@ class DataSyncer {
     }
   }
 
+  // Process pedigree tree data and create ancestor dogs + relationships
+  async syncPedigreeTree(childDogId: string, pedigreeTree: any): Promise<void> {
+    if (!pedigreeTree || !pedigreeTree.hunder) return;
+    
+    try {
+      this.stats.pedigreeTreesProcessed++;
+      console.log(`Processing pedigree tree for ${childDogId} with ${pedigreeTree.hunder.length} ancestors`);
+      
+      // Process all dogs in the pedigree tree
+      for (const pedigreeHund of pedigreeTree.hunder) {
+        if (!pedigreeHund.sti || pedigreeHund.sti === '') continue; // Skip if no path (should be the child itself)
+        
+        try {
+          // Create ancestor dog record if it doesn't exist
+          await this.createPedigreeAncestor(pedigreeHund);
+          
+          // Parse the generation and relationship from the path
+          const generation = pedigreeHund.sti.length;
+          if (generation === 0) continue; // Skip child dog itself
+          
+          // Create pedigree relationship
+          await this.createPedigreeRelationship(childDogId, pedigreeHund, generation);
+          
+        } catch (error) {
+          this.stats.errors.push(`Error processing pedigree ancestor ${pedigreeHund.hundId}: ${error.message}`);
+          console.error(`Error processing ancestor ${pedigreeHund.hundId}:`, error);
+        }
+      }
+    } catch (error) {
+      this.stats.errors.push(`Pedigree tree sync error for ${childDogId}: ${error.message}`);
+      console.error('Pedigree tree sync error:', error);
+    }
+  }
+
+  // Create ancestor dog record from pedigree tree data
+  private async createPedigreeAncestor(pedigreeHund: any): Promise<void> {
+    // Check if dog already exists
+    const { data: existingDog, error: checkError } = await this.supabase
+      .from('dogs')
+      .select('id')
+      .eq('id', pedigreeHund.hundId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
+    }
+
+    if (existingDog) {
+      // Dog already exists, just update titles if we have them
+      if (pedigreeHund.tittel && pedigreeHund.tittel.trim()) {
+        const titles = this.parseTitles(pedigreeHund.hundId, pedigreeHund.tittel);
+        for (const title of titles) {
+          // Check if title already exists to avoid duplicates
+          const { data: existingTitle } = await this.supabase
+            .from('titles')
+            .select('id')
+            .eq('dog_id', title.dog_id)
+            .eq('title_code', title.title_code)
+            .single();
+          
+          if (!existingTitle) {
+            await this.supabase
+              .from('titles')
+              .insert(title);
+          }
+        }
+      }
+      return;
+    }
+
+    // Need to create new ancestor dog
+    // First determine/create breed
+    let breedId = 1; // Default breed ID
+    // Note: Pedigree tree data doesn't include breed info, so we use default
+    // In a more complete implementation, we could try to infer breed from other dogs
+    
+    // Determine gender from position in tree (this is approximate)
+    // Path ending in '0' is typically father's side, '1' is mother's side
+    // But this is not reliable, so we'll leave it unknown for now
+    const gender = 'M'; // Default - we'd need better logic to determine this
+
+    const ancestorDog: DbDog = {
+      id: pedigreeHund.hundId,
+      name: pedigreeHund.navn,
+      nickname: undefined,
+      gender: gender,
+      breed_id: breedId,
+      birth_date: undefined,
+      death_date: undefined,
+      is_deceased: false,
+      color: pedigreeHund.farge || undefined,
+      owner_person_id: undefined,
+      original_dog_id: undefined
+    };
+
+    const { error: insertError } = await this.supabase
+      .from('dogs')
+      .insert(ancestorDog);
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    this.stats.pedigreeAncestorsCreated++;
+    console.log(`Created ancestor dog: ${pedigreeHund.hundId} - ${pedigreeHund.navn}`);
+
+    // Add titles if available
+    if (pedigreeHund.tittel && pedigreeHund.tittel.trim()) {
+      const titles = this.parseTitles(pedigreeHund.hundId, pedigreeHund.tittel);
+      for (const title of titles) {
+        await this.supabase
+          .from('titles')
+          .insert(title);
+        this.stats.titlesCreated++;
+      }
+    }
+  }
+
+  // Create pedigree relationship from path information
+  private async createPedigreeRelationship(childDogId: string, pedigreeHund: any, generation: number): Promise<void> {
+    // The path (sti) tells us the relationship
+    // '0' = father's side, '1' = mother's side
+    // '00' = father's father, '01' = father's mother, etc.
+    
+    if (generation > 4) return; // Limit to 4 generations for now
+    
+    // For generation 1 (direct parents), we can determine SIRE vs DAM
+    let relationshipType: 'SIRE' | 'DAM';
+    
+    if (generation === 1) {
+      // Direct parent - '0' = SIRE, '1' = DAM
+      relationshipType = pedigreeHund.sti === '0' ? 'SIRE' : 'DAM';
+    } else {
+      // For higher generations, we determine by the first character of the path
+      relationshipType = pedigreeHund.sti.startsWith('0') ? 'SIRE' : 'DAM';
+    }
+
+    const relationship: DbPedigreeRelationship = {
+      dog_id: childDogId,
+      parent_id: pedigreeHund.hundId,
+      relationship_type: relationshipType,
+      generation: generation
+    };
+
+    try {
+      const { error: insertError } = await this.supabase
+        .from('pedigree_relationships')
+        .upsert(relationship, { onConflict: 'dog_id,parent_id,relationship_type' });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      console.log(`Created pedigree relationship: ${childDogId} -> ${pedigreeHund.hundId} (${relationshipType}, gen ${generation})`);
+    } catch (error) {
+      this.stats.errors.push(`Error creating pedigree relationship ${childDogId} -> ${pedigreeHund.hundId}: ${error.message}`);
+    }
+  }
+
   async syncAllData(scrapedDogs: any[], myDogIds?: string[]): Promise<SyncStats> {
     console.log(`Starting sync of ${scrapedDogs.length} dogs...`);
 
@@ -583,6 +747,12 @@ class DataSyncer {
 
         // Sync pedigree relationships
         await this.syncPedigree(scrapedDog);
+
+        // Sync deeper pedigree tree if available
+        if (scrapedDog.pedigreeTree) {
+          console.log(`Syncing pedigree tree for: ${scrapedDog.detailedInfo.hundId}`);
+          await this.syncPedigreeTree(scrapedDog.detailedInfo.hundId, scrapedDog.pedigreeTree);
+        }
 
         console.log(`Synced dog: ${scrapedDog.detailedInfo.hundId} - ${scrapedDog.detailedInfo.navn}`);
 
@@ -874,6 +1044,61 @@ class HundewebScraper {
       throw error;
     }
   }
+
+  async fetchPedigreeTree(farHundId, morHundId, generations = 4) {
+    try {
+      if (!farHundId && !morHundId) {
+        console.log("No parent IDs provided for pedigree tree");
+        return null;
+      }
+      
+      const params = new URLSearchParams({
+        antallGenerasjonerInnavlsberegning: '3',
+        antallGenerasjonerStamtavle: generations.toString(),
+        fiktiv: 'false'
+      });
+      
+      if (farHundId) params.append('farHundId', farHundId);
+      if (morHundId) params.append('morHundId', morHundId);
+      
+      const url = `https://www.hundeweb.dk/dkk-hundedatabase-backend/rest/hund/stamtavleTre?${params.toString()}`;
+      console.log(`Fetching pedigree tree for father: ${farHundId || 'N/A'}, mother: ${morHundId || 'N/A'}`);
+      
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "accept": "*/*",
+          "accept-language": "en-US,en;q=0.9",
+          "priority": "u=1, i",
+          "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "Cookie": this.cookies,
+          "Referer": "https://www.hundeweb.dk/hundedatabase/hund"
+        },
+        mode: "cors",
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        console.error(`Pedigree tree fetch failed: ${response.status} ${response.statusText}`);
+        const responseText = await response.text();
+        console.error("Response body:", responseText);
+        return null; // Don't throw, just return null as this is supplementary data
+      }
+      
+      const pedigreeData = await response.json();
+      console.log(`Successfully fetched pedigree tree with ${pedigreeData.hunder?.length || 0} dogs`);
+      return pedigreeData;
+    } catch (error) {
+      console.error("Error fetching pedigree tree:", error);
+      return null; // Don't throw, just return null as this is supplementary data
+    }
+  }
   async scrapeAllDogs(): Promise<ScrapeResult> {
     try {
       // Step 1: Login
@@ -889,15 +1114,27 @@ class HundewebScraper {
       }
       // Step 2: Fetch dog list
       const dogList = await this.fetchDogList();
-      // Step 3: Fetch details for each dog
+      // Step 3: Fetch details and pedigree for each dog
       const dogsWithDetails: ScrapedDog[] = [];
       for (const dog of dogList){
         try {
           const details = await this.fetchDogDetails(dog.id);
+          
+          // Also fetch pedigree tree if parent information is available
+          let pedigreeTree = null;
+          if (details.farHundId || details.morHundId) {
+            console.log(`Fetching pedigree tree for ${dog.id}`);
+            pedigreeTree = await this.fetchPedigreeTree(details.farHundId, details.morHundId);
+            // Add extra delay after pedigree fetch since it's a more complex query
+            await new Promise((resolve)=>setTimeout(resolve, 300));
+          }
+          
           dogsWithDetails.push({
             basicInfo: dog,
-            detailedInfo: details
+            detailedInfo: details,
+            pedigreeTree: pedigreeTree
           });
+          
           // Add a small delay to be respectful to the server
           await new Promise((resolve)=>setTimeout(resolve, 500));
         } catch (error) {
@@ -907,7 +1144,8 @@ class HundewebScraper {
             basicInfo: dog,
             detailedInfo: {
               error: `Failed to fetch details: ${error.message}`
-            }
+            },
+            pedigreeTree: null
           });
         }
       }

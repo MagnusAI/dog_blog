@@ -267,7 +267,7 @@ export const dogService = {
     if (error) throw error;
   },
 
-  // My Dogs
+    // My Dogs
   async getMyDogs(): Promise<MyDog[]> {
     const { data, error } = await supabase
       .from('my_dogs')

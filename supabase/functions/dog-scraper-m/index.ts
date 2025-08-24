@@ -43,6 +43,12 @@ interface DbPedigreeRelationship {
   generation: number;
 }
 
+interface DbMyDog {
+  dog_id: string;
+  acquisition_date?: string;
+  notes?: string;
+}
+
 interface SyncStats {
   breedsProcessed: number;
   breedsCreated: number;
@@ -56,6 +62,9 @@ interface SyncStats {
   pedigreeProcessed: number;
   pedigreeCreated: number;
   pedigreeSkipped: number;
+  myDogsProcessed: number;
+  myDogsCreated: number;
+  myDogsUpdated: number;
   errors: string[];
 }
 
@@ -79,6 +88,9 @@ class DataSyncer {
       pedigreeProcessed: 0,
       pedigreeCreated: 0,
       pedigreeSkipped: 0,
+      myDogsProcessed: 0,
+      myDogsCreated: 0,
+      myDogsUpdated: 0,
       errors: []
     };
     this.createPlaceholders = createPlaceholders;
@@ -453,7 +465,71 @@ class DataSyncer {
     }
   }
 
-  async syncAllData(scrapedDogs: any[]): Promise<SyncStats> {
+  async syncMyDogs(myDogIds: string[]): Promise<void> {
+    try {
+      console.log(`Syncing ${myDogIds.length} dogs to my_dogs table...`);
+
+      for (const dogId of myDogIds) {
+        this.stats.myDogsProcessed++;
+
+        // Check if this dog is already in my_dogs table
+        const { data: existingMyDog, error: checkError } = await this.supabase
+          .from('my_dogs')
+          .select('dog_id')
+          .eq('dog_id', dogId)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          // Real error, not just "not found"
+          this.stats.errors.push(`Error checking my_dogs for ${dogId}: ${checkError.message}`);
+          continue;
+        }
+
+        if (existingMyDog) {
+          // Already exists, update timestamp (or skip)
+          const { error: updateError } = await this.supabase
+            .from('my_dogs')
+            .update({ 
+              updated_at: new Date().toISOString(),
+              notes: 'Synced from hundeweb.dk'
+            })
+            .eq('dog_id', dogId);
+
+          if (updateError) {
+            this.stats.errors.push(`Error updating my_dogs for ${dogId}: ${updateError.message}`);
+          } else {
+            this.stats.myDogsUpdated++;
+            console.log(`Updated my_dogs record for: ${dogId}`);
+          }
+        } else {
+          // Create new my_dogs record
+          const myDogRecord: DbMyDog = {
+            dog_id: dogId,
+            acquisition_date: undefined, // Could be extracted from dog data if available
+            notes: 'Synced from hundeweb.dk'
+          };
+
+          const { error: insertError } = await this.supabase
+            .from('my_dogs')
+            .insert(myDogRecord);
+
+          if (insertError) {
+            this.stats.errors.push(`Error creating my_dogs record for ${dogId}: ${insertError.message}`);
+          } else {
+            this.stats.myDogsCreated++;
+            console.log(`Created my_dogs record for: ${dogId}`);
+          }
+        }
+      }
+
+      console.log(`Completed my_dogs sync: ${this.stats.myDogsCreated} created, ${this.stats.myDogsUpdated} updated`);
+    } catch (error) {
+      this.stats.errors.push(`My dogs sync error: ${error.message}`);
+      console.error('My dogs sync error:', error);
+    }
+  }
+
+  async syncAllData(scrapedDogs: any[], myDogIds?: string[]): Promise<SyncStats> {
     console.log(`Starting sync of ${scrapedDogs.length} dogs...`);
 
     // Keep track of unique breeds to avoid duplicate processing
@@ -497,6 +573,12 @@ class DataSyncer {
         this.stats.errors.push(`Failed to sync dog ${scrapedDog.detailedInfo?.hundId || 'unknown'}: ${error.message}`);
         console.error('Error syncing dog:', error);
       }
+    }
+
+    // Sync my_dogs if provided
+    if (myDogIds && myDogIds.length > 0) {
+      console.log(`\nSyncing ${myDogIds.length} dogs to my_dogs table...`);
+      await this.syncMyDogs(myDogIds);
     }
 
     console.log('Sync completed:', this.stats);
@@ -784,6 +866,7 @@ class HundewebScraper {
           success: false,
           dogsCount: 0,
           dogs: [],
+          myDogIds: [],
           error: "Failed to login to hundeweb.dk"
         };
       }
@@ -814,7 +897,8 @@ class HundewebScraper {
       return {
         success: true,
         dogsCount: dogsWithDetails.length,
-        dogs: dogsWithDetails
+        dogs: dogsWithDetails,
+        myDogIds: dogList.map(dog => dog.id)
       };
     } catch (error) {
       console.error("Scraping error:", error);
@@ -822,6 +906,7 @@ class HundewebScraper {
         success: false,
         dogsCount: 0,
         dogs: [],
+        myDogIds: [],
         error: error.message
       };
     }
@@ -840,13 +925,14 @@ class HundewebScraper {
       let syncStats: SyncStats | null = null;
       if (dataSyncer) {
         console.log("Starting database sync...");
-        syncStats = await dataSyncer.syncAllData(scrapingResult.dogs);
+        syncStats = await dataSyncer.syncAllData(scrapingResult.dogs, scrapingResult.myDogIds);
       }
 
       return {
         success: true,
         dogsCount: scrapingResult.dogsCount,
         dogs: scrapingResult.dogs,
+        myDogIds: scrapingResult.myDogIds,
         syncStats: syncStats
       };
     } catch (error) {
@@ -855,6 +941,7 @@ class HundewebScraper {
         success: false,
         dogsCount: 0,
         dogs: [],
+        myDogIds: [],
         error: error.message,
         syncStats: null
       };

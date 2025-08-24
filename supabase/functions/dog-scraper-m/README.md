@@ -8,7 +8,8 @@ This Edge Function scrapes dog data from hundeweb.dk and optionally syncs it to 
 - **Breeds**: Automatically creates/updates breed records with FCI numbers
 - **Dogs**: Creates/updates dog records with full information mapping
 - **Titles**: Parses concatenated title strings into individual title records
-- **Pedigree**: Creates parent-child relationships (sire/dam)
+- **Pedigree**: Creates parent-child relationships (sire/dam) with placeholder parents
+- **My Dogs**: Automatically marks scraped dogs as "owned" in my_dogs table
 - **Smart Sync**: Only updates changed data, avoids duplicates
 
 ### 📊 **Data Mapping**
@@ -50,6 +51,15 @@ GET/POST https://your-project.supabase.co/functions/v1/dog-scraper-m?sync=true
 
 Scrapes data AND saves to your Supabase database.
 
+#### **Sync Options**
+```bash
+# Sync with placeholder parents (default)
+GET/POST https://your-project.supabase.co/functions/v1/dog-scraper-m?sync=true
+
+# Sync without placeholder parents (skip missing parents)
+GET/POST https://your-project.supabase.co/functions/v1/dog-scraper-m?sync=true&placeholders=false
+```
+
 ### **Response Format**
 
 #### **Scrape Only Response**
@@ -58,6 +68,7 @@ Scrapes data AND saves to your Supabase database.
   "success": true,
   "dogsCount": 18,
   "dogs": [/* scraped dog data */],
+  "myDogIds": ["DK12345/2024", "DK67890/2023"],
   "syncStats": null
 }
 ```
@@ -68,6 +79,7 @@ Scrapes data AND saves to your Supabase database.
   "success": true,
   "dogsCount": 18,
   "dogs": [/* scraped dog data */],
+  "myDogIds": ["DK12345/2024", "DK67890/2023"],
   "syncStats": {
     "breedsProcessed": 3,
     "breedsCreated": 1,
@@ -75,10 +87,15 @@ Scrapes data AND saves to your Supabase database.
     "dogsProcessed": 18,
     "dogsCreated": 5,
     "dogsUpdated": 13,
+    "placeholderDogsCreated": 24,
     "titlesProcessed": 42,
-    "titlesCreated": 42,
+    "titlesCreated": 66,
     "pedigreeProcessed": 36,
     "pedigreeCreated": 36,
+    "pedigreeSkipped": 0,
+    "myDogsProcessed": 18,
+    "myDogsCreated": 18,
+    "myDogsUpdated": 0,
     "errors": []
   }
 }
@@ -127,6 +144,29 @@ Creates parent-child relationships:
   "generation": 1
 }
 ```
+
+#### **Placeholder Parents**
+When parent dogs don't exist in the database, the function can automatically create placeholder records:
+- **Smart Gender**: SIRE → Male, DAM → Female
+- **Breed Inheritance**: Uses same breed as child
+- **Title Parsing**: Includes parent titles if available
+- **Option to Disable**: Use `?placeholders=false` to skip
+
+### **My Dogs Integration**
+
+Since the `mineHunder` endpoint provides your owned dogs, the function automatically:
+
+```json
+{
+  "dog_id": "DK12345/2024",
+  "acquisition_date": null,
+  "notes": "Synced from hundeweb.dk"
+}
+```
+
+- **Auto-Detection**: All scraped dogs are marked as "my dogs"
+- **Upsert Behavior**: Creates new records or updates existing ones
+- **Metadata**: Adds sync timestamp and source notes
 
 ## Deployment
 
@@ -184,7 +224,8 @@ The function includes comprehensive error handling:
 - **Breeds**: Updates if name exists, creates if new
 - **Dogs**: Updates if ID exists, creates if new
 - **Titles**: Replaces all titles for each dog (delete + insert)
-- **Pedigree**: Replaces generation 1 relationships (delete + insert)
+- **Pedigree**: Replaces generation 1 relationships (delete + insert), creates placeholder parents
+- **My Dogs**: Creates if new, updates timestamp if exists
 
 ### **Data Integrity**
 - Foreign key constraints maintained

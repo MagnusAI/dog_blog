@@ -9,6 +9,7 @@ import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import DogCard from "./components/DogCard";
 import NewsPostForm from "./components/NewsPostForm";
+import { DogForm } from "./components/DogForm";
 
 function App() {
   const navigationLinks = [
@@ -36,6 +37,8 @@ function App() {
         <div className="text-3xl font-bold underline text-green-500 w-full">
           Hello World!
         </div>
+        <DogForm onSave={(dog) => console.log('Created:', dog)} />
+
 
         <div>
           <h2 className="text-xl font-bold mb-4">Create News Post</h2>

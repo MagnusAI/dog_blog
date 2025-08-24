@@ -14,6 +14,21 @@ interface DbBreed {
   club_name?: string;
 }
 
+// Scraping result types
+interface ScrapedDog {
+  basicInfo: any;
+  detailedInfo: any;
+}
+
+interface ScrapeResult {
+  success: boolean;
+  dogsCount: number;
+  dogs: ScrapedDog[];
+  myDogIds: string[];
+  error?: string;
+  syncStats?: SyncStats | null;
+}
+
 interface DbDog {
   id: string;
   name: string;
@@ -859,7 +874,7 @@ class HundewebScraper {
       throw error;
     }
   }
-  async scrapeAllDogs() {
+  async scrapeAllDogs(): Promise<ScrapeResult> {
     try {
       // Step 1: Login
       const loginSuccess = await this.login();
@@ -875,7 +890,7 @@ class HundewebScraper {
       // Step 2: Fetch dog list
       const dogList = await this.fetchDogList();
       // Step 3: Fetch details for each dog
-      const dogsWithDetails = [];
+      const dogsWithDetails: ScrapedDog[] = [];
       for (const dog of dogList){
         try {
           const details = await this.fetchDogDetails(dog.id);
@@ -914,7 +929,7 @@ class HundewebScraper {
     }
   }
 
-  async scrapeAndSync(dataSyncer?: DataSyncer) {
+  async scrapeAndSync(dataSyncer?: DataSyncer): Promise<ScrapeResult> {
     try {
       // First scrape the data
       const scrapingResult = await this.scrapeAllDogs();
@@ -977,9 +992,13 @@ serve(async (req)=>{
   }
   try {
     // Get credentials from Supabase secrets (environment variables)
+    // @ts-ignore
     const username = Deno.env.get('HUNDEWEB_USERNAME');
+    // @ts-ignore
     const password = Deno.env.get('HUNDEWEB_PASSWORD');
+    // @ts-ignore
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    // @ts-ignore
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!username || !password) {

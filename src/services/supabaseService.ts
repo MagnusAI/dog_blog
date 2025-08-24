@@ -152,14 +152,16 @@ export const dogService = {
             *,
             breed:breeds(*),
             titles(*)
-          )
+          ),
+          relationship_type
         ),
         pedigree_dam:pedigree_relationships!fk_pedigree_dog(
           parent:dogs!fk_pedigree_parent(
             *,
             breed:breeds(*),
             titles(*)
-          )
+          ),
+          relationship_type
         ),
         my_dogs(*),
         offspring_as_sire:pedigree_relationships!fk_pedigree_parent(

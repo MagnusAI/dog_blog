@@ -5,6 +5,8 @@ import type { Dog } from '../services/supabaseService';
 import Button from '../components/ui/Button';
 import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
+import HorizontalTree, { type TreeNode } from '../components/HorizontalTree';
+import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 
 function DogDetailsPage() {
@@ -60,6 +62,59 @@ function DogDetailsPage() {
       return `${years - 1} years old`;
     }
     return `${years} years old`;
+  };
+
+  // Helper function to convert dog data to pedigree data format
+  const dogToPedigreeData = (dog: any, relation: string): PedigreeData => {
+    return {
+      relation,
+      name: dog.name,
+      titles: dog.titles?.map((t: any) => t.title_code) || [],
+      regnr: dog.id,
+      fallbackInitials: dog.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
+      imageUrl: undefined // We'll use fallback initials for now
+    };
+  };
+
+  // Custom render function for pedigree nodes with navigation
+  const renderClickablePedigreeNode = (data: PedigreeData, level: number) => {
+    const handlePedigreeClick = () => {
+      navigate(createDogDetailPath(data.regnr));
+    };
+
+    return (
+      <div onClick={handlePedigreeClick} className="cursor-pointer">
+        {renderPedigreeNode(data, level)}
+      </div>
+    );
+  };
+
+  // Build pedigree tree for father's line
+  const buildFatherTree = (): TreeNode<PedigreeData> | null => {
+    // Filter for SIRE relationships only
+    const sireRelationship = dog?.pedigree_sire?.find((rel: any) => rel.relationship_type === 'SIRE');
+    const sire = sireRelationship?.parent;
+    if (!sire) return null;
+
+    // TODO: In future iterations, we could recursively build deeper generations
+    // For now, we'll build a simple 2-generation tree
+    return {
+      data: dogToPedigreeData(sire, 'Father'),
+      children: [] // Would add grandparents here in future
+    };
+  };
+
+  // Build pedigree tree for mother's line
+  const buildMotherTree = (): TreeNode<PedigreeData> | null => {
+    // Filter for DAM relationships only
+    const damRelationship = dog?.pedigree_dam?.find((rel: any) => rel.relationship_type === 'DAM');
+    const dam = damRelationship?.parent;
+    if (!dam) return null;
+
+    return {
+      data: dogToPedigreeData(dam, 'Mother'),
+      children: [] // Would add grandparents here in future
+    };
   };
 
   if (loading) {
@@ -228,6 +283,50 @@ function DogDetailsPage() {
               </div>
             </div>
           )}
+
+          {/* Pedigree */}
+          {(() => {
+            const fatherTree = buildFatherTree();
+            const motherTree = buildMotherTree();
+            const hasPedigree = fatherTree || motherTree;
+            
+            if (!hasPedigree) return null;
+            
+            return (
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <Typography variant="h4" className="mb-6">Pedigree</Typography>
+                <div className="space-y-8">
+                  {fatherTree && (
+                    <div>
+                      <Typography variant="h5" className="mb-4">Father's Line</Typography>
+                      <div className="overflow-x-auto">
+                        <HorizontalTree
+                          tree={fatherTree}
+                          renderNode={renderClickablePedigreeNode}
+                          maxDepth={3}
+                          lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {motherTree && (
+                    <div>
+                      <Typography variant="h5" className="mb-4">Mother's Line</Typography>
+                      <div className="overflow-x-auto">
+                        <HorizontalTree
+                          tree={motherTree}
+                          renderNode={renderClickablePedigreeNode}
+                          maxDepth={3}
+                          lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Offspring */}
           {(() => {

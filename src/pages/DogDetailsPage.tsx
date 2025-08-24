@@ -234,30 +234,28 @@ function DogDetailsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Dog Image Placeholder */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-              <Typography variant="h1" color="muted" className="select-none">
-                {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-              </Typography>
-            </div>
-            <Typography variant="caption" color="muted" className="text-center block">
-              Photo coming soon
+      {/* Top Row: Photo and Basic Info */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        {/* Dog Image Placeholder */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border h-full flex flex-col">
+          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+            <Typography variant="h1" color="muted" className="select-none">
+              {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
             </Typography>
           </div>
-
+          <Typography variant="caption" color="muted" className="text-center block">
+            Photo coming soon
+          </Typography>
+          
           {/* My Dogs Info */}
           {dog.my_dogs && dog.my_dogs.length > 0 && (
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <Typography variant="h5" className="mb-2">🏆 My Kennel</Typography>
-              <Typography variant="body" color="muted">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4">
+              <Typography variant="h6" className="mb-2">🏆 My Kennel</Typography>
+              <Typography variant="caption" color="muted">
                 This dog is part of your kennel.
               </Typography>
               {dog.my_dogs[0].acquisition_date && (
-                <Typography variant="caption" color="muted" className="block mt-2">
+                <Typography variant="caption" color="muted" className="block mt-1">
                   Acquired: {formatDate(dog.my_dogs[0].acquisition_date)}
                 </Typography>
               )}
@@ -268,80 +266,75 @@ function DogDetailsPage() {
               )}
             </div>
           )}
+        </div>
 
-          {/* Quick Stats */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <Typography variant="h5" className="mb-4">Quick Stats</Typography>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Typography variant="caption" color="muted">Titles</Typography>
-                <Typography variant="caption">{dog.titles?.length || 0}</Typography>
+        {/* Basic Info Card */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border h-full md:col-span-2">
+          <Typography variant="h4" className="mb-4">Basic Information</Typography>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <Typography variant="caption" color="muted">Breed</Typography>
+              <Typography variant="body">{dog.breed?.name || 'Unknown'}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">Registration ID</Typography>
+              <Typography variant="body" className="font-mono">{dog.id}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">Birth Date</Typography>
+              <Typography variant="body">{formatDate(dog.birth_date)}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">Age</Typography>
+              <Typography variant="body">{calculateAge(dog.birth_date)}</Typography>
+            </div>
+            {dog.color && (
+              <div>
+                <Typography variant="caption" color="muted">Color</Typography>
+                <Typography variant="body">{dog.color}</Typography>
               </div>
-              <div className="flex justify-between">
-                <Typography variant="caption" color="muted">Offspring</Typography>
-                <Typography variant="caption">
-                  {(() => {
-                    const sireCount = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE').length || 0;
-                    const damCount = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM').length || 0;
-                    return sireCount + damCount;
-                  })()}
-                </Typography>
+            )}
+            {dog.death_date && (
+              <div>
+                <Typography variant="caption" color="muted">Death Date</Typography>
+                <Typography variant="body">{formatDate(dog.death_date)}</Typography>
               </div>
+            )}
+            <div>
+              <Typography variant="caption" color="muted">Titles</Typography>
+              <Typography variant="body">{dog.titles?.length || 0}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">Offspring</Typography>
+              <Typography variant="body">
+                {(() => {
+                  const sireCount = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE').length || 0;
+                  const damCount = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM').length || 0;
+                  return sireCount + damCount;
+                })()}
+              </Typography>
             </div>
           </div>
         </div>
-        
-        {/* Main Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Info Card */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <Typography variant="h4" className="mb-4">Basic Information</Typography>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Typography variant="caption" color="muted">Breed</Typography>
-                <Typography variant="body">{dog.breed?.name || 'Unknown'}</Typography>
-              </div>
-              <div>
-                <Typography variant="caption" color="muted">Registration ID</Typography>
-                <Typography variant="body" className="font-mono">{dog.id}</Typography>
-              </div>
-              <div>
-                <Typography variant="caption" color="muted">Birth Date</Typography>
-                <Typography variant="body">{formatDate(dog.birth_date)}</Typography>
-              </div>
-              <div>
-                <Typography variant="caption" color="muted">Age</Typography>
-                <Typography variant="body">{calculateAge(dog.birth_date)}</Typography>
-              </div>
-              {dog.color && (
-                <div>
-                  <Typography variant="caption" color="muted">Color</Typography>
-                  <Typography variant="body">{dog.color}</Typography>
-                </div>
-              )}
-              {dog.death_date && (
-                <div>
-                  <Typography variant="caption" color="muted">Death Date</Typography>
-                  <Typography variant="body">{formatDate(dog.death_date)}</Typography>
-                </div>
-              )}
-            </div>
-          </div>
+      </div>
 
-          {/* Titles */}
-          {dog.titles && dog.titles.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <Typography variant="h4" className="mb-4">Titles & Achievements</Typography>
-              <div className="flex flex-wrap gap-2">
-                {dog.titles.map((title, index) => (
-                  <Badge key={index} variant="secondary">
-                    {title.title_code}
-                    {title.year_earned && ` (${title.year_earned})`}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Titles Section */}
+      {dog.titles && dog.titles.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <Typography variant="h4" className="mb-4">Titles & Achievements</Typography>
+          <div className="flex flex-wrap gap-2">
+            {dog.titles.map((title, index) => (
+              <Badge key={index} variant="secondary">
+                {title.title_code}
+                {title.year_earned && ` (${title.year_earned})`}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Full Width Content */}
+      <div className="space-y-6">
 
           {/* Pedigree */}
           {(() => {
@@ -366,7 +359,7 @@ function DogDetailsPage() {
                     )}
                   </Typography>
                 )}
-                <div className="space-y-8">
+                <div className="space-y-8 lg:flex gap-4 ">
                   {fatherTree && (
                     <div>
                       <Typography variant="h5" className="mb-4">Father's Line</Typography>
@@ -467,9 +460,6 @@ function DogDetailsPage() {
               </div>
             );
           })()}
-        </div>
-
-        
       </div>
     </div>
   );

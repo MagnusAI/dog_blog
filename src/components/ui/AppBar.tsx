@@ -29,7 +29,9 @@ const AppBar = ({
   };
 
   const handleLinkClick = (link: { href?: string; onClick?: () => void }) => {
-    if (link.onClick) {
+    if (link.href) {
+      window.location.href = link.href;
+    } else if (link.onClick) {
       link.onClick();
     }
     // Close mobile menu when link is clicked

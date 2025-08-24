@@ -7,6 +7,8 @@ export interface DogCardProps extends HTMLAttributes<HTMLDivElement> {
   imageUrl?: string;
   imageAlt?: string;
   fallbackInitials?: string;
+  subtitle?: string;
+  metadata?: string[];
 }
 
 const DogCard = ({
@@ -15,6 +17,8 @@ const DogCard = ({
   imageUrl,
   imageAlt,
   fallbackInitials,
+  subtitle,
+  metadata,
   className = "",
   ...rest
 }: DogCardProps) => {
@@ -49,9 +53,23 @@ const DogCard = ({
         <Typography variant="h5" weight="semibold" className="truncate">
           {name}
         </Typography>
+        {subtitle && (
+          <Typography variant="caption" color="muted" className="italic">
+            {subtitle}
+          </Typography>
+        )}
         <Typography variant="caption" color="secondary">
           {breed}
         </Typography>
+        {metadata && metadata.length > 0 && (
+          <div className="pt-1 space-y-0.5">
+            {metadata.map((item, index) => (
+              <Typography key={index} variant="caption" color="muted" className="block text-xs">
+                {item}
+              </Typography>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

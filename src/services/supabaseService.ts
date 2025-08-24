@@ -35,6 +35,12 @@ export interface Dog {
   created_at: string;
   updated_at: string;
   breed?: Breed;
+  titles?: Title[];
+  pedigree_sire?: { parent: Dog & { titles?: Title[] } }[];
+  pedigree_dam?: { parent: Dog & { titles?: Title[] } }[];
+  offspring_as_sire?: { offspring: Dog & { breed?: Breed } }[];
+  offspring_as_dam?: { offspring: Dog & { breed?: Breed } }[];
+  my_dogs?: MyDog[];
 }
 
 export interface Title {
@@ -132,6 +138,53 @@ export const dogService = {
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
+  },
+
+  async getDogById(id: string): Promise<Dog | null> {
+    const { data, error } = await supabase
+      .from('dogs')
+      .select(`
+        *,
+        breed:breeds(*),
+        titles(*),
+        pedigree_sire:pedigree_relationships!fk_pedigree_dog(
+          parent:dogs!fk_pedigree_parent(
+            *,
+            breed:breeds(*),
+            titles(*)
+          )
+        ),
+        pedigree_dam:pedigree_relationships!fk_pedigree_dog(
+          parent:dogs!fk_pedigree_parent(
+            *,
+            breed:breeds(*),
+            titles(*)
+          )
+        ),
+        my_dogs(*),
+        offspring_as_sire:pedigree_relationships!fk_pedigree_parent(
+          offspring:dogs!fk_pedigree_dog(
+            *,
+            breed:breeds(*)
+          ),
+          relationship_type
+        ),
+        offspring_as_dam:pedigree_relationships!fk_pedigree_parent(
+          offspring:dogs!fk_pedigree_dog(
+            *,
+            breed:breeds(*)
+          ),
+          relationship_type
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
   },
 
   async getDog(id: string): Promise<Dog | null> {

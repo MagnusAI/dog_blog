@@ -2,7 +2,7 @@ import "./config/imageConfig"; // Initialize image service
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
-import { HomePage, DogsPage, ArchivePage } from './pages';
+import { HomePage, DogsPage, DogDetailsPage, ArchivePage } from './pages';
 
 function App() {
   const navigationLinks = [
@@ -30,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/dogs" element={<DogsPage />} />
+          <Route path="/dogs/:id" element={<DogDetailsPage />} />
           <Route path="/archive" element={<ArchivePage />} />
           <Route path="/about" element={
             <div className="p-8">

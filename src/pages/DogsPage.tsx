@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DogCard from '../components/DogCard';
 import { DogForm } from '../components/DogForm';
 import Button from '../components/ui/Button';
 import { dogService } from '../services/supabaseService';
 import type { MyDog } from '../services/supabaseService';
+import { createDogDetailPath } from '../utils/dogUtils';
 
 function DogsPage() {
+  const navigate = useNavigate();
   const [myDogs, setMyDogs] = useState<MyDog[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,10 @@ function DogsPage() {
   const handleDogSaved = () => {
     setShowAddForm(false);
     loadMyDogs(); // Refresh the list
+  };
+
+  const handleDogClick = (dogId: string) => {
+    navigate(createDogDetailPath(dogId));
   };
 
   if (loading) {
@@ -118,6 +125,8 @@ function DogsPage() {
                     myDog.dog.birth_date ? new Date(myDog.dog.birth_date).getFullYear().toString() : undefined,
                     myDog.acquisition_date ? `Acquired: ${new Date(myDog.acquisition_date).toLocaleDateString()}` : undefined
                   ].filter((item): item is string => Boolean(item))}
+                  dogId={myDog.dog.id}
+                  onDogClick={handleDogClick}
                 />
               );
             })}

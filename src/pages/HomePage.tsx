@@ -9,6 +9,11 @@ import NewsPostForm from "../components/NewsPostForm";
 import { DogForm } from "../components/DogForm";
 
 function HomePage() {
+  const handleDemoClick = (dogId: string) => {
+    // For demo purposes, we'll just show an alert since these aren't real dog IDs
+    alert(`Demo: Would navigate to /dogs/${dogId} (this is just a demo dog)`);
+  };
+
   return (
     <div className="p-8 space-y-8">
       <div className="text-3xl font-bold underline text-green-500 w-full">
@@ -42,6 +47,8 @@ function HomePage() {
             imageUrl="https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face"
             imageAlt="Golden Retriever Champion"
             fallbackInitials="GT"
+            dogId="demo-1"
+            onDogClick={handleDemoClick}
           />
           
           <DogCard

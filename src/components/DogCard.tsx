@@ -9,6 +9,8 @@ export interface DogCardProps extends HTMLAttributes<HTMLDivElement> {
   fallbackInitials?: string;
   subtitle?: string;
   metadata?: string[];
+  dogId?: string;
+  onDogClick?: (dogId: string) => void;
 }
 
 const DogCard = ({
@@ -19,12 +21,21 @@ const DogCard = ({
   fallbackInitials,
   subtitle,
   metadata,
+  dogId,
+  onDogClick,
   className = "",
   ...rest
 }: DogCardProps) => {
+  const handleClick = () => {
+    if (dogId && onDogClick) {
+      onDogClick(dogId);
+    }
+  };
+
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer ${className}`}
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden ${dogId && onDogClick ? 'cursor-pointer' : ''} ${className}`}
+      onClick={handleClick}
       {...rest}
     >
       {/* Image Section */}

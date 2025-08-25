@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dogService } from '../services/supabaseService';
-import type { Dog } from '../services/supabaseService';
+import type { Dog, DogImage } from '../services/supabaseService';
 import Button from '../components/ui/Button';
 import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
@@ -16,6 +16,7 @@ function DogDetailsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [dog, setDog] = useState<Dog | null>(null);
+  const [profileImage, setProfileImage] = useState<DogImage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -40,6 +41,15 @@ function DogDetailsPage() {
       const dogData = await dogService.getDogById(decodedDogId);
       if (dogData) {
         setDog(dogData);
+        
+        // Load profile image if available
+        try {
+          const imageData = await dogService.getDogProfileImage(decodedDogId);
+          setProfileImage(imageData);
+        } catch (error) {
+          console.info('Profile image not available for this dog');
+          setProfileImage(null);
+        }
       } else {
         setError('Dog not found');
       }
@@ -268,15 +278,32 @@ function DogDetailsPage() {
 
       {/* Top Row: Photo and Basic Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-        {/* Dog Image Placeholder */}
+        {/* Dog Image */}
         <div className="bg-white p-6 rounded-lg shadow-sm border h-full flex flex-col">
-          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-            <Typography variant="h1" color="muted" className="select-none">
-              {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-            </Typography>
+          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+            {profileImage ? (
+              <img
+                src={profileImage.image_url}
+                alt={profileImage.alt_text || `${dog.name} profile`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.parentElement!.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center">
+                      <span class="text-4xl text-gray-400">${dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</span>
+                    </div>
+                  `;
+                }}
+              />
+            ) : (
+              <Typography variant="h1" color="muted" className="select-none">
+                {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+              </Typography>
+            )}
           </div>
           <Typography variant="caption" color="muted" className="text-center block">
-            Photo coming soon
+            {profileImage ? 'Profile Photo' : 'Photo coming soon'}
           </Typography>
           
           {/* My Dogs Info */}

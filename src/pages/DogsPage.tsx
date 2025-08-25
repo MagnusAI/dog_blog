@@ -4,12 +4,13 @@ import DogCard from '../components/DogCard';
 import { DogForm } from '../components/DogForm';
 import Button from '../components/ui/Button';
 import { dogService } from '../services/supabaseService';
-import type { MyDog } from '../services/supabaseService';
+import type { MyDog, DogImage } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
 
 function DogsPage() {
   const navigate = useNavigate();
   const [myDogs, setMyDogs] = useState<MyDog[]>([]);
+  const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +24,30 @@ function DogsPage() {
       setLoading(true);
       const dogs = await dogService.getMyDogs();
       setMyDogs(dogs);
+      
+      // Load profile images for all dogs
+      const imagePromises = dogs.map(async (myDog) => {
+        if (myDog.dog) {
+          try {
+            const image = await dogService.getDogProfileImage(myDog.dog.id);
+            return { dogId: myDog.dog.id, image };
+          } catch (error) {
+            console.info(`Profile image not available for ${myDog.dog.id}`);
+            return { dogId: myDog.dog.id, image: null };
+          }
+        }
+        return null;
+      });
+      
+      const imageResults = await Promise.all(imagePromises);
+      const imagesMap: Record<string, DogImage | null> = {};
+      imageResults.forEach(result => {
+        if (result) {
+          imagesMap[result.dogId] = result.image;
+        }
+      });
+      
+      setDogImages(imagesMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dogs');
     } finally {
@@ -32,7 +57,7 @@ function DogsPage() {
 
   const handleDogSaved = () => {
     setShowAddForm(false);
-    loadMyDogs(); // Refresh the list
+    loadMyDogs(); // Refresh the list and images
   };
 
   const handleDogClick = (dogId: string) => {
@@ -116,8 +141,8 @@ function DogsPage() {
                   key={myDog.dog.id}
                   name={myDog.dog.name}
                   breed={myDog.dog.breed?.name || 'Unknown Breed'}
-                  imageUrl={undefined} // We don't have images in the data yet
-                  imageAlt={`${myDog.dog.name} - ${myDog.dog.breed?.name}`}
+                  imageUrl={dogImages[myDog.dog.id]?.image_url}
+                  imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
                   fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                   subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
                   metadata={[

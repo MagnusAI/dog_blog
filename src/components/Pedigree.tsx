@@ -4,6 +4,7 @@ import HorizontalTree, {
   type LineStyle,
 } from "./HorizontalTree";
 import PedigreeCard from "./PedigreeCard";
+import dogPlaceholder from "../assets/dog_placeholder_2.png";
 
 // Pedigree-specific data type
 export type PedigreeData = {
@@ -20,7 +21,7 @@ const renderPedigreeNode = (data: PedigreeData, _level: number) => {
   // Generate placeholder image URL if not provided
   const imageUrl =
     data.imageUrl ||
-    `https://images.unsplash.com/photo-1551717743-49959800b1f6?w=200&h=200&fit=crop&crop=face&auto=format&q=80&seed=${data.name}`;
+    dogPlaceholder;
 
   return (
     <PedigreeCard

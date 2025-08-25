@@ -89,22 +89,24 @@ const PedigreeCard = ({
             {relation}
           </Typography>
           
-          {/* Registration Number */}
-          <Typography 
-            variant="caption"
-            color="secondary"
-            className="truncate block"
-          >
-            Reg: {regnr}
-          </Typography>
+
           
           {/* Name */}
           <Typography 
             variant="body"
             weight="semibold"
-            className="truncate block"
+            className={`truncate block leading-tight`}
           >
             {name}
+          </Typography>
+
+                    {/* Registration Number */}
+                    <Typography 
+            variant="caption"
+            color="secondary"
+            className={`truncate block  ${titlesText ? '' : 'mb-4'}`}
+          >
+            Reg: {regnr}
           </Typography>
           
           {/* Titles (if any) */}

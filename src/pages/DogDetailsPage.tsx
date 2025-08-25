@@ -279,7 +279,7 @@ function DogDetailsPage() {
       {/* Top Row: Photo and Basic Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
         {/* Dog Image */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border h-full flex flex-col">
+        <div className="rounded-lg h-full flex flex-col">
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
             {profileImage ? (
               <img
@@ -297,34 +297,14 @@ function DogDetailsPage() {
                 }}
               />
             ) : (
-              <Typography variant="h1" color="muted" className="select-none">
+              <Typography variant="h1" color="muted" className="select-none shadow-sm  border border-gray-200 bg-white rounded-lg p-2 w-full h-full text-center place-content-center">
                 {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
               </Typography>
             )}
           </div>
           <Typography variant="caption" color="muted" className="text-center block">
-            {profileImage ? 'Profile Photo' : 'Photo coming soon'}
+            {profileImage ? `Updated: ${new Date(profileImage.created_at).toLocaleDateString()}` : 'Photo coming soon'}
           </Typography>
-          
-          {/* My Dogs Info */}
-          {dog.my_dogs && dog.my_dogs.length > 0 && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4">
-              <Typography variant="h6" className="mb-2">🏆 My Kennel</Typography>
-              <Typography variant="caption" color="muted">
-                This dog is part of your kennel.
-              </Typography>
-              {dog.my_dogs[0].acquisition_date && (
-                <Typography variant="caption" color="muted" className="block mt-1">
-                  Acquired: {formatDate(dog.my_dogs[0].acquisition_date)}
-                </Typography>
-              )}
-              {dog.my_dogs[0].notes && (
-                <Typography variant="caption" color="muted" className="block mt-1">
-                  Notes: {dog.my_dogs[0].notes}
-                </Typography>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Basic Info Card */}
@@ -406,18 +386,6 @@ function DogDetailsPage() {
             return (
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <Typography variant="h4" className="mb-6">Pedigree (3 Generations)</Typography>
-                {dog.all_ancestors && (
-                  <Typography variant="caption" color="muted" className="block mb-4">
-                    Total ancestors in database: {dog.all_ancestors.length}
-                    {dog.all_ancestors.length > 0 && (
-                      <span className="ml-2">
-                        (Gen 1: {dog.all_ancestors.filter(a => a.generation === 1).length}, 
-                         Gen 2: {dog.all_ancestors.filter(a => a.generation === 2).length}, 
-                         Gen 3: {dog.all_ancestors.filter(a => a.generation === 3).length})
-                      </span>
-                    )}
-                  </Typography>
-                )}
                 <div className="space-y-8 lg:flex gap-4 ">
                   {fatherTree && (
                     <div>

@@ -114,6 +114,19 @@ export interface MyDog {
   dog?: Dog;
 }
 
+export interface DogImage {
+  id: number;
+  dog_id: string;
+  image_url: string;
+  image_public_id: string;
+  is_profile: boolean;
+  image_type: 'profile' | 'gallery' | 'medical' | 'pedigree';
+  alt_text?: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Service functions
 export const dogService = {
   // Breeds
@@ -417,6 +430,95 @@ export const dogService = {
     
     if (error) throw error;
     return data || [];
+  },
+
+  // Dog Images
+  async getDogImages(dogId: string): Promise<DogImage[]> {
+    const { data, error } = await supabase
+      .from('dog_images')
+      .select('*')
+      .eq('dog_id', dogId)
+      .order('is_profile', { ascending: false })
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getDogProfileImage(dogId: string): Promise<DogImage | null> {
+    const { data, error } = await supabase
+      .from('dog_images')
+      .select('*')
+      .eq('dog_id', dogId)
+      .eq('is_profile', true)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
+  },
+
+  async addDogImage(image: Omit<DogImage, 'id' | 'created_at' | 'updated_at'>): Promise<DogImage> {
+    const { data, error } = await supabase
+      .from('dog_images')
+      .insert(image)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async updateDogImage(id: number, updates: Partial<DogImage>): Promise<DogImage> {
+    const { data, error } = await supabase
+      .from('dog_images')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteDogImage(id: number): Promise<void> {
+    const { error } = await supabase
+      .from('dog_images')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async setProfileImage(dogId: string, imageId: number): Promise<void> {
+    // The trigger will automatically handle unsetting other profile images
+    const { error } = await supabase
+      .from('dog_images')
+      .update({ is_profile: true })
+      .eq('id', imageId)
+      .eq('dog_id', dogId);
+    
+    if (error) throw error;
+  },
+
+  async reorderDogImages(imageUpdates: { id: number; display_order: number }[]): Promise<void> {
+    // Update multiple images' display order in a transaction-like manner
+    const updates = imageUpdates.map(({ id, display_order }) =>
+      supabase
+        .from('dog_images')
+        .update({ display_order })
+        .eq('id', id)
+    );
+    
+    const results = await Promise.all(updates);
+    const errors = results.filter(result => result.error);
+    
+    if (errors.length > 0) {
+      throw new Error(`Failed to reorder images: ${errors.map(e => e.error?.message).join(', ')}`);
+    }
   }
 };
 

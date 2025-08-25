@@ -455,7 +455,6 @@ export const dogService = {
   },
 
   async getDogProfileImage(dogId: string): Promise<DogImage | null> {
-    try {
       const { data, error } = await supabase
         .from('dog_images')
         .select('*')
@@ -464,26 +463,10 @@ export const dogService = {
         .single();
       
       if (error) {
-        // Handle specific error codes without throwing
-        if (error.code === 'PGRST116') return null; // Not found - normal case
-        if (error.code === 'PGRST106' || error.message?.includes('dog_images') || error.message?.includes('Not Acceptable')) {
-          console.info('🗂️ dog_images table not yet available - run "npx supabase db push" to enable image features');
-          return null;
-        }
         console.error('Error fetching profile image:', error);
         return null; // Return null instead of throwing
       }
       return data;
-    } catch (error: any) {
-      // Handle network/other errors gracefully
-      if (error.status === 406 || error.code === 'PGRST106' || error.message?.includes('dog_images') || error.message?.includes('Not Acceptable')) {
-        console.info('🗂️ dog_images table not yet available - run "npx supabase db push" to enable image features');
-        return null;
-      }
-      
-      console.warn('Profile image fetch failed, continuing without image:', error);
-      return null;
-    }
   },
 
   async addDogImage(image: Omit<DogImage, 'id' | 'created_at' | 'updated_at'>): Promise<DogImage> {

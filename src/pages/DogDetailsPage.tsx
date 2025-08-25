@@ -8,13 +8,17 @@ import Badge from '../components/ui/Badge';
 import HorizontalTree, { type TreeNode } from '../components/HorizontalTree';
 import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
+import { useAuth } from '../contexts/AuthContext';
+import { DogForm } from '../components/DogForm';
 
 function DogDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dog, setDog] = useState<Dog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -44,6 +48,20 @@ function DogDetailsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditClick = () => {
+    setShowEditForm(true);
+  };
+
+  const handleEditSave = (updatedDog: Dog) => {
+    setDog(updatedDog);
+    setShowEditForm(false);
+    // Optionally show a success message
+  };
+
+  const handleEditCancel = () => {
+    setShowEditForm(false);
   };
 
   const formatDate = (dateString?: string) => {
@@ -223,14 +241,28 @@ function DogDetailsPage() {
           )}
         </div>
         <div className="text-right">
-          <Badge variant={dog.gender === 'M' ? 'primary' : 'secondary'}>
-            {dog.gender === 'M' ? 'Male' : 'Female'}
-          </Badge>
-          {dog.is_deceased && (
-            <Badge variant="danger" className="ml-2">
-              Deceased
-            </Badge>
-          )}
+          <div className="flex items-center space-x-3">
+            {/* Edit Button - Only visible for authenticated users */}
+            {user && (
+              <Button
+                variant="primary"
+                onClick={handleEditClick}
+                className="mb-2"
+              >
+                ✏️ Edit Dog
+              </Button>
+            )}
+            <div>
+              <Badge variant={dog.gender === 'M' ? 'primary' : 'secondary'}>
+                {dog.gender === 'M' ? 'Male' : 'Female'}
+              </Badge>
+              {dog.is_deceased && (
+                <Badge variant="danger" className="ml-2">
+                  Deceased
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -461,6 +493,35 @@ function DogDetailsPage() {
             );
           })()}
       </div>
+
+      {/* Edit Form Modal - Only shown when editing */}
+      {showEditForm && user && dog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-screen overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 z-10">
+              <div className="flex items-center justify-between">
+                <Typography variant="h3">
+                  Edit {dog.name}
+                </Typography>
+                <Button
+                  variant="ghost"
+                  onClick={handleEditCancel}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕ Close
+                </Button>
+              </div>
+            </div>
+            <div className="p-6">
+              <DogForm
+                dogId={dog.id}
+                onSave={handleEditSave}
+                onCancel={handleEditCancel}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

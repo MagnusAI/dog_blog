@@ -87,26 +87,6 @@ export const BreedSelector: React.FC<BreedSelectorProps> = ({
 
             {/* Breed list */}
             <div className="max-h-48 overflow-y-auto">
-              {/* Add New Breed Button */}
-              {onAddNewBreed && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onAddNewBreed();
-                    setIsOpen(false);
-                  }}
-                  className="w-full p-3 text-left hover:bg-green-50 focus:bg-green-50 focus:outline-none text-green-700 border-b border-gray-200"
-                >
-                  <div className="font-medium flex items-center">
-                    <span className="mr-2">+</span>
-                    Add New Breed
-                  </div>
-                  <div className="text-sm text-green-600">
-                    Create a new breed entry
-                  </div>
-                </button>
-              )}
-
               {filteredBreeds.length > 0 ? (
                 filteredBreeds.map((breed) => (
                   <button
@@ -149,6 +129,28 @@ export const BreedSelector: React.FC<BreedSelectorProps> = ({
                   ) : (
                     'No breeds available'
                   )}
+                </div>
+              )}
+
+              {/* Add New Breed Button - Now at the bottom */}
+              {onAddNewBreed && (
+                <div className="border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAddNewBreed();
+                      setIsOpen(false);
+                    }}
+                    className="w-full p-3 text-left hover:bg-green-50 focus:bg-green-50 focus:outline-none text-green-700"
+                  >
+                    <div className="font-medium flex items-center">
+                      <span className="mr-2">+</span>
+                      Add New Breed
+                    </div>
+                    <div className="text-sm text-green-600">
+                      Create a new breed entry
+                    </div>
+                  </button>
                 </div>
               )}
             </div>

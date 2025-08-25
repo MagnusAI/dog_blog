@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { dogService } from '../services/supabaseService';
-import type { Dog, Breed, Title, PedigreeRelationship, MyDog } from '../services/supabaseService';
+import type { Dog, Breed, DogImage } from '../services/supabaseService';
 import Button from './ui/Button';
 import Typography from './ui/Typography';
-import { BreedSelector } from './BreedSelector';
-import { TitlesManager } from './TitlesManager';
-import { PedigreeManager } from './PedigreeManager';
-import { MyDogToggle } from './MyDogToggle';
 import { BreedManager } from './BreedManager';
+import { BreedSelector } from './BreedSelector';
+import ImageUploadComponent from './ImageUploadComponent';
 
 interface DogFormProps {
   dogId?: string; // If provided, we're editing; if not, we're creating
@@ -46,13 +44,10 @@ const initialFormData: FormData = {
 export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [breeds, setBreeds] = useState<Breed[]>([]);
-  const [titles, setTitles] = useState<Title[]>([]);
-  const [pedigreeRelationships, setPedigreeRelationships] = useState<PedigreeRelationship[]>([]);
-  const [myDogRecord, setMyDogRecord] = useState<MyDog | null>(null);
+  const [profileImage, setProfileImage] = useState<DogImage | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState<'basic' | 'titles' | 'pedigree' | 'ownership'>('basic');
   const [showBreedManager, setShowBreedManager] = useState(false);
 
   const isEditing = Boolean(dogId);
@@ -70,9 +65,12 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
 
       if (dogId) {
         // Load existing dog data
-        const dogData = await dogService.getDog(dogId);
+        console.log('Loading dog data for ID:', dogId);
+        const dogData = await dogService.getDogById(dogId);
+        console.log('Retrieved dog data:', dogData);
+        
         if (dogData) {
-          setFormData({
+          const newFormData = {
             id: dogData.id,
             name: dogData.name,
             nickname: dogData.nickname || '',
@@ -84,21 +82,18 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
             color: dogData.color || '',
             owner_person_id: dogData.owner_person_id || '',
             original_dog_id: dogData.original_dog_id || ''
-          });
+          };
+          console.log('Setting form data:', newFormData);
+          setFormData(newFormData);
 
-          // Load related data
-          const [titlesData, pedigreeData] = await Promise.all([
-            dogService.getDogTitles(dogId),
-            dogService.getDogPedigree(dogId)
-          ]);
-
-          setTitles(titlesData);
-          setPedigreeRelationships(pedigreeData);
-
-          // Check if this is one of my dogs
-          const myDogsData = await dogService.getMyDogs();
-          const myDogRecord = myDogsData.find(md => md.dog_id === dogId);
-          setMyDogRecord(myDogRecord || null);
+          // Load profile image (handle gracefully if table doesn't exist)
+          try {
+            const profileImageData = await dogService.getDogProfileImage(dogId);
+            setProfileImage(profileImageData);
+          } catch (error) {
+            console.info('Profile image not available - continuing without image');
+            setProfileImage(null);
+          }
         }
       }
     } catch (error) {
@@ -206,6 +201,19 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
     }));
   };
 
+  const refreshProfileImage = async () => {
+    if (dogId) {
+      try {
+        const updatedProfileImage = await dogService.getDogProfileImage(dogId);
+        setProfileImage(updatedProfileImage);
+      } catch (error) {
+        console.warn('Could not refresh profile image (this is expected if dog_images table is not yet migrated):', error);
+        // Don't show this as an error to the user since it's expected behavior
+        setProfileImage(null);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -215,7 +223,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg text-gray-800">
       <Typography variant="h2" className="mb-6">
         {isEditing ? `Edit ${formData.name}` : 'Add New Dog'}
       </Typography>
@@ -228,33 +236,84 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 mb-6 border-b">
-        {[
-          { key: 'basic', label: 'Basic Info' },
-          { key: 'titles', label: 'Titles' },
-          { key: 'pedigree', label: 'Pedigree' },
-          { key: 'ownership', label: 'Ownership' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`px-4 py-2 font-medium text-sm rounded-t-lg ${
-              activeTab === tab.key
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Profile Image Section */}
+        {isEditing && (
+          <div className="bg-gray-50 p-6 rounded-lg border">
+            <Typography variant="h4" className="mb-4 text-gray-800">Profile Image</Typography>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Current Profile Image */}
+              <div>
+                <Typography variant="h6" className="mb-3 text-gray-700">Current Image</Typography>
+                <div className="aspect-square bg-gray-100 rounded-lg border overflow-hidden">
+                  {profileImage ? (
+                    <img
+                      src={profileImage.image_url}
+                      alt={profileImage.alt_text || `${formData.name} profile`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.parentElement!.innerHTML = `
+                          <div class="w-full h-full flex items-center justify-center">
+                            <span class="text-4xl text-gray-400">${formData.name ? formData.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2) : '??'}</span>
+                          </div>
+                        `;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Typography variant="h1" color="muted" className="select-none">
+                        {formData.name ? formData.name.split(' ').map(n => n[0]).join('').substring(0, 2) : '??'}
+                      </Typography>
+                    </div>
+                  )}
+                </div>
+                {profileImage && (
+                  <Typography variant="caption" color="muted" className="block text-center mt-2">
+                    Uploaded: {new Date(profileImage.created_at).toLocaleDateString()}
+                  </Typography>
+                )}
+              </div>
 
-      <form onSubmit={handleSubmit}>
-        {/* Basic Information Tab */}
-        {activeTab === 'basic' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Upload New Image */}
+              <div className="space-y-4">
+                <Typography variant="h6" className="mb-3 text-gray-700">Upload New Image</Typography>
+
+                  <ImageUploadComponent
+                    dogId={dogId!}
+                    dogName={formData.name || 'Unnamed Dog'}
+                    allowMultiple={false}
+                    defaultImageType="profile"
+                    onUploadSuccess={() => {
+                      refreshProfileImage();
+                      if (errors.images) {
+                        setErrors(prev => ({ ...prev, images: '' }));
+                      }
+                    }}
+                    onUploadError={(error) => {
+                      setErrors(prev => ({ ...prev, images: error }));
+                    }}
+                  />
+          
+              </div>
+            </div>
+
+            {/* Error Display for Images */}
+            {errors.images && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
+                <Typography variant="caption" color="danger">
+                  {errors.images}
+                </Typography>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Basic Information Section */}
+        <div className="space-y-6">
+          <Typography variant="h4" className="text-gray-800">Basic Information</Typography>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Dog ID */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -431,37 +490,9 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
               </div>
             </div>
           </div>
-        )}
-
-        {/* Titles Tab */}
-        {activeTab === 'titles' && isEditing && (
-          <TitlesManager
-            dogId={dogId!}
-            titles={titles}
-            onTitlesChange={setTitles}
-          />
-        )}
-
-        {/* Pedigree Tab */}
-        {activeTab === 'pedigree' && isEditing && (
-          <PedigreeManager
-            dogId={dogId!}
-            relationships={pedigreeRelationships}
-            onRelationshipsChange={setPedigreeRelationships}
-          />
-        )}
-
-        {/* Ownership Tab */}
-        {activeTab === 'ownership' && isEditing && (
-          <MyDogToggle
-            dogId={dogId!}
-            myDogRecord={myDogRecord}
-            onMyDogChange={setMyDogRecord}
-          />
-        )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+        <div className="flex justify-end space-x-4 pt-6 border-t">
           {onCancel && (
             <Button
               type="button"

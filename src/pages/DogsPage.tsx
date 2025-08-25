@@ -6,14 +6,18 @@ import Button from '../components/ui/Button';
 import { dogService } from '../services/supabaseService';
 import type { MyDog, DogImage } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
+import { useAuth } from '../contexts/AuthContext';
 
 function DogsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [myDogs, setMyDogs] = useState<MyDog[]>([]);
   const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedDogs, setSelectedDogs] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadMyDogs();
@@ -60,9 +64,76 @@ function DogsPage() {
     loadMyDogs(); // Refresh the list and images
   };
 
-  const handleDogClick = (dogId: string) => {
-    navigate(createDogDetailPath(dogId));
+  const handleCardClick = (myDogId: number, dogId: string) => {
+    if (editMode) {
+      // In edit mode, toggle selection
+      toggleDogSelection(myDogId);
+    } else {
+      // Not in edit mode, navigate to details
+      navigate(createDogDetailPath(dogId));
+    }
   };
+
+  const toggleDogSelection = (myDogId: number) => {
+    const newSelected = new Set(selectedDogs);
+    if (newSelected.has(myDogId)) {
+      newSelected.delete(myDogId);
+    } else {
+      newSelected.add(myDogId);
+    }
+    setSelectedDogs(newSelected);
+  };
+
+  const toggleEditMode = () => {
+    if (!editMode) {
+      // Entering edit mode - select all active dogs
+      const activeDogIds = myDogs
+        .filter(myDog => myDog.is_active)
+        .map(myDog => myDog.id);
+      setSelectedDogs(new Set(activeDogIds));
+    } else {
+      // Exiting edit mode - clear selection
+      setSelectedDogs(new Set());
+    }
+    setEditMode(!editMode);
+  };
+
+  const saveDogStatusChanges = async () => {
+    if (selectedDogs.size === 0) return;
+
+    try {
+      const updatePromises = myDogs.map(async (myDog) => {
+        if (myDog.dog) {
+          const shouldBeActive = selectedDogs.has(myDog.id);
+          const currentIsActive = myDog.is_active;
+          
+          // Only update if status needs to change
+          if (shouldBeActive !== currentIsActive) {
+            await dogService.updateMyDog(myDog.id, { is_active: shouldBeActive });
+          }
+        }
+      });
+
+      await Promise.all(updatePromises);
+      await loadMyDogs(); // Refresh the list
+      setSelectedDogs(new Set()); // Clear selection
+      setEditMode(false); // Exit edit mode
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update dog status');
+    }
+  };
+
+  const getVisibleDogs = () => {
+    if (user && editMode) {
+      // Authenticated users see all dogs (active and inactive)
+      return myDogs;
+    } else {
+      // Non-authenticated users only see active dogs
+      return myDogs.filter(myDog => myDog.is_active);
+    }
+  };
+
+  const visibleDogs = getVisibleDogs();
 
   if (loading) {
     return (
@@ -91,12 +162,32 @@ function DogsPage() {
     <div className="p-8 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">My Dogs</h1>
-        <Button
-          variant="primary"
-          onClick={() => setShowAddForm(true)}
-        >
-          Add New Dog
-        </Button>
+        <div className="flex gap-3">
+          {user && (
+            <>
+              <Button
+                variant={editMode ? "secondary" : "ghost"}
+                onClick={toggleEditMode}
+              >
+                {editMode ? "Cancel Edit" : "Edit"}
+              </Button>
+              {editMode && selectedDogs.size > 0 && (
+                <Button
+                  variant="primary"
+                  onClick={saveDogStatusChanges}
+                >
+                  Save Changes ({selectedDogs.size} selected)
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                onClick={() => setShowAddForm(true)}
+              >
+                Add New Dog
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {showAddForm && (
@@ -115,26 +206,43 @@ function DogsPage() {
         </div>
       )}
 
-      {myDogs.length === 0 ? (
+      {visibleDogs.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-4">
-            You haven't added any dogs yet.
+            {user ? "You haven't added any dogs yet." : "No active dogs available."}
           </div>
-          <Button
-            variant="primary"
-            onClick={() => setShowAddForm(true)}
-          >
-            Add Your First Dog
-          </Button>
+          {user && (
+            <Button
+              variant="primary"
+              onClick={() => setShowAddForm(true)}
+            >
+              Add Your First Dog
+            </Button>
+          )}
         </div>
       ) : (
         <div>
           <div className="text-sm text-gray-600 mb-4">
-            {myDogs.length} dog{myDogs.length !== 1 ? 's' : ''} in your kennel
+            {visibleDogs.length} dog{visibleDogs.length !== 1 ? 's' : ''} in your kennel
+            {!user && " (active dogs only)"}
+            {editMode && user && (
+              <span className="block mt-1 text-blue-600">
+                Active dogs are pre-selected. Inactive dogs are also visible for editing. Click to select/deselect dogs, then save to update their status.
+                {selectedDogs.size > 0 && (
+                  <span className="block mt-1">
+                    {selectedDogs.size} dogs will be active, {visibleDogs.length - selectedDogs.size} will be inactive.
+                  </span>
+                )}
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {myDogs.map((myDog) => {
+            {visibleDogs.map((myDog) => {
               if (!myDog.dog) return null;
+              
+              const isSelected = selectedDogs.has(myDog.id);
+              const isInactive = !myDog.is_active;
+              const isDeceased = myDog.dog.is_deceased;
               
               return (
                 <DogCard
@@ -148,10 +256,20 @@ function DogsPage() {
                   metadata={[
                     myDog.dog.gender === 'M' ? 'Male' : 'Female',
                     myDog.dog.birth_date ? new Date(myDog.dog.birth_date).getFullYear().toString() : undefined,
-                    myDog.acquisition_date ? `Acquired: ${new Date(myDog.acquisition_date).toLocaleDateString()}` : undefined
+                    myDog.acquisition_date ? `Acquired: ${new Date(myDog.acquisition_date).toLocaleDateString()}` : undefined,
+                    isInactive ? 'Inactive' : undefined,
+                    isDeceased ? 'Deceased' : undefined
                   ].filter((item): item is string => Boolean(item))}
                   dogId={myDog.dog.id}
-                  onDogClick={handleDogClick}
+                  onDogClick={() => handleCardClick(myDog.id, myDog.dog!.id)}
+                  className={`
+                    ${editMode ? 'cursor-pointer' : ''}
+                    ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : ''}
+                    ${isInactive ? 'opacity-60 bg-gray-50' : ''}
+                    ${isDeceased ? 'bg-red-50 border-red-200' : ''}
+                    ${isInactive && isDeceased ? 'bg-red-100' : ''}
+                    ${editMode && !isSelected ? 'hover:ring-1 hover:ring-gray-300' : ''}
+                  `}
                 />
               );
             })}

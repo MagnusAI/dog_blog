@@ -57,19 +57,13 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dogs" element={
-          <ProtectedRoute>
             <DogsPage />
-          </ProtectedRoute>
         } />
         <Route path="/dogs/:id" element={
-          <ProtectedRoute>
             <DogDetailsPage />
-          </ProtectedRoute>
         } />
         <Route path="/archive" element={
-          <ProtectedRoute>
             <ArchivePage />
-          </ProtectedRoute>
         } />
         <Route path="/about" element={
           <div className="p-8">

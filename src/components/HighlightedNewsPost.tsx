@@ -15,6 +15,7 @@ export interface HighlightedNewsPostProps extends HTMLAttributes<HTMLDivElement>
   fallbackImageUrl?: string;   // Fallback if main image fails
   dateFormat?: "short" | "long" | "relative"; // Date display format
   backgroundColor?: string;    // Custom background color (CSS color value)
+  taggedDogs?: string[];       // Array of dog IDs that are tagged in this post
 }
 
 const HighlightedNewsPost = ({
@@ -26,6 +27,7 @@ const HighlightedNewsPost = ({
   fallbackImageUrl,
   dateFormat = "short",
   backgroundColor = "transparent",
+  taggedDogs = [],
   className = "",
   ...rest
 }: HighlightedNewsPostProps) => {
@@ -113,6 +115,8 @@ const HighlightedNewsPost = ({
             {excerpt}
           </Typography>
 
+
+
           {/* Read More Indicator */}
           <div className="flex items-center mt-4">
             <span className="text-blue-600 font-medium hover:text-blue-800 transition-colors flex items-center gap-2">
@@ -136,6 +140,7 @@ const HighlightedNewsPost = ({
         excerpt={excerpt}
         fallbackImageUrl={fallbackImageUrl}
         dateFormat={dateFormat}
+        taggedDogs={taggedDogs}
       />
     </>
   );

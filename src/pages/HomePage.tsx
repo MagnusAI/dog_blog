@@ -30,12 +30,30 @@ function HomePage() {
         <NewsPostForm
           onSubmit={(data) => {
             console.log("News post submitted:", data);
-            alert("News post created successfully!");
+            console.log("Tagged dogs:", data.taggedDogs);
+            alert(`News post created successfully! Tagged ${data.taggedDogs?.length || 0} dogs.`);
           }}
           onCancel={() => {
             console.log("Form cancelled");
           }}
         />
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold mb-4">📰 News Post with Dog Tags Demo</h2>
+        <p className="text-gray-600 mb-6">
+          Example of a news post featuring tagged kennel dogs
+        </p>
+        <div className="max-w-xs mx-auto">
+          <NewsPost
+            imageUrl="https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face"
+            imageAlt="Golden Retriever Champion"
+            date="2024-01-15"
+            title="Championship Victory at Regional Show"
+            excerpt="Our kennel dogs dominated the regional dog show this weekend, taking home multiple awards including Best in Show. The competition was fierce but our training paid off."
+            taggedDogs={["sample-dog-1", "sample-dog-2"]} // These would be real dog IDs in production
+          />
+        </div>
       </div>
 
       <div>

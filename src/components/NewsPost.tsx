@@ -15,6 +15,7 @@ export interface NewsPostProps extends HTMLAttributes<HTMLDivElement> {
   fallbackImageUrl?: string;   // Fallback if main image fails
   size?: "sm" | "md" | "lg";   // Card size variant
   dateFormat?: "short" | "long" | "relative"; // Date display format
+  taggedDogs?: string[];       // Array of dog IDs that are tagged in this post
 }
 
 const NewsPost = ({
@@ -25,6 +26,7 @@ const NewsPost = ({
   excerpt,
   fallbackImageUrl,
   dateFormat = "short",
+  taggedDogs = [],
   className = "",
   ...rest
 }: NewsPostProps) => {
@@ -138,6 +140,8 @@ const NewsPost = ({
           {excerpt}
         </Typography>
 
+
+
         {/* Read More Indicator */}
         <div className="flex items-center justify-between mt-auto pt-2">
           <span className={`${config.date} text-blue-600 font-medium group-hover:text-blue-800 transition-colors`}>
@@ -158,6 +162,7 @@ const NewsPost = ({
       excerpt={excerpt}
       fallbackImageUrl={fallbackImageUrl}
       dateFormat={dateFormat}
+      taggedDogs={taggedDogs}
     />
     </>
   );

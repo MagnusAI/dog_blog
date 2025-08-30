@@ -13,7 +13,7 @@ function AppContent() {
   const navigationLinks = [
     { label: "Home", href: "#/" },
     { label: "Dogs", href: "#/dogs" },
-    { label: "Archive", href: "#/archive" },
+    { label: "News", href: "#/news" },
     { label: "About", href: "#/about" }
   ];
 
@@ -62,7 +62,7 @@ function AppContent() {
         <Route path="/dogs/:id" element={
             <DogDetailsPage />
         } />
-        <Route path="/archive" element={
+        <Route path="/news" element={
             <NewsPage />
         } />
         <Route path="/about" element={

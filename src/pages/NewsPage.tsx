@@ -1,91 +1,49 @@
+import { useState, useEffect } from 'react';
 import NewsPost from '../components/NewsPost';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
+import { newsService, type NewsPost as NewsPostType } from '../services/supabaseService';
 
 function NewsPage() {
-  // Mock news posts data - in a real app, this would come from your database/API
-  const featuredPost = {
-    imageUrl: "https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&h=600&fit=crop&auto=format&q=80",
-    imageAlt: "Championship dog show arena",
-    date: "2025-01-20",
-    title: "Breaking: Historic Win at International Championship Sets New Standards",
-    content: "In an unprecedented display of excellence, this year's international championship has redefined what it means to achieve perfection in pedigree competitions. With over 500 participants from 30 countries, the event showcased the pinnacle of breeding excellence and training dedication that has shaped the future of canine sports.",
-    taggedDogs: ["DK10420/2025", "champion-golden-2", "rising-star-3"] // Multiple champion dogs featured
-  };
+  const [newsPosts, setNewsPosts] = useState<NewsPostType[]>([]);
+  const [featuredPost, setFeaturedPost] = useState<NewsPostType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const newsPosts = [
-    {
-      id: 1,
-      imageUrl: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Dog championship event",
-      date: "2025-01-15",
-      title: "Annual Dog Show Championship Results",
-      content: "The 2025 National Dog Show concluded with record-breaking attendance and fierce competition across all breeds. Golden Retrievers dominated the sporting group with exceptional performances.",
-      taggedDogs: ["DK10420/2025", "show-winner-bella"] // Championship winners
-    },
-    {
-      id: 2,
-      imageUrl: "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Dog training session",
-      date: "2025-01-10",
-      title: "New Training Techniques for Better Pedigree Performance",
-      content: "Discover the latest methodologies in canine training that are revolutionizing how we prepare dogs for competitions. Expert trainers share their insights on building stronger bonds between handlers and their champions.",
-      taggedDogs: ["training-star-max", "young-prospect-luna"] // Dogs in training
-    },
-    {
-      id: 3,
-      imageUrl: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Veterinary care for dogs",
-      date: "2025-01-05",
-      title: "Health and Wellness: Maintaining Champion Bloodlines",
-      content: "A comprehensive guide to ensuring the health and vitality of pedigreed dogs. From nutrition to genetic testing, learn how top breeders maintain the integrity of their bloodlines while promoting overall canine wellness and longevity.",
-      taggedDogs: ["health-champion-duke"] // Featured for health excellence
-    },
-    {
-      id: 4,
-      imageUrl: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Golden Retriever puppy",
-      date: "2025-01-01",
-      title: "New Year, New Litter: Welcoming Champion Bloodlines",
-      content: "Starting the year with exciting news as our champion female has delivered a healthy litter of eight puppies. Each puppy shows promising traits that continue our kennel's legacy of excellence.",
-      taggedDogs: ["mother-champion-amber", "sire-golden-thunder"] // Breeding pair
-    },
-    {
-      id: 5,
-      imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Dog agility competition",
-      date: "2024-12-28",
-      title: "Winter Agility Series Kicks Off with Record Participation",
-      content: "The winter agility series has begun with unprecedented enthusiasm from handlers and their dogs. This year's course designs challenge both speed and precision, testing the true partnership between dog and handler.",
-      taggedDogs: ["agility-ace-rocket", "speed-demon-flash", "precision-prince-cooper"] // Agility team
-    },
-    {
-      id: 6,
-      imageUrl: "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Dog grooming",
-      date: "2024-12-25",
-      title: "Holiday Grooming Tips for Show Dogs",
-      content: "During the holiday season, maintaining your show dog's coat and appearance becomes even more important. Our expert groomers share their top tips for keeping your dog looking championship-ready through the festive period.",
-      taggedDogs: ["grooming-model-princess"] // Featured grooming example
-    },
-    {
-      id: 7,
-      imageUrl: "https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Dog nutrition",
-      date: "2024-12-20",
-      title: "Nutrition Science: Feeding for Peak Performance",
-      content: "Modern canine nutrition has evolved significantly, with new research revealing optimal feeding strategies for performance dogs. Learn about the latest developments in nutritional science that are helping dogs reach their full potential.",
-      taggedDogs: ["nutrition-test-subject-bruno", "performance-athlete-storm"] // Nutrition case studies
-    },
-    {
-      id: 8,
-      imageUrl: "https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=300&fit=crop&auto=format&q=80",
-      imageAlt: "Kennel facilities",
-      date: "2024-12-15",
-      title: "Kennel Expansion Complete: New Facilities Tour",
-      content: "After months of construction, our kennel expansion is finally complete. The new facilities feature state-of-the-art climate control, spacious whelping areas, and dedicated training spaces designed with our dogs' comfort and safety in mind.",
-      taggedDogs: [] // No specific dogs, just facility news
-    }
-  ];
+  useEffect(() => {
+    const loadNewsPosts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get all published news posts
+        const posts = await newsService.getPublishedNewsPosts();
+        
+        if (posts.length > 0) {
+          // Use the most recent post as featured
+          setFeaturedPost(posts[0]);
+          // The rest are regular posts
+          setNewsPosts(posts.slice(1));
+        } else {
+          setFeaturedPost(null);
+          setNewsPosts([]);
+        }
+      } catch (err) {
+        console.error('Error loading news posts:', err);
+        setError('Failed to load news posts. Please try again later.');
+        setFeaturedPost(null);
+        setNewsPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNewsPosts();
+  }, []);
+
+  // Helper function to get tagged dog IDs for components
+  const getTaggedDogIds = (post: NewsPostType): string[] => {
+    return post.tagged_dogs?.map(dog => dog.id) || [];
+  };
 
   return (
     <div className="p-8 space-y-8">
@@ -96,47 +54,95 @@ function NewsPage() {
         </p>
       </div>
 
-      {/* Featured Post */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured</h2>
-        <HighlightedNewsPost
-          imageUrl={featuredPost.imageUrl}
-          imageAlt={featuredPost.imageAlt}
-          date={featuredPost.date}
-          title={featuredPost.title}
-          content={featuredPost.content}
-          dateFormat="long"
-          backgroundColor="transparent"
-          taggedDogs={featuredPost.taggedDogs}
-        />
-      </div>
-
-      {/* All News Posts Grid */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">All News</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {newsPosts.map((post, index) => (
-            <NewsPost
-              key={post.id}
-              imageUrl={post.imageUrl}
-              imageAlt={post.imageAlt}
-              date={post.date}
-              title={post.title}
-              content={post.content}
-              size={index % 3 === 0 ? "lg" : index % 2 === 0 ? "md" : "sm"}
-              dateFormat="short"
-              taggedDogs={post.taggedDogs}
-            />
-          ))}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="text-gray-600">Loading news posts...</span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Pagination placeholder - you can implement this later */}
-      <div className="flex justify-center pt-8">
-        <div className="text-gray-500 text-sm">
-          Showing {newsPosts.length} news posts
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 mb-2">⚠️ {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="text-red-800 hover:text-red-900 underline"
+          >
+            Try again
+          </button>
         </div>
-      </div>
+      )}
+
+      {!loading && !error && (
+        <>
+          {/* Featured Post */}
+          {featuredPost && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured</h2>
+              <HighlightedNewsPost
+                imageUrl={featuredPost.image_url || ''}
+                imageAlt={featuredPost.image_alt || featuredPost.title}
+                date={featuredPost.published_date}
+                title={featuredPost.title}
+                content={featuredPost.content}
+                dateFormat="long"
+                backgroundColor="transparent"
+                taggedDogs={getTaggedDogIds(featuredPost)}
+                imagePublicId={featuredPost.image_public_id}
+                fallbackImageUrl={featuredPost.fallback_image_url}
+              />
+            </div>
+          )}
+
+          {/* All News Posts Grid */}
+          {newsPosts.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                {featuredPost ? 'More News' : 'All News'}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {newsPosts.map((post, index) => (
+                  <NewsPost
+                    key={post.id}
+                    imageUrl={post.image_url || ''}
+                    imageAlt={post.image_alt || post.title}
+                    date={post.published_date}
+                    title={post.title}
+                    content={post.content}
+                    size={index % 3 === 0 ? "lg" : index % 2 === 0 ? "md" : "sm"}
+                    dateFormat="short"
+                    taggedDogs={getTaggedDogIds(post)}
+                    imagePublicId={post.image_public_id}
+                    fallbackImageUrl={post.fallback_image_url}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!featuredPost && newsPosts.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-6xl mb-4">📰</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No News Posts Yet</h3>
+              <p className="text-gray-600 mb-4">
+                Check back later for the latest news and updates from our kennel.
+              </p>
+            </div>
+          )}
+
+          {/* Posts count */}
+          {(featuredPost || newsPosts.length > 0) && (
+            <div className="flex justify-center pt-8">
+              <div className="text-gray-500 text-sm">
+                Showing {(featuredPost ? 1 : 0) + newsPosts.length} news post{(featuredPost ? 1 : 0) + newsPosts.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import NewsPost from '../components/NewsPost';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
 
-function ArchivePage() {
+function NewsPage() {
   // Mock news posts data - in a real app, this would come from your database/API
   const featuredPost = {
     imageUrl: "https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&h=600&fit=crop&auto=format&q=80",
@@ -130,4 +130,4 @@ function ArchivePage() {
   );
 }
 
-export default ArchivePage;
+export default NewsPage;

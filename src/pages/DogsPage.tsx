@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DogCard from '../components/DogCard';
-import { DogForm } from '../components/DogForm';
 import Button from '../components/ui/Button';
 import { dogService } from '../services/supabaseService';
 import type { MyDog, DogImage } from '../services/supabaseService';
@@ -13,7 +12,7 @@ function DogsPage() {
   const { user } = useAuth();
   const [myDogs, setMyDogs] = useState<MyDog[]>([]);
   const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
-  const [showAddForm, setShowAddForm] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -59,9 +58,8 @@ function DogsPage() {
     }
   };
 
-  const handleDogSaved = () => {
-    setShowAddForm(false);
-    loadMyDogs(); // Refresh the list and images
+  const handleAddNewDog = () => {
+    navigate('/dogs/new');
   };
 
   const handleCardClick = (myDogId: number, dogId: string) => {
@@ -181,7 +179,7 @@ function DogsPage() {
               )}
               <Button
                 variant="primary"
-                onClick={() => setShowAddForm(true)}
+                onClick={handleAddNewDog}
               >
                 Add New Dog
               </Button>
@@ -189,22 +187,6 @@ function DogsPage() {
           )}
         </div>
       </div>
-
-      {showAddForm && (
-        <div className="bg-white p-6 rounded-lg shadow-lg border">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Add New Dog</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddForm(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-          <DogForm onSave={handleDogSaved} />
-        </div>
-      )}
 
       {visibleDogs.length === 0 ? (
         <div className="text-center py-12">
@@ -214,7 +196,7 @@ function DogsPage() {
           {user && (
             <Button
               variant="primary"
-              onClick={() => setShowAddForm(true)}
+              onClick={handleAddNewDog}
             >
               Add Your First Dog
             </Button>

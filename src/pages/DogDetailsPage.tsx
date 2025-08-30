@@ -231,7 +231,7 @@ function DogDetailsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

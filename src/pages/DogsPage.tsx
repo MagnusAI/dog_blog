@@ -159,7 +159,7 @@ function DogsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">My Dogs</h1>
         <div className="flex gap-3">

@@ -15,7 +15,7 @@ function HomePage() {
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
       <div className="text-3xl font-bold underline text-green-500 w-full">
         Hello World!
       </div>
@@ -392,57 +392,6 @@ function HomePage() {
               size="lg"
               fallbackInitials="CS"
               transformations={["e_grayscale"]} // Make it grayscale
-            />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-xl font-bold mb-4">Featured News (Highlighted)</h2>
-          <HighlightedNewsPost
-            imageUrl="https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&h=600&fit=crop&auto=format&q=80"
-            imageAlt="Championship dog show arena"
-            date="2025-01-20"
-            title="Breaking: Historic Win at International Championship Sets New Standards"
-            excerpt="In an unprecedented display of excellence, this year's international championship has redefined what it means to achieve perfection in pedigree competitions. With over 500 participants from 30 countries, the event showcased the pinnacle of breeding excellence and training dedication that has shaped the future of canine sports."
-            dateFormat="long"
-            backgroundColor="transparent"
-          />
-        </div>
-
-        <div>
-          <h2 className="text-xl font-bold mb-4">News Posts</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Small news post */}
-            <NewsPost
-              imageUrl="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop&auto=format&q=80"
-              imageAlt="Dog championship event"
-              date="2025-01-15"
-              title="Annual Dog Show Championship Results"
-              excerpt="The 2025 National Dog Show concluded with record-breaking attendance and fierce competition across all breeds. Golden Retrievers dominated the sporting group with exceptional performances."
-              size="sm"
-              dateFormat="short"
-            />
-
-            {/* Medium news post */}
-            <NewsPost
-              imageUrl="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop&auto=format&q=80"
-              imageAlt="Dog training session"
-              date="2025-01-10"
-              title="New Training Techniques for Better Pedigree Performance"
-              excerpt="Discover the latest methodologies in canine training that are revolutionizing how we prepare dogs for competitions. Expert trainers share their insights on building stronger bonds between handlers and their champions."
-              size="md"
-              dateFormat="relative"
-            />
-
-            {/* Large news post */}
-            <NewsPost
-              imageUrl="https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=300&fit=crop&auto=format&q=80"
-              imageAlt="Veterinary care for dogs"
-              date="2025-01-05"
-              title="Health and Wellness: Maintaining Champion Bloodlines"
-              excerpt="A comprehensive guide to ensuring the health and vitality of pedigreed dogs. From nutrition to genetic testing, learn how top breeders maintain the integrity of their bloodlines while promoting overall canine wellness and longevity."
-              size="lg"
-              dateFormat="long"
             />
           </div>
         </div>

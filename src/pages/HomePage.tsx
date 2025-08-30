@@ -50,7 +50,7 @@ function HomePage() {
             imageAlt="Golden Retriever Champion"
             date="2024-01-15"
             title="Championship Victory at Regional Show"
-            excerpt="Our kennel dogs dominated the regional dog show this weekend, taking home multiple awards including Best in Show. The competition was fierce but our training paid off."
+            content="Our kennel dogs dominated the regional dog show this weekend, taking home multiple awards including Best in Show. The competition was fierce but our training paid off."
             taggedDogs={["sample-dog-1", "sample-dog-2"]} // These would be real dog IDs in production
           />
         </div>

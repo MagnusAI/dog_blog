@@ -8,7 +8,7 @@ function NewsPage() {
     imageAlt: "Championship dog show arena",
     date: "2025-01-20",
     title: "Breaking: Historic Win at International Championship Sets New Standards",
-    excerpt: "In an unprecedented display of excellence, this year's international championship has redefined what it means to achieve perfection in pedigree competitions. With over 500 participants from 30 countries, the event showcased the pinnacle of breeding excellence and training dedication that has shaped the future of canine sports.",
+    content: "In an unprecedented display of excellence, this year's international championship has redefined what it means to achieve perfection in pedigree competitions. With over 500 participants from 30 countries, the event showcased the pinnacle of breeding excellence and training dedication that has shaped the future of canine sports.",
     taggedDogs: ["DK10420/2025", "champion-golden-2", "rising-star-3"] // Multiple champion dogs featured
   };
 
@@ -19,7 +19,7 @@ function NewsPage() {
       imageAlt: "Dog championship event",
       date: "2025-01-15",
       title: "Annual Dog Show Championship Results",
-      excerpt: "The 2025 National Dog Show concluded with record-breaking attendance and fierce competition across all breeds. Golden Retrievers dominated the sporting group with exceptional performances.",
+      content: "The 2025 National Dog Show concluded with record-breaking attendance and fierce competition across all breeds. Golden Retrievers dominated the sporting group with exceptional performances.",
       taggedDogs: ["DK10420/2025", "show-winner-bella"] // Championship winners
     },
     {
@@ -28,7 +28,7 @@ function NewsPage() {
       imageAlt: "Dog training session",
       date: "2025-01-10",
       title: "New Training Techniques for Better Pedigree Performance",
-      excerpt: "Discover the latest methodologies in canine training that are revolutionizing how we prepare dogs for competitions. Expert trainers share their insights on building stronger bonds between handlers and their champions.",
+      content: "Discover the latest methodologies in canine training that are revolutionizing how we prepare dogs for competitions. Expert trainers share their insights on building stronger bonds between handlers and their champions.",
       taggedDogs: ["training-star-max", "young-prospect-luna"] // Dogs in training
     },
     {
@@ -37,7 +37,7 @@ function NewsPage() {
       imageAlt: "Veterinary care for dogs",
       date: "2025-01-05",
       title: "Health and Wellness: Maintaining Champion Bloodlines",
-      excerpt: "A comprehensive guide to ensuring the health and vitality of pedigreed dogs. From nutrition to genetic testing, learn how top breeders maintain the integrity of their bloodlines while promoting overall canine wellness and longevity.",
+      content: "A comprehensive guide to ensuring the health and vitality of pedigreed dogs. From nutrition to genetic testing, learn how top breeders maintain the integrity of their bloodlines while promoting overall canine wellness and longevity.",
       taggedDogs: ["health-champion-duke"] // Featured for health excellence
     },
     {
@@ -46,7 +46,7 @@ function NewsPage() {
       imageAlt: "Golden Retriever puppy",
       date: "2025-01-01",
       title: "New Year, New Litter: Welcoming Champion Bloodlines",
-      excerpt: "Starting the year with exciting news as our champion female has delivered a healthy litter of eight puppies. Each puppy shows promising traits that continue our kennel's legacy of excellence.",
+      content: "Starting the year with exciting news as our champion female has delivered a healthy litter of eight puppies. Each puppy shows promising traits that continue our kennel's legacy of excellence.",
       taggedDogs: ["mother-champion-amber", "sire-golden-thunder"] // Breeding pair
     },
     {
@@ -55,7 +55,7 @@ function NewsPage() {
       imageAlt: "Dog agility competition",
       date: "2024-12-28",
       title: "Winter Agility Series Kicks Off with Record Participation",
-      excerpt: "The winter agility series has begun with unprecedented enthusiasm from handlers and their dogs. This year's course designs challenge both speed and precision, testing the true partnership between dog and handler.",
+      content: "The winter agility series has begun with unprecedented enthusiasm from handlers and their dogs. This year's course designs challenge both speed and precision, testing the true partnership between dog and handler.",
       taggedDogs: ["agility-ace-rocket", "speed-demon-flash", "precision-prince-cooper"] // Agility team
     },
     {
@@ -64,7 +64,7 @@ function NewsPage() {
       imageAlt: "Dog grooming",
       date: "2024-12-25",
       title: "Holiday Grooming Tips for Show Dogs",
-      excerpt: "During the holiday season, maintaining your show dog's coat and appearance becomes even more important. Our expert groomers share their top tips for keeping your dog looking championship-ready through the festive period.",
+      content: "During the holiday season, maintaining your show dog's coat and appearance becomes even more important. Our expert groomers share their top tips for keeping your dog looking championship-ready through the festive period.",
       taggedDogs: ["grooming-model-princess"] // Featured grooming example
     },
     {
@@ -73,7 +73,7 @@ function NewsPage() {
       imageAlt: "Dog nutrition",
       date: "2024-12-20",
       title: "Nutrition Science: Feeding for Peak Performance",
-      excerpt: "Modern canine nutrition has evolved significantly, with new research revealing optimal feeding strategies for performance dogs. Learn about the latest developments in nutritional science that are helping dogs reach their full potential.",
+      content: "Modern canine nutrition has evolved significantly, with new research revealing optimal feeding strategies for performance dogs. Learn about the latest developments in nutritional science that are helping dogs reach their full potential.",
       taggedDogs: ["nutrition-test-subject-bruno", "performance-athlete-storm"] // Nutrition case studies
     },
     {
@@ -82,7 +82,7 @@ function NewsPage() {
       imageAlt: "Kennel facilities",
       date: "2024-12-15",
       title: "Kennel Expansion Complete: New Facilities Tour",
-      excerpt: "After months of construction, our kennel expansion is finally complete. The new facilities feature state-of-the-art climate control, spacious whelping areas, and dedicated training spaces designed with our dogs' comfort and safety in mind.",
+      content: "After months of construction, our kennel expansion is finally complete. The new facilities feature state-of-the-art climate control, spacious whelping areas, and dedicated training spaces designed with our dogs' comfort and safety in mind.",
       taggedDogs: [] // No specific dogs, just facility news
     }
   ];
@@ -104,7 +104,7 @@ function NewsPage() {
           imageAlt={featuredPost.imageAlt}
           date={featuredPost.date}
           title={featuredPost.title}
-          excerpt={featuredPost.excerpt}
+          content={featuredPost.content}
           dateFormat="long"
           backgroundColor="transparent"
           taggedDogs={featuredPost.taggedDogs}
@@ -122,7 +122,7 @@ function NewsPage() {
               imageAlt={post.imageAlt}
               date={post.date}
               title={post.title}
-              excerpt={post.excerpt}
+              content={post.content}
               size={index % 3 === 0 ? "lg" : index % 2 === 0 ? "md" : "sm"}
               dateFormat="short"
               taggedDogs={post.taggedDogs}

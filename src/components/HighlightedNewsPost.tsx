@@ -2,6 +2,7 @@ import type { HTMLAttributes } from "react";
 import NewsModal from "./NewsModal";
 import { formatDate, Typography } from "./ui";
 import { useModal, useImageFallback } from "../hooks/useModal";
+import CloudinaryImage from "./CloudinaryImage";
 
 export interface HighlightedNewsPostProps extends HTMLAttributes<HTMLDivElement> {
   // Content props
@@ -9,13 +10,26 @@ export interface HighlightedNewsPostProps extends HTMLAttributes<HTMLDivElement>
   imageAlt: string;
   date: string | Date;          // Publication date
   title: string;               // Post title
-  excerpt: string;             // Brief text excerpt
+  content: string;             // Article content/description
   
   // Optional props
   fallbackImageUrl?: string;   // Fallback if main image fails
   dateFormat?: "short" | "long" | "relative"; // Date display format
   backgroundColor?: string;    // Custom background color (CSS color value)
   taggedDogs?: string[];       // Array of dog IDs that are tagged in this post
+  
+  // Cloudinary image optimization props
+  imagePublicId?: string;      // Cloudinary public ID for optimized images
+  imageQuality?: "auto" | number;
+  imageFormat?: "auto" | "webp" | "jpg" | "png";
+  imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  imageGravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  enableLazyLoading?: boolean;
+  enablePlaceholder?: boolean;
+  placeholderType?: "blur" | "pixelate" | "vectorize";
+  enableAccessibility?: boolean;
+  enableResponsive?: boolean;
+  imageEnhance?: boolean;
 }
 
 const HighlightedNewsPost = ({
@@ -23,11 +37,23 @@ const HighlightedNewsPost = ({
   imageAlt,
   date,
   title,
-  excerpt,
+  content,
   fallbackImageUrl,
   dateFormat = "short",
   backgroundColor = "transparent",
   taggedDogs = [],
+  // Cloudinary optimization props with defaults
+  imagePublicId,
+  imageQuality = "auto",
+  imageFormat = "auto", 
+  imageCrop = "fill",
+  imageGravity = "auto",
+  enableLazyLoading = true,
+  enablePlaceholder = true,
+  placeholderType = "blur",
+  enableAccessibility = true,
+  enableResponsive = true,
+  imageEnhance = true,
   className = "",
   ...rest
 }: HighlightedNewsPostProps) => {
@@ -63,13 +89,33 @@ const HighlightedNewsPost = ({
       >
         {/* Image Section */}
         <div className="w-full md:w-1/2 flex-shrink-0 overflow-hidden relative rounded-lg md:rounded-lg">
-          <img
-            src={imageUrl}
-            alt={imageAlt}
-            className="w-full h-full object-cover"
-            onError={handleError}
-            loading="lazy"
-          />
+          {imagePublicId ? (
+            <CloudinaryImage
+              publicId={imagePublicId}
+              width={600}
+              height={400}
+              alt={imageAlt}
+              className="w-full h-full object-cover"
+              quality={imageQuality}
+              format={imageFormat}
+              crop={imageCrop}
+              gravity={imageGravity}
+              enableLazyLoading={enableLazyLoading}
+              enablePlaceholder={enablePlaceholder}
+              placeholderType={placeholderType}
+              enableAccessibility={enableAccessibility}
+              enableResponsive={enableResponsive}
+              enhance={imageEnhance}
+            />
+          ) : (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              className="w-full h-full object-cover"
+              onError={handleError}
+              loading="lazy"
+            />
+          )}
         </div>
 
         {/* Content Section */}
@@ -101,7 +147,7 @@ const HighlightedNewsPost = ({
             {title}
           </Typography>
 
-          {/* Excerpt */}
+          {/* Content */}
           <Typography 
             variant="body" 
             color="secondary"
@@ -112,7 +158,7 @@ const HighlightedNewsPost = ({
               WebkitBoxOrient: 'vertical',
             }}
           >
-            {excerpt}
+            {content}
           </Typography>
 
 
@@ -137,7 +183,7 @@ const HighlightedNewsPost = ({
         imageAlt={imageAlt}
         date={date}
         title={title}
-        excerpt={excerpt}
+        excerpt={content}
         fallbackImageUrl={fallbackImageUrl}
         dateFormat={dateFormat}
         taggedDogs={taggedDogs}

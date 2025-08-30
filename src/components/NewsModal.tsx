@@ -126,11 +126,10 @@ const NewsModal = ({
           </div>
 
           {/* Tagged Dogs Section - Clean Pills Only */}
-          {(dogs.length > 0 || loadingDogs) && (
+          {(dogs.length === 0) && <div className="border-t bg-gray-50 py-4 px-6"/>}
+          {(dogs.length > 0) && (
             <div className="border-t bg-gray-50 py-4 px-6">
-              {loadingDogs ? (
-                <></>
-              ) : (
+              {!loadingDogs && (
                 <div className="flex flex-wrap gap-2">
                   {dogs.map((dog) => (
                     <span

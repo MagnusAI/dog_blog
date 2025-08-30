@@ -2,6 +2,7 @@ import type { HTMLAttributes } from "react";
 import NewsModal from "./NewsModal";
 import { formatDate, Typography } from "./ui";
 import { useModal, useImageFallback } from "../hooks/useModal";
+import CloudinaryImage from "./CloudinaryImage";
 
 export interface NewsPostProps extends HTMLAttributes<HTMLDivElement> {
   // Content props
@@ -9,13 +10,26 @@ export interface NewsPostProps extends HTMLAttributes<HTMLDivElement> {
   imageAlt: string;
   date: string | Date;          // Publication date
   title: string;               // Post title
-  excerpt: string;             // Brief text excerpt
+  content: string;             // Article content/description
   
   // Optional props
   fallbackImageUrl?: string;   // Fallback if main image fails
   size?: "sm" | "md" | "lg";   // Card size variant
   dateFormat?: "short" | "long" | "relative"; // Date display format
   taggedDogs?: string[];       // Array of dog IDs that are tagged in this post
+  
+  // Cloudinary image optimization props
+  imagePublicId?: string;      // Cloudinary public ID for optimized images
+  imageQuality?: "auto" | number;
+  imageFormat?: "auto" | "webp" | "jpg" | "png";
+  imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  imageGravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  enableLazyLoading?: boolean;
+  enablePlaceholder?: boolean;
+  placeholderType?: "blur" | "pixelate" | "vectorize";
+  enableAccessibility?: boolean;
+  enableResponsive?: boolean;
+  imageEnhance?: boolean;
 }
 
 const NewsPost = ({
@@ -23,10 +37,22 @@ const NewsPost = ({
   imageAlt,
   date,
   title,
-  excerpt,
+  content,
   fallbackImageUrl,
   dateFormat = "short",
   taggedDogs = [],
+  // Cloudinary optimization props with defaults
+  imagePublicId,
+  imageQuality = "auto",
+  imageFormat = "auto", 
+  imageCrop = "fill",
+  imageGravity = "face",
+  enableLazyLoading = true,
+  enablePlaceholder = true,
+  placeholderType = "blur",
+  enableAccessibility = true,
+  enableResponsive = true,
+  imageEnhance = true,
   className = "",
   ...rest
 }: NewsPostProps) => {
@@ -39,6 +65,8 @@ const NewsPost = ({
     sm: {
       container: "h-96 w-full max-w-xs",
       image: "h-44",
+      imageWidth: 320,
+      imageHeight: 176,
       content: "p-3",
       title: "text-sm font-semibold",
       date: "text-xs",
@@ -48,6 +76,8 @@ const NewsPost = ({
     md: {
       container: "h-96 w-full max-w-sm",
       image: "h-44",
+      imageWidth: 384,
+      imageHeight: 176,
       content: "p-4",
       title: "text-base font-semibold",
       date: "text-sm",
@@ -57,6 +87,8 @@ const NewsPost = ({
     lg: {
       container: "h-[28rem] w-full max-w-md",
       image: "h-52",
+      imageWidth: 448,
+      imageHeight: 208,
       content: "p-5",
       title: "text-lg font-semibold",
       date: "text-sm",
@@ -93,13 +125,33 @@ const NewsPost = ({
     >
       {/* Image Section */}
       <div className={`${config.image} w-full flex-shrink-0 overflow-hidden rounded-t-lg`}>
-        <img
-          src={imageUrl}
-          alt={imageAlt}
-          className="w-full h-full object-cover"
-          onError={handleError}
-          loading="lazy"
-        />
+        {imagePublicId ? (
+          <CloudinaryImage
+            publicId={imagePublicId}
+            width={config.imageWidth}
+            height={config.imageHeight}
+            alt={imageAlt}
+            className="w-full h-full object-cover"
+            quality={imageQuality}
+            format={imageFormat}
+            crop={imageCrop}
+            gravity={imageGravity}
+            enableLazyLoading={enableLazyLoading}
+            enablePlaceholder={enablePlaceholder}
+            placeholderType={placeholderType}
+            enableAccessibility={enableAccessibility}
+            enableResponsive={enableResponsive}
+            enhance={imageEnhance}
+          />
+        ) : (
+          <img
+            src={imageUrl}
+            alt={imageAlt}
+            className="w-full h-full object-cover"
+            onError={handleError}
+            loading="lazy"
+          />
+        )}
       </div>
 
       {/* Content Section */}
@@ -126,7 +178,7 @@ const NewsPost = ({
           {title}
         </Typography>
 
-        {/* Excerpt */}
+        {/* Content */}
         <Typography 
           variant="body" 
           color="secondary"
@@ -137,7 +189,7 @@ const NewsPost = ({
             WebkitBoxOrient: 'vertical',
           }}
         >
-          {excerpt}
+          {content}
         </Typography>
 
 
@@ -159,7 +211,7 @@ const NewsPost = ({
       imageAlt={imageAlt}
       date={date}
       title={title}
-      excerpt={excerpt}
+      excerpt={content}
       fallbackImageUrl={fallbackImageUrl}
       dateFormat={dateFormat}
       taggedDogs={taggedDogs}

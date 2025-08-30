@@ -1,6 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { Button, CloseButton, Typography, formatDate, createBackdropClickHandler, createModalKeyHandler } from "./ui";
 import { useImageFallback } from "../hooks/useModal";
+import ClickableImage from "./ClickableImage";
 
 export interface NewsModalProps extends HTMLAttributes<HTMLDivElement> {
   // Core props
@@ -62,12 +63,11 @@ const NewsModal = ({
         <div className="p-6">
           <div className="space-y-6">
             {/* Enlarged Image */}
-            <div className="w-full flex justify-center">
-              <img
+            <div className="w-full flex justify-center">   
+              <ClickableImage
                 src={imageUrl}
                 alt={imageAlt}
-                className="w-full max-w-lg h-96 md:h-[28rem] object-cover rounded-lg shadow-md"
-                onError={handleError}
+                size="xxxl"
               />
             </div>
             
@@ -81,15 +81,6 @@ const NewsModal = ({
                 <Typography variant="body" color="secondary" className="text-lg">
                   {excerpt}
                 </Typography>
-                
-                {/* Additional content placeholder */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <Typography variant="body" color="secondary" className="italic">
-                    This is where the full article content would be displayed. 
-                    In a real application, you would fetch and render the complete article text, 
-                    additional images, and other multimedia content.
-                  </Typography>
-                </div>
               </div>
               
               {/* Article Actions */}

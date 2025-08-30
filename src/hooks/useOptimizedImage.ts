@@ -7,7 +7,10 @@ export interface UseOptimizedImageOptions {
   enlargedSize?: number;
   quality?: "auto" | number;
   format?: "auto" | "webp" | "jpg" | "png";
+  crop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  gravity?: "auto" | "face" | "center" | "north" | "south" | "east" | "west";
   transformations?: string[];
+  dpr?: number;
 }
 
 export function useOptimizedImage({
@@ -16,19 +19,23 @@ export function useOptimizedImage({
   enlargedSize = 400,
   quality = "auto",
   format = "auto",
-  transformations = []
+  crop = "fill",
+  gravity = "auto",
+  transformations = [],
+  dpr = 1
 }: UseOptimizedImageOptions) {
   const imageService = getDefaultImageService();
 
   const urls = useMemo(() => {
-    // Standard size options (with 2x for retina)
+    // Standard size options (with DPR for retina)
     const standardOptions: ImageOptions = {
-      width: size * 2,
-      height: size * 2,
+      width: size,
+      height: size,
       quality,
       format,
-      crop: "fill",
-      gravity: "face",
+      crop,
+      gravity,
+      dpr,
       transformations
     };
 
@@ -38,8 +45,9 @@ export function useOptimizedImage({
       height: enlargedSize,
       quality,
       format,
-      crop: "fill",
-      gravity: "face",
+      crop,
+      gravity,
+      dpr,
       transformations
     };
 
@@ -47,7 +55,7 @@ export function useOptimizedImage({
       standard: imageService.getOptimizedUrl(publicId, standardOptions),
       enlarged: imageService.getOptimizedUrl(publicId, enlargedOptions)
     };
-  }, [publicId, size, enlargedSize, quality, format, transformations, imageService]);
+  }, [publicId, size, enlargedSize, quality, format, crop, gravity, dpr, transformations, imageService]);
 
   return urls;
 }

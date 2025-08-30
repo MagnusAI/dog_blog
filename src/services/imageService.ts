@@ -6,9 +6,10 @@ import { quality } from "@cloudinary/url-gen/actions/delivery";
 import { format } from "@cloudinary/url-gen/actions/delivery";
 import { auto } from "@cloudinary/url-gen/qualifiers/quality";
 import { auto as autoFormat } from "@cloudinary/url-gen/qualifiers/format";
-import { fill } from "@cloudinary/url-gen/actions/resize";
-import { focusOn } from "@cloudinary/url-gen/qualifiers/gravity";
+import { fill, fit, scale, crop, pad, limitFit } from "@cloudinary/url-gen/actions/resize";
+import { focusOn, autoGravity, compass } from "@cloudinary/url-gen/qualifiers/gravity";
 import { face } from "@cloudinary/url-gen/qualifiers/focusOn";
+import { improve } from "@cloudinary/url-gen/actions/adjust";
 
 export interface ImageService {
   getOptimizedUrl(publicId: string, options: ImageOptions): string;
@@ -20,9 +21,12 @@ export interface ImageOptions {
   height: number;
   quality?: "auto" | number;
   format?: "auto" | "webp" | "jpg" | "png";
-  crop?: "fill" | "fit" | "scale" | "crop";
-  gravity?: "auto" | "face" | "center" | "north" | "south" | "east" | "west";
+  crop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  gravity?: "auto" | "face" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
   transformations?: string[];
+  dpr?: number; // Device pixel ratio for retina displays
+  enhance?: boolean; // Apply automatic enhancements
+  aspectRatio?: string; // Target aspect ratio (e.g., "1:1", "16:9")
 }
 
 // Cloudinary implementation using React SDK
@@ -46,18 +50,68 @@ export class CloudinaryService implements ImageService {
       height,
       quality: qualityOption = "auto",
       format: formatOption = "auto",
-      gravity = "face",
+      gravity = "auto",
+      crop: cropMode = "fill",
+      dpr = 1,
+      enhance = false,
       transformations = []
     } = options;
 
     // Create image instance
     let image = this.cld.image(publicId);
 
-    // Apply resize with gravity
-    if (gravity === "face") {
-      image = image.resize(fill().width(width).height(height).gravity(focusOn(face())));
-    } else {
-      image = image.resize(fill().width(width).height(height));
+    // Apply DPR (Device Pixel Ratio) for retina displays
+    const actualWidth = Math.round(width * dpr);
+    const actualHeight = Math.round(height * dpr);
+
+    // Apply resize based on crop mode and gravity with advanced options
+    let resizeTransform;
+    
+    switch (cropMode) {
+      case "fill":
+        resizeTransform = fill().width(actualWidth).height(actualHeight);
+        break;
+      case "fit":
+        resizeTransform = fit().width(actualWidth).height(actualHeight);
+        break;
+      case "scale":
+        resizeTransform = scale().width(actualWidth).height(actualHeight);
+        break;
+      case "crop":
+        resizeTransform = crop().width(actualWidth).height(actualHeight);
+        break;
+      case "pad":
+        resizeTransform = pad().width(actualWidth).height(actualHeight);
+        break;
+      case "limitFit":
+        resizeTransform = limitFit().width(actualWidth).height(actualHeight);
+        break;
+      default:
+        resizeTransform = fill().width(actualWidth).height(actualHeight);
+    }
+
+    // Apply advanced gravity options for modes that support it
+    if ((cropMode === "fill" || cropMode === "crop") && gravity) {
+      if (gravity === "face") {
+        resizeTransform = (resizeTransform as any).gravity(focusOn(face()));
+      } else if (gravity === "auto") {
+        resizeTransform = (resizeTransform as any).gravity(autoGravity());
+      } else if (gravity === "auto:subject") {
+        // Enhanced auto-gravity focusing on main subject
+        resizeTransform = (resizeTransform as any).gravity(autoGravity());
+      } else if (gravity === "auto:classic") {
+        // Classic auto-gravity algorithm
+        resizeTransform = (resizeTransform as any).gravity(autoGravity());
+      } else if (["center", "north", "south", "east", "west"].includes(gravity)) {
+        resizeTransform = (resizeTransform as any).gravity(compass(gravity as any));
+      }
+    }
+
+    image = image.resize(resizeTransform);
+
+    // Apply automatic enhancements if requested
+    if (enhance) {
+      image = image.adjust(improve());
     }
 
     // Apply quality

@@ -7,6 +7,7 @@ import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
 import HorizontalTree, { type TreeNode } from '../components/HorizontalTree';
 import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
+import CloudinaryImage from '../components/CloudinaryImage';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
@@ -282,20 +283,31 @@ function DogDetailsPage() {
         <div className="rounded-lg h-full flex flex-col">
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
             {profileImage ? (
-              <img
-                src={profileImage.image_url}
-                alt={profileImage.alt_text || `${dog.name} profile`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  target.parentElement!.innerHTML = `
-                    <div class="w-full h-full flex items-center justify-center">
-                      <span class="text-4xl text-gray-400">${dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</span>
-                    </div>
-                  `;
-                }}
-              />
+              profileImage.image_public_id ? (
+                <CloudinaryImage
+                  publicId={profileImage.image_public_id}
+                  width={400}
+                  height={400}
+                  alt={profileImage.alt_text || `${dog.name} profile`}
+                  gravity="auto"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={profileImage.image_url}
+                  alt={profileImage.alt_text || `${dog.name} profile`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `
+                      <div class="w-full h-full flex items-center justify-center">
+                        <span class="text-4xl text-gray-400">${dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</span>
+                      </div>
+                    `;
+                  }}
+                />
+              )
             ) : (
               <Typography variant="h1" color="muted" className="select-none shadow-sm  border border-gray-200 bg-white rounded-lg p-2 w-full h-full text-center place-content-center">
                 {dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}

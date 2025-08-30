@@ -236,7 +236,7 @@ function DogsPage() {
               </span>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {visibleDogs.map((myDog) => {
               if (!myDog.dog) return null;
               
@@ -249,8 +249,11 @@ function DogsPage() {
                   key={myDog.dog.id}
                   name={myDog.dog.name}
                   breed={myDog.dog.breed?.name || 'Unknown Breed'}
+                  imagePublicId={dogImages[myDog.dog.id]?.image_public_id}
                   imageUrl={dogImages[myDog.dog.id]?.image_url}
+                  imageSize={266}
                   imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
+                  imageGravity='face'
                   fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                   subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
                   metadata={[

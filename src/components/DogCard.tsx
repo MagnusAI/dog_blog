@@ -1,36 +1,84 @@
 import type { HTMLAttributes } from "react";
 import Typography from "./ui/Typography";
+import { useOptimizedImage } from "../hooks/useOptimizedImage";
+import CloudinaryImage from "./CloudinaryImage";
 
 export interface DogCardProps extends HTMLAttributes<HTMLDivElement> {
   name: string;
   breed: string;
   imageUrl?: string;
+  imagePublicId?: string; // For optimized images
   imageAlt?: string;
   fallbackInitials?: string;
   subtitle?: string;
   metadata?: string[];
   dogId?: string;
   onDogClick?: (dogId: string) => void;
+  imageSize?: number; // Size for optimized image
+  imageQuality?: "auto" | number;
+  imageFormat?: "auto" | "webp" | "jpg" | "png";
+  imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  imageGravity?: "auto" | "face" | "faces" | "body" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  imageTransformations?: string[];
+  imageResponsive?: boolean;
+  imageEnhance?: boolean;
+  // React Plugin Options
+  enableLazyLoading?: boolean;
+  enablePlaceholder?: boolean;
+  placeholderType?: "blur" | "pixelate" | "vectorize" | "predominant";
+  enableAccessibility?: boolean;
+  accessibilityMode?: "monochrome" | "darkmode" | "brightmode" | "colorblind";
+  responsiveStepSize?: number;
 }
 
 const DogCard = ({
   name,
   breed,
   imageUrl,
+  imagePublicId,
   imageAlt,
   fallbackInitials,
   subtitle,
   metadata,
   dogId,
   onDogClick,
+  imageSize = 200,
+  imageQuality = "auto",
+  imageFormat = "auto",
+  imageCrop = "fill",
+  imageGravity = "auto",
+  imageTransformations = [],
+  imageResponsive = true,
+  imageEnhance = false,
+  // React Plugin Options
+  enableLazyLoading = true,
+  enablePlaceholder = true,
+  placeholderType = "blur",
+  enableAccessibility = false,
+  accessibilityMode = "darkmode",
+  responsiveStepSize = 200,
   className = "",
   ...rest
 }: DogCardProps) => {
+  // Use optimized image if publicId is provided, otherwise fall back to imageUrl
+  const optimizedUrls = useOptimizedImage({
+    publicId: imagePublicId || "",
+    size: imageSize,
+    quality: imageQuality,
+    format: imageFormat,
+    transformations: [
+      
+    ],
+  });
+
   const handleClick = () => {
     if (dogId && onDogClick) {
       onDogClick(dogId);
     }
   };
+
+  // Determine which image source to use
+  const finalImageUrl = imagePublicId ? optimizedUrls.standard : imageUrl;
 
   return (
     <div
@@ -40,9 +88,31 @@ const DogCard = ({
     >
       {/* Image Section */}
       <div className="relative aspect-square overflow-hidden">
-        {imageUrl ? (
+        {imagePublicId ? (
+          <CloudinaryImage
+            publicId={imagePublicId}
+            width={imageSize}
+            height={imageSize}
+            alt={imageAlt || `${name} - ${breed}`}
+            gravity={imageGravity}
+            crop={imageCrop}
+            quality={imageQuality}
+            format={imageFormat}
+            responsive={imageResponsive}
+            enhance={imageEnhance}
+            enableLazyLoading={enableLazyLoading}
+            enableResponsive={imageResponsive}
+            responsiveStepSize={responsiveStepSize}
+            enablePlaceholder={enablePlaceholder}
+            placeholderType={placeholderType}
+            enableAccessibility={enableAccessibility}
+            accessibilityMode={accessibilityMode}
+            transformations={imageTransformations}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : finalImageUrl ? (
           <img
-            src={imageUrl}
+            src={finalImageUrl}
             alt={imageAlt || `${name} - ${breed}`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -79,15 +149,6 @@ const DogCard = ({
                 {item}
               </Typography>
             ))}
-          </div>
-        )}
-        
-        {/* Click indicator - only show when card is clickable */}
-        {dogId && onDogClick && (
-          <div className="pt-2 mt-auto">
-            <span className="text-xs text-blue-600 font-medium group-hover:text-blue-800 transition-colors duration-300">
-              View details →
-            </span>
           </div>
         )}
       </div>

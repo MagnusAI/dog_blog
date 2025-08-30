@@ -1,42 +1,49 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NewsPost from '../components/NewsPost';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
+import Button from '../components/ui/Button';
 import { newsService, type NewsPost as NewsPostType } from '../services/supabaseService';
+import { useAuth } from '../contexts/AuthContext';
 
 function NewsPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [newsPosts, setNewsPosts] = useState<NewsPostType[]>([]);
   const [featuredPost, setFeaturedPost] = useState<NewsPostType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const loadNewsPosts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Get all published news posts
-        const posts = await newsService.getPublishedNewsPosts();
-        
-        if (posts.length > 0) {
-          // Use the most recent post as featured
-          setFeaturedPost(posts[0]);
-          // The rest are regular posts
-          setNewsPosts(posts.slice(1));
-        } else {
-          setFeaturedPost(null);
-          setNewsPosts([]);
-        }
-      } catch (err) {
-        console.error('Error loading news posts:', err);
-        setError('Failed to load news posts. Please try again later.');
+  const loadNewsPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get all published news posts
+      const posts = await newsService.getPublishedNewsPosts();
+      
+      if (posts.length > 0) {
+        // Use the most recent post as featured
+        setFeaturedPost(posts[0]);
+        // The rest are regular posts
+        setNewsPosts(posts.slice(1));
+      } else {
         setFeaturedPost(null);
         setNewsPosts([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error loading news posts:', err);
+      setError('Failed to load news posts. Please try again later.');
+      setFeaturedPost(null);
+      setNewsPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadNewsPosts();
   }, []);
 
@@ -45,13 +52,123 @@ function NewsPage() {
     return post.tagged_dogs?.map(dog => dog.id) || [];
   };
 
+  const handlePostCardClick = (post: NewsPostType) => {
+    if (editMode) {
+      // In edit mode, toggle selection
+      togglePostSelection(post.id);
+    } else {
+      // Not in edit mode - posts open in modal automatically
+      // No additional action needed as NewsPost handles modal opening
+    }
+  };
+
+  const togglePostSelection = (postId: string) => {
+    const newSelected = new Set(selectedPosts);
+    if (newSelected.has(postId)) {
+      newSelected.delete(postId);
+    } else {
+      newSelected.add(postId);
+    }
+    setSelectedPosts(newSelected);
+  };
+
+  const toggleEditMode = () => {
+    if (!editMode) {
+      // Entering edit mode - clear selection
+      setSelectedPosts(new Set());
+    } else {
+      // Exiting edit mode - clear selection
+      setSelectedPosts(new Set());
+    }
+    setEditMode(!editMode);
+  };
+
+  const handleEditSelectedPost = () => {
+    if (selectedPosts.size !== 1) return;
+    
+    const postId = Array.from(selectedPosts)[0];
+    navigate(`/news/edit/${postId}`);
+  };
+
+  const handleDeleteSelectedPosts = async () => {
+    if (selectedPosts.size === 0) return;
+    
+    const confirmMessage = selectedPosts.size === 1 
+      ? 'Are you sure you want to delete this news post?' 
+      : `Are you sure you want to delete these ${selectedPosts.size} news posts?`;
+    
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      setLoading(true);
+      
+      // Delete all selected posts
+      const deletePromises = Array.from(selectedPosts).map(postId => 
+        newsService.deleteNewsPost(postId)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Reload posts and exit edit mode
+      await loadNewsPosts();
+      setEditMode(false);
+      setSelectedPosts(new Set());
+    } catch (err) {
+      console.error('Error deleting news posts:', err);
+      setError('Failed to delete news posts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddNewPost = () => {
+    navigate('/news/new');
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
+      <div className="flex justify-between items-start">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">News Archive</h1>
         <p className="text-gray-600">
           Stay updated with the latest news, achievements, and insights from our kennel.
         </p>
+      </div>
+        <div className="flex gap-3">
+          {user && (
+            <>
+              <Button
+                variant={editMode ? "secondary" : "ghost"}
+                onClick={toggleEditMode}
+              >
+                {editMode ? "Cancel Edit" : "Edit"}
+              </Button>
+              {editMode && selectedPosts.size === 1 && (
+                <Button
+                  variant="primary"
+                  onClick={handleEditSelectedPost}
+                >
+                  Edit Post
+                </Button>
+              )}
+              {editMode && selectedPosts.size > 0 && (
+                <Button
+                  variant="danger"
+                  onClick={handleDeleteSelectedPosts}
+                >
+                  Delete ({selectedPosts.size})
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                onClick={handleAddNewPost}
+                disabled={editMode}
+              >
+                Add New Post
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {loading && (
@@ -75,51 +192,99 @@ function NewsPage() {
         </div>
       )}
 
-      {!loading && !error && (
+            {!loading && !error && (
         <>
-          {/* Featured Post */}
+      {/* Featured Post */}
           {featuredPost && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured</h2>
-              <HighlightedNewsPost
-                imageUrl={featuredPost.image_url || ''}
-                imageAlt={featuredPost.image_alt || featuredPost.title}
-                date={featuredPost.published_date}
-                title={featuredPost.title}
-                content={featuredPost.content}
-                dateFormat="long"
-                backgroundColor="transparent"
-                taggedDogs={getTaggedDogIds(featuredPost)}
-                imagePublicId={featuredPost.image_public_id}
-                fallbackImageUrl={featuredPost.fallback_image_url}
-              />
-            </div>
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Featured</h2>
+              <div 
+                className={`relative ${editMode ? 'cursor-pointer' : ''} ${
+                  editMode && selectedPosts.has(featuredPost.id) 
+                    ? 'ring-2 ring-blue-500 rounded-lg' 
+                    : ''
+                }`}
+                onClick={() => editMode && handlePostCardClick(featuredPost)}
+              >
+        <HighlightedNewsPost
+                  imageUrl={featuredPost.image_url || ''}
+                  imageAlt={featuredPost.image_alt || featuredPost.title}
+                  date={featuredPost.published_date}
+          title={featuredPost.title}
+                  content={featuredPost.content}
+          dateFormat="long"
+          backgroundColor="transparent"
+                  taggedDogs={getTaggedDogIds(featuredPost)}
+                  imagePublicId={featuredPost.image_public_id}
+                  fallbackImageUrl={featuredPost.fallback_image_url}
+                />
+                {editMode && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      selectedPosts.has(featuredPost.id)
+                        ? 'bg-blue-500 border-blue-500'
+                        : 'bg-white border-gray-300'
+                    }`}>
+                      {selectedPosts.has(featuredPost.id) && (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+      </div>
           )}
 
-          {/* All News Posts Grid */}
+      {/* All News Posts Grid */}
           {newsPosts.length > 0 && (
-            <div>
+      <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 {featuredPost ? 'More News' : 'All News'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {newsPosts.map((post, index) => (
-                  <NewsPost
+          {newsPosts.map((post, index) => (
+                  <div 
                     key={post.id}
-                    imageUrl={post.image_url || ''}
-                    imageAlt={post.image_alt || post.title}
-                    date={post.published_date}
-                    title={post.title}
-                    content={post.content}
-                    size={index % 3 === 0 ? "lg" : index % 2 === 0 ? "md" : "sm"}
-                    dateFormat="short"
-                    taggedDogs={getTaggedDogIds(post)}
-                    imagePublicId={post.image_public_id}
-                    fallbackImageUrl={post.fallback_image_url}
-                  />
-                ))}
-              </div>
-            </div>
+                    className={`relative ${editMode ? 'cursor-pointer' : ''} ${
+                      editMode && selectedPosts.has(post.id) 
+                        ? 'ring-2 ring-blue-500 rounded-lg' 
+                        : ''
+                    }`}
+                    onClick={() => editMode && handlePostCardClick(post)}
+                  >
+            <NewsPost
+                      imageUrl={post.image_url || ''}
+                      imageAlt={post.image_alt || post.title}
+                      date={post.published_date}
+              title={post.title}
+                      content={post.content}
+              size={index % 3 === 0 ? "lg" : index % 2 === 0 ? "md" : "sm"}
+              dateFormat="short"
+                      taggedDogs={getTaggedDogIds(post)}
+                      imagePublicId={post.image_public_id}
+                      fallbackImageUrl={post.fallback_image_url}
+                    />
+                    {editMode && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          selectedPosts.has(post.id)
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'bg-white border-gray-300'
+                        }`}>
+                          {selectedPosts.has(post.id) && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+          ))}
+        </div>
+      </div>
           )}
 
           {/* Empty state */}
@@ -135,11 +300,11 @@ function NewsPage() {
 
           {/* Posts count */}
           {(featuredPost || newsPosts.length > 0) && (
-            <div className="flex justify-center pt-8">
-              <div className="text-gray-500 text-sm">
+      <div className="flex justify-center pt-8">
+        <div className="text-gray-500 text-sm">
                 Showing {(featuredPost ? 1 : 0) + newsPosts.length} news post{(featuredPost ? 1 : 0) + newsPosts.length !== 1 ? 's' : ''}
-              </div>
-            </div>
+        </div>
+      </div>
           )}
         </>
       )}

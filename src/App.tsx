@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, useNavigate } from 'react-router-d
 import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { HomePage, DogsPage, DogDetailsPage, NewsPage, LoginPage } from './pages';
+import { HomePage, DogsPage, DogDetailsPage, NewsPage, NewsFormPage, LoginPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -64,6 +64,16 @@ function AppContent() {
         } />
         <Route path="/news" element={
             <NewsPage />
+        } />
+        <Route path="/news/new" element={
+          <ProtectedRoute>
+            <NewsFormPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/news/edit/:id" element={
+          <ProtectedRoute>
+            <NewsFormPage />
+          </ProtectedRoute>
         } />
         <Route path="/about" element={
           <div className="p-8">

@@ -127,6 +127,53 @@ export interface DogImage {
   updated_at: string;
 }
 
+export interface NewsPost {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  image_alt?: string;
+  image_public_id?: string;
+  fallback_image_url?: string;
+  published_date: string;
+  created_at: string;
+  updated_at: string;
+  author_id?: string;
+  slug?: string;
+  meta_description?: string;
+  featured: boolean;
+  status: 'draft' | 'published' | 'archived';
+  // Relations
+  tagged_dogs?: Dog[];
+  author?: any; // auth.users data
+}
+
+export interface NewsPostDog {
+  id: string;
+  news_post_id: string;
+  dog_id: string; // VARCHAR(50) to match dogs.id
+  created_at: string;
+}
+
+export interface CreateNewsPostData {
+  title: string;
+  content: string;
+  image_url?: string;
+  image_alt?: string;
+  image_public_id?: string;
+  fallback_image_url?: string;
+  published_date?: string;
+  slug?: string;
+  meta_description?: string;
+  featured?: boolean;
+  status?: 'draft' | 'published' | 'archived';
+  tagged_dog_ids?: string[];
+}
+
+export interface UpdateNewsPostData extends Partial<CreateNewsPostData> {
+  id: string;
+}
+
 // Service functions
 export const dogService = {
   // Breeds
@@ -526,6 +573,254 @@ export const dogService = {
     if (errors.length > 0) {
       throw new Error(`Failed to reorder images: ${errors.map(e => e.error?.message).join(', ')}`);
     }
+  }
+};
+
+// News Service
+export const newsService = {
+  // Get all published news posts
+  async getPublishedNewsPosts(): Promise<NewsPost[]> {
+    const { data, error } = await supabase
+      .from('news_posts')
+      .select(`
+        *,
+        tagged_dogs:news_posts_dogs(
+          dog:dogs(*)
+        )
+      `)
+      .eq('status', 'published')
+      .order('published_date', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Transform the data to match our interface
+    return data?.map(post => ({
+      ...post,
+      tagged_dogs: post.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
+    })) || [];
+  },
+
+  // Get featured news post
+  async getFeaturedNewsPost(): Promise<NewsPost | null> {
+    const { data, error } = await supabase
+      .from('news_posts')
+      .select(`
+        *,
+        tagged_dogs:news_posts_dogs(
+          dog:dogs(*)
+        )
+      `)
+      .eq('status', 'published')
+      .eq('featured', true)
+      .order('published_date', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No rows found
+      throw error;
+    }
+    
+    // Transform the data to match our interface
+    return {
+      ...data,
+      tagged_dogs: data.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
+    };
+  },
+
+  // Get news post by ID
+  async getNewsPostById(id: string): Promise<NewsPost | null> {
+    const { data, error } = await supabase
+      .from('news_posts')
+      .select(`
+        *,
+        tagged_dogs:news_posts_dogs(
+          dog:dogs(*)
+        )
+      `)
+      .eq('id', id)
+      .eq('status', 'published')
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    
+    return {
+      ...data,
+      tagged_dogs: data.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
+    };
+  },
+
+  // Get news post by slug
+  async getNewsPostBySlug(slug: string): Promise<NewsPost | null> {
+    const { data, error } = await supabase
+      .from('news_posts')
+      .select(`
+        *,
+        tagged_dogs:news_posts_dogs(
+          dog:dogs(*)
+        )
+      `)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    
+    return {
+      ...data,
+      tagged_dogs: data.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
+    };
+  },
+
+  // Get user's own news posts (including drafts)
+  async getUserNewsPosts(): Promise<NewsPost[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('news_posts')
+      .select(`
+        *,
+        tagged_dogs:news_posts_dogs(
+          dog:dogs(*)
+        )
+      `)
+      .eq('author_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data?.map(post => ({
+      ...post,
+      tagged_dogs: post.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
+    })) || [];
+  },
+
+  // Create news post
+  async createNewsPost(newsPostData: CreateNewsPostData): Promise<NewsPost> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { tagged_dog_ids, ...postData } = newsPostData;
+    
+    // Create the news post
+    const { data: newsPost, error: postError } = await supabase
+      .from('news_posts')
+      .insert({
+        ...postData,
+        author_id: user.id
+      })
+      .select()
+      .single();
+    
+    if (postError) throw postError;
+
+    // Add dog tags if provided
+    if (tagged_dog_ids && tagged_dog_ids.length > 0) {
+      const dogTags = tagged_dog_ids.map(dogId => ({
+        news_post_id: newsPost.id,
+        dog_id: dogId
+      }));
+
+      const { error: tagsError } = await supabase
+        .from('news_posts_dogs')
+        .insert(dogTags);
+      
+      if (tagsError) throw tagsError;
+    }
+
+    // Return the complete news post with tags
+    return this.getNewsPostById(newsPost.id) || newsPost;
+  },
+
+  // Update news post
+  async updateNewsPost(updateData: UpdateNewsPostData): Promise<NewsPost> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { id, tagged_dog_ids, ...postData } = updateData;
+
+    // Update the news post
+    const { data: newsPost, error: postError } = await supabase
+      .from('news_posts')
+      .update(postData)
+      .eq('id', id)
+      .eq('author_id', user.id) // Ensure user owns the post
+      .select()
+      .single();
+    
+    if (postError) throw postError;
+
+    // Update dog tags if provided
+    if (tagged_dog_ids !== undefined) {
+      // Remove existing tags
+      await supabase
+        .from('news_posts_dogs')
+        .delete()
+        .eq('news_post_id', id);
+
+      // Add new tags
+      if (tagged_dog_ids.length > 0) {
+        const dogTags = tagged_dog_ids.map(dogId => ({
+          news_post_id: id,
+          dog_id: dogId
+        }));
+
+        const { error: tagsError } = await supabase
+          .from('news_posts_dogs')
+          .insert(dogTags);
+        
+        if (tagsError) throw tagsError;
+      }
+    }
+
+    // Return the complete news post with tags
+    return this.getNewsPostById(id) || newsPost;
+  },
+
+  // Delete news post
+  async deleteNewsPost(id: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('news_posts')
+      .delete()
+      .eq('id', id)
+      .eq('author_id', user.id); // Ensure user owns the post
+    
+    if (error) throw error;
+  },
+
+  // Toggle featured status (admin function)
+  async toggleFeatured(id: string): Promise<NewsPost> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // First, un-feature all other posts
+    await supabase
+      .from('news_posts')
+      .update({ featured: false })
+      .neq('id', id);
+
+    // Then feature/unfeature the target post
+    const { data: newsPost, error } = await supabase
+      .from('news_posts')
+      .update({ featured: true })
+      .eq('id', id)
+      .eq('author_id', user.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return this.getNewsPostById(id) || newsPost;
   }
 };
 

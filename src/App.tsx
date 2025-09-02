@@ -14,8 +14,7 @@ function AppContent() {
     { label: "Home", href: "#/" },
     { label: "Dogs", href: "#/dogs" },
     { label: "News", href: "#/news" },
-    { label: "Puppies", href: "#/puppies" },
-    ...(user ? [{ label: "Content", href: "#/admin/content" }] : [])
+    { label: "Puppies", href: "#/puppies" }
   ];
 
   const handleLoginClick = () => {

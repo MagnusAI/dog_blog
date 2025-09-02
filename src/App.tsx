@@ -35,7 +35,6 @@ function AppContent() {
 
   const actionItem = (
     <div className="flex items-center space-x-3">
-      <LanguageSwitcher />
       {user ? (
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">

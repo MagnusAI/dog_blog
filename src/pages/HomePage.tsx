@@ -76,7 +76,7 @@ function HomePage() {
     <div className="min-h-screen bg-white">
       {/* Simple Header */}
       <div className="max-w-6xl mx-auto px-8 py-8">
-        <div className="text-center mb-8">
+        <div className="md:text-center mb-8">
           <Typography variant="h1" weight="bold" className="text-4xl md:text-6xl text-gray-900 mb-4">
             Kennel Speedex
           </Typography>

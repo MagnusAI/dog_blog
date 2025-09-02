@@ -358,7 +358,7 @@ function DogDetailsPage() {
         </div>
 
         {/* Basic Info Card */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border h-full md:col-span-2">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full md:col-span-2">
           <Typography variant="h4" className="mb-4">Basic Information</Typography>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
@@ -409,7 +409,7 @@ function DogDetailsPage() {
 
       {/* Titles Section */}
       {dog.titles && dog.titles.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <Typography variant="h4" className="mb-4">Titles & Achievements</Typography>
           <div className="flex flex-wrap gap-2">
             {dog.titles.map((title, index) => (
@@ -434,7 +434,7 @@ function DogDetailsPage() {
             if (!hasPedigree) return null;
             
             return (
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between mb-6">
                   <Typography variant="h4">Pedigree (3 Generations)</Typography>
                   {user && (
@@ -503,7 +503,7 @@ function DogDetailsPage() {
             if (!hasOffspring) return null;
             
             return (
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <Typography variant="h4" className="mb-4">Offspring</Typography>
                 <div className="space-y-4">
                   {sireOffspring.length > 0 && (
@@ -539,7 +539,7 @@ function DogDetailsPage() {
                           <button
                             key={`dam-${rel.offspring.id}`}
                             onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
-                            className="text-left p-2 border rounded hover:bg-gray-50 transition-colors"
+                            className="text-left p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
                           >
                             <Typography variant="caption" weight="semibold">
                               {rel.offspring.name}
@@ -567,7 +567,7 @@ function DogDetailsPage() {
       {showEditForm && user && dog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-screen overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-4 z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
               <div className="flex items-center justify-between">
                 <Typography variant="h3">
                   Edit {dog.name}

@@ -129,7 +129,7 @@ function DogDetailsPage() {
         rawProfileImageArray: dog.profile_image
       });
     } else {
-      console.log(`No profile image found for ${dog.name} (${relation})`);
+      // Do nothing
     }
 
     return {

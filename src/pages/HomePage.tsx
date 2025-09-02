@@ -116,6 +116,7 @@ function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {latestNews.slice(1).map((post) => (
                     <NewsPost
+                      key={post.id}
                       imageUrl={post.image_url || ''}
                       imageAlt={post.image_alt || ''}
                       date={post.published_date}

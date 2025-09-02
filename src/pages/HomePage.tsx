@@ -4,8 +4,8 @@ import Typography from '../components/ui/Typography';
 import Button from '../components/ui/Button';
 import NewsPost from '../components/NewsPost';
 import DogCard from '../components/DogCard';
-import { newsService, dogService } from '../services/supabaseService';
-import type { NewsPost as NewsPostType, MyDog, DogImage } from '../services/supabaseService';
+import { newsService, dogService, contentService } from '../services/supabaseService';
+import type { NewsPost as NewsPostType, MyDog, DogImage, ContentSection } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
 
@@ -14,6 +14,7 @@ function HomePage() {
   const [latestNews, setLatestNews] = useState<NewsPostType[]>([]);
   const [featuredDogs, setFeaturedDogs] = useState<MyDog[]>([]);
   const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
+  const [aboutContent, setAboutContent] = useState<ContentSection | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +28,10 @@ function HomePage() {
       // Load latest news (first 3 posts)
       const news = await newsService.getPublishedNewsPosts();
       setLatestNews(news.slice(0, 4));
+
+      // Load about content
+      const about = await contentService.getContentByKey('about_kennel');
+      setAboutContent(about);
 
       // Load featured dogs (first 4 dogs)
       const myDogs = await dogService.getMyDogs();
@@ -138,64 +143,52 @@ function HomePage() {
         </div>
 
         {/* About Section */}
-        <div className="mb-20">
-          <div>
-            <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-8">
-              Om Kennel Speedex
-            </Typography>
-
-            <div className="prose prose-lg max-w-none">
-              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-6">
-                Kennel Speedex er et lille, seriøst og passioneret opdræt beliggende i smukke Gilleleje.
-                Bag kennelen står Tine Arnild, som har været aktiv opdrætter siden 2005 og er uddannet og
-                certificeret gennem Dansk Kennel Klub (DKK).
+        {aboutContent && (
+          <div className="mb-20">
+            <div>
+              <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-8">
+                {aboutContent.title}
               </Typography>
 
-              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-6">
-                Gennem årene har vi specialiseret os i opdræt af terriere – herunder bl.a. West Highland
-                White Terriers, Jack Russell Terriers og senest Norfolk Terriers, som i dag er vores
-                primære fokus. Med stor kærlighed til racerne og et stærkt fagligt fundament arbejder vi
-                målrettet for at fremavle sunde, velfungerende og racetypiske hunde med et godt og stabilt
-                temperament.
-              </Typography>
+              <div className="prose prose-lg max-w-none">
+                {aboutContent.content.split('\n\n').map((paragraph, index) => (
+                  <Typography key={index} variant="body" className="text-lg text-gray-600 leading-relaxed mb-6">
+                    {paragraph}
+                  </Typography>
+                ))}
 
-              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-8">
-                Vores opdræt bygger på kvalitet, sundhed og et stærkt netværk af erfarne og ansvarlige
-                opdrættere. Hver hvalp fra Kennel Speedex vokser op i trygge rammer og får den bedst
-                mulige start på livet – både fysisk og mentalt.
-              </Typography>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 pt-8 border-t border-gray-200">
+                  <div className="text-center">
+                    <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                      {new Date().getFullYear() - 2005} års erfaring
+                    </Typography>
+                    <Typography variant="body" color="secondary">
+                      Siden 2005
+                    </Typography>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 pt-8 border-t border-gray-200">
-                <div className="text-center">
-                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                    {new Date().getFullYear() - 2005} års erfaring
-                  </Typography>
-                  <Typography variant="body" color="secondary">
-                    Siden 2005
-                  </Typography>
-                </div>
+                  <div className="text-center">
+                    <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                      DKK Certificeret
+                    </Typography>
+                    <Typography variant="body" color="secondary">
+                      Dansk Kennel Klub
+                    </Typography>
+                  </div>
 
-                <div className="text-center">
-                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                    DKK Certificeret
-                  </Typography>
-                  <Typography variant="body" color="secondary">
-                    Dansk Kennel Klub
-                  </Typography>
-                </div>
-
-                <div className="text-center">
-                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                    Norfolk Terriers
-                  </Typography>
-                  <Typography variant="body" color="secondary">
-                    Primært fokus
-                  </Typography>
+                  <div className="text-center">
+                    <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                      Norfolk Terriers
+                    </Typography>
+                    <Typography variant="body" color="secondary">
+                      Primært fokus
+                    </Typography>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Featured Dogs Section */}
         <div className="mb-20">

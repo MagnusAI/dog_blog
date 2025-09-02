@@ -127,6 +127,37 @@ export interface DogImage {
   updated_at: string;
 }
 
+export interface ContentSection {
+  id: string;
+  section_key: string;
+  title: string;
+  content: string;
+  section_type: 'text' | 'list' | 'card';
+  page: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentSectionCreateData {
+  section_key: string;
+  title: string;
+  content: string;
+  section_type?: 'text' | 'list' | 'card';
+  page: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface ContentSectionUpdateData {
+  title?: string;
+  content?: string;
+  section_type?: 'text' | 'list' | 'card';
+  sort_order?: number;
+  is_active?: boolean;
+}
+
 export interface NewsPost {
   id: string;
   title: string;
@@ -822,6 +853,124 @@ export const newsService = {
     if (error) throw error;
     
     return this.getNewsPostById(id) || newsPost;
+  }
+};
+
+// Content management service
+export const contentService = {
+  // Get all content sections for a page
+  async getPageContent(page: string): Promise<ContentSection[]> {
+    const { data, error } = await supabase
+      .from('content_sections')
+      .select('*')
+      .eq('page', page)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get specific content section by key
+  async getContentByKey(sectionKey: string): Promise<ContentSection | null> {
+    const { data, error } = await supabase
+      .from('content_sections')
+      .select('*')
+      .eq('section_key', sectionKey)
+      .eq('is_active', true)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    
+    return data;
+  },
+
+  // Get all content sections (admin only)
+  async getAllContent(): Promise<ContentSection[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('content_sections')
+      .select('*')
+      .order('page', { ascending: true })
+      .order('sort_order', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Create content section
+  async createContentSection(contentData: ContentSectionCreateData): Promise<ContentSection> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('content_sections')
+      .insert(contentData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Update content section
+  async updateContentSection(id: string, updateData: ContentSectionUpdateData): Promise<ContentSection> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('content_sections')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete content section
+  async deleteContentSection(id: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('content_sections')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  // Toggle content section active status
+  async toggleContentActive(id: string): Promise<ContentSection> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Get current status
+    const { data: current, error: fetchError } = await supabase
+      .from('content_sections')
+      .select('is_active')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) throw fetchError;
+
+    // Toggle status
+    const { data, error } = await supabase
+      .from('content_sections')
+      .update({ is_active: !current.is_active })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 };
 

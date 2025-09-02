@@ -3,17 +3,15 @@ import { z } from "zod";
 import Button from "./ui/Button";
 import Typography from "./ui/Typography";
 import { dogService, type MyDog } from "../services/supabaseService";
+import { createCloudinaryUploadService } from "../services/cloudinaryUploadService";
 
 // Zod schema for news post validation
 const newsPostSchema = z.object({
   title: z.string()
     .min(10, "Title must be at least 10 characters")
     .max(100, "Title must be less than 100 characters"),
-  excerpt: z.string()
-    .min(50, "Excerpt must be at least 50 characters")
-    .max(500, "Excerpt must be less than 500 characters"),
   content: z.string()
-    .min(100, "Content must be at least 100 characters")
+    .min(50, "Content must be at least 50 characters")
     .max(5000, "Content must be less than 5000 characters"),
   image: z.instanceof(File)
     .optional()
@@ -36,9 +34,11 @@ const newsPostSchema = z.object({
 
 export type NewsPostFormData = z.infer<typeof newsPostSchema>;
 
-// Type for the data that gets submitted (includes auto-generated date)
-export type NewsPostSubmissionData = NewsPostFormData & {
+// Type for the data that gets submitted (includes auto-generated date and processed image data)
+export type NewsPostSubmissionData = Omit<NewsPostFormData, 'image'> & {
   date: string;
+  imageUrl?: string;
+  imagePublicId?: string;
 };
 
 export interface NewsPostFormProps {
@@ -56,7 +56,6 @@ const NewsPostForm = ({
 }: NewsPostFormProps) => {
   const [formData, setFormData] = useState<NewsPostFormData>({
     title: initialData?.title || "",
-    excerpt: initialData?.excerpt || "",
     content: initialData?.content || "",
     image: initialData?.image || undefined,
     imageAlt: initialData?.imageAlt || "",
@@ -67,6 +66,8 @@ const NewsPostForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableDogs, setAvailableDogs] = useState<MyDog[]>([]);
   const [loadingDogs, setLoadingDogs] = useState(true);
+  const [dogDropdownOpen, setDogDropdownOpen] = useState(false);
+  const [dogSearchTerm, setDogSearchTerm] = useState("");
 
   // Load available dogs on component mount
   useEffect(() => {
@@ -83,6 +84,20 @@ const NewsPostForm = ({
 
     loadDogs();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (dogDropdownOpen && !target.closest('[data-dog-dropdown]')) {
+        setDogDropdownOpen(false);
+        setDogSearchTerm(""); // Clear search when closing
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dogDropdownOpen]);
 
   const handleInputChange = (
     field: keyof NewsPostFormData,
@@ -120,6 +135,27 @@ const NewsPostForm = ({
     }
   };
 
+  const removeTaggedDog = (dogId: string) => {
+    const currentTaggedDogs = formData.taggedDogs || [];
+    const updatedDogs = currentTaggedDogs.filter(id => id !== dogId);
+    handleInputChange("taggedDogs", updatedDogs);
+  };
+
+  // Filter dogs based on search term
+  const filteredDogs = availableDogs.filter(myDog => {
+    if (!myDog.dog) return false;
+    const searchLower = dogSearchTerm.toLowerCase();
+    return (
+      myDog.dog.name.toLowerCase().includes(searchLower) ||
+      (myDog.dog.breed?.name || '').toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Get selected dogs for display
+  const selectedDogs = availableDogs.filter(myDog => 
+    myDog.dog && formData.taggedDogs?.includes(myDog.dog.id)
+  );
+
   const validateForm = () => {
     try {
       newsPostSchema.parse(formData);
@@ -148,14 +184,40 @@ const NewsPostForm = ({
 
     setIsSubmitting(true);
     try {
-      // Add current date to the form data when submitting
-      const submissionData = {
-        ...formData,
-        date: new Date().toISOString()
+      let imageUrl: string | undefined;
+      let imagePublicId: string | undefined;
+
+      // Handle image upload if a file is selected
+      if (formData.image) {
+        try {
+          const uploadService = createCloudinaryUploadService();
+          const uploadResult = await uploadService.uploadFile(formData.image, {
+            folder: 'news-posts',
+            tags: ['news', 'post']
+          });
+          
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          throw new Error("Failed to upload image. Please try again.");
+        }
+      }
+
+      // Prepare submission data (excluding the raw file object)
+      const { image, ...formDataWithoutImage } = formData;
+      const submissionData: NewsPostSubmissionData = {
+        ...formDataWithoutImage,
+        date: new Date().toISOString(),
+        imageUrl,
+        imagePublicId
       };
+      
       await onSubmit(submissionData);
     } catch (error) {
       console.error("Error submitting form:", error);
+      // Re-throw the error so the calling component can handle it
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -202,32 +264,7 @@ const NewsPostForm = ({
           )}
         </div>
 
-        {/* Excerpt */}
-        <div>
-          <label htmlFor="excerpt" className="block mb-2">
-            <Typography variant="body" weight="medium">
-              Excerpt *
-            </Typography>
-          </label>
-          <textarea
-            id="excerpt"
-            value={formData.excerpt || ""}
-            onChange={(e) => handleInputChange("excerpt", e.target.value)}
-            disabled={isFormDisabled}
-            rows={3}
-            className={`
-              w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-vertical text-gray-900
-              ${errors.excerpt ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
-              ${isFormDisabled ? "bg-gray-100 cursor-not-allowed" : ""}
-            `}
-            placeholder="Write a brief summary that will appear in news previews"
-          />
-          {errors.excerpt && (
-            <Typography variant="caption" color="danger" className="mt-1">
-              {errors.excerpt}
-            </Typography>
-          )}
-        </div>
+
 
         {/* Content */}
         <div>
@@ -336,9 +373,9 @@ const NewsPostForm = ({
           </div>
         </div>
 
-        {/* Dog Tags Section */}
+        {/* Dog Tags Section - Multi-Select Dropdown */}
         <div>
-          <label className="block mb-4">
+          <label className="block mb-2">
             <Typography variant="body" weight="medium">
               Tag Kennel Dogs (Optional)
             </Typography>
@@ -360,62 +397,143 @@ const NewsPostForm = ({
               </Typography>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {availableDogs.map((myDog) => {
-                if (!myDog.dog) return null;
-                
-                const isTagged = formData.taggedDogs?.includes(myDog.dog.id) || false;
-                
-                return (
-                  <div
-                    key={myDog.dog.id}
-                    onClick={() => handleDogToggle(myDog.dog!.id)}
-                    className={`
-                      relative p-3 border rounded-lg cursor-pointer transition-all duration-200
-                      ${isTagged 
-                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200" 
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                      }
-                      ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}
-                    `}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {/* Checkbox */}
-                      <div className={`
-                        w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                        ${isTagged 
-                          ? "bg-blue-500 border-blue-500" 
-                          : "border-gray-300 bg-white"
-                        }
-                      `}>
-                        {isTagged && (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      
-                      {/* Dog Info */}
-                      <div className="flex-1 min-w-0">
-                        <Typography variant="body" weight="medium" className="truncate">
+            <div className="space-y-3">
+              {/* Selected Dogs Display */}
+              {selectedDogs.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedDogs.map((myDog) => {
+                    if (!myDog.dog) return null;
+                    
+                    return (
+                      <div
+                        key={myDog.dog.id}
+                        className="flex items-center gap-2 bg-blue-100 border border-blue-300 rounded-full px-3 py-1"
+                      >
+                        <Typography variant="caption" weight="medium" color="primary">
                           {myDog.dog.name}
                         </Typography>
-                        <Typography variant="caption" color="secondary" className="truncate">
-                          {myDog.dog.breed?.name || 'Unknown Breed'}
-                        </Typography>
+                        <button
+                          type="button"
+                          onClick={() => removeTaggedDog(myDog.dog!.id)}
+                          disabled={isFormDisabled}
+                          className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Multi-Select Dropdown */}
+              <div className="relative" data-dog-dropdown>
+                <div
+                  onClick={() => {
+                    if (!isFormDisabled) {
+                      if (dogDropdownOpen) {
+                        setDogSearchTerm(""); // Clear search when closing
+                      }
+                      setDogDropdownOpen(!dogDropdownOpen);
+                    }
+                  }}
+                  className={`
+                    w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer text-gray-900
+                    ${dogDropdownOpen ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-300 bg-white hover:border-gray-400"}
+                    ${isFormDisabled ? "bg-gray-100 cursor-not-allowed" : ""}
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <Typography variant="body" color={selectedDogs.length > 0 ? undefined : "secondary"}>
+                      {selectedDogs.length > 0 
+                        ? `${selectedDogs.length} dog${selectedDogs.length === 1 ? '' : 's'} selected`
+                        : "Select dogs to tag in this post"
+                      }
+                    </Typography>
+                    <svg 
+                      className={`w-5 h-5 text-gray-400 transition-transform ${dogDropdownOpen ? 'transform rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Dropdown Menu */}
+                {dogDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-hidden">
+                    {/* Search Input */}
+                    <div className="p-3 border-b border-gray-200">
+                      <input
+                        type="text"
+                        value={dogSearchTerm}
+                        onChange={(e) => setDogSearchTerm(e.target.value)}
+                        placeholder="Search dogs by name or breed..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        disabled={isFormDisabled}
+                      />
+                    </div>
+
+                    {/* Dog List */}
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredDogs.length === 0 ? (
+                        <div className="p-3 text-center">
+                          <Typography variant="caption" color="secondary">
+                            No dogs found matching your search
+                          </Typography>
+                        </div>
+                      ) : (
+                        filteredDogs.map((myDog) => {
+                          if (!myDog.dog) return null;
+                          
+                          const isSelected = formData.taggedDogs?.includes(myDog.dog.id) || false;
+                          
+                          return (
+                            <div
+                              key={myDog.dog.id}
+                              onClick={() => handleDogToggle(myDog.dog!.id)}
+                              className={`
+                                flex items-center gap-3 p-3 cursor-pointer transition-colors
+                                ${isSelected ? "bg-blue-50 border-l-4 border-blue-500" : "hover:bg-gray-50"}
+                                ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                              `}
+                            >
+                              {/* Checkbox */}
+                              <div className={`
+                                w-4 h-4 rounded border-2 flex items-center justify-center transition-colors
+                                ${isSelected 
+                                  ? "bg-blue-500 border-blue-500" 
+                                  : "border-gray-300 bg-white"
+                                }
+                              `}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              
+                              {/* Dog Info */}
+                              <div className="flex-1 min-w-0">
+                                <Typography variant="body" weight={isSelected ? "medium" : "normal"} className="truncate">
+                                  {myDog.dog.name}
+                                </Typography>
+                                <Typography variant="caption" color="secondary" className="truncate">
+                                  {myDog.dog.breed?.name || 'Unknown Breed'}
+                                </Typography>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-          
-          {formData.taggedDogs && formData.taggedDogs.length > 0 && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <Typography variant="caption" color="primary">
-                {formData.taggedDogs.length} dog(s) tagged in this post
-              </Typography>
+                )}
+              </div>
             </div>
           )}
         </div>

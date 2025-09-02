@@ -51,7 +51,7 @@ const HighlightedNewsPost = ({
   enableLazyLoading = true,
   enablePlaceholder = true,
   placeholderType = "blur",
-  enableAccessibility = true,
+  enableAccessibility = false,
   enableResponsive = true,
   imageEnhance = true,
   className = "",
@@ -107,7 +107,7 @@ const HighlightedNewsPost = ({
               enableResponsive={enableResponsive}
               enhance={imageEnhance}
             />
-          ) : (
+          ) : imageUrl ? (
             <img
               src={imageUrl}
               alt={imageAlt}
@@ -115,7 +115,7 @@ const HighlightedNewsPost = ({
               onError={handleError}
               loading="lazy"
             />
-          )}
+          ) : null}
         </div>
 
         {/* Content Section */}

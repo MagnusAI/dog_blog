@@ -58,7 +58,6 @@ function NewsFormPage() {
           image_url: data.imageUrl,
           image_alt: data.imageAlt,
           image_public_id: data.imagePublicId,
-          meta_description: data.excerpt,
           tagged_dog_ids: data.taggedDogs
         });
       } else {
@@ -69,7 +68,6 @@ function NewsFormPage() {
           image_url: data.imageUrl,
           image_alt: data.imageAlt,
           image_public_id: data.imagePublicId,
-          meta_description: data.excerpt,
           tagged_dog_ids: data.taggedDogs
         });
       }
@@ -155,7 +153,6 @@ function NewsFormPage() {
           onCancel={handleCancel}
           initialData={editingPost ? {
             title: editingPost.title,
-            excerpt: editingPost.meta_description || '',
             content: editingPost.content,
             imageAlt: editingPost.image_alt || '',
             taggedDogs: getTaggedDogIds(editingPost)

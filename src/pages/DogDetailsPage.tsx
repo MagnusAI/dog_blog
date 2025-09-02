@@ -100,13 +100,34 @@ function DogDetailsPage() {
   const dogToPedigreeData = (dog: any, relation: string): PedigreeData => {
     // Try to get image URL from the dog's profile image if available
     let imageUrl: string | undefined;
-    if (dog.profile_image) {
-      if (dog.profile_image.image_public_id) {
+    
+    // Check if profile_image is an array (from ancestor data) or a single object
+    let profileImage;
+    if (Array.isArray(dog.profile_image)) {
+      // Filter for profile images (is_profile = true) and take the first one
+      profileImage = dog.profile_image.find(img => img.is_profile) || dog.profile_image[0];
+    } else {
+      profileImage = dog.profile_image;
+    }
+    
+    if (profileImage) {
+      if (profileImage.image_public_id) {
         // For Cloudinary images, we'll construct the URL
-        imageUrl = `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dsstocv9w'}/image/upload/c_fill,w_96,h_96,g_face/${dog.profile_image.image_public_id}`;
-      } else if (dog.profile_image.image_url) {
-        imageUrl = dog.profile_image.image_url;
+        imageUrl = `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dsstocv9w'}/image/upload/c_fill,w_96,h_96,g_face/${profileImage.image_public_id}`;
+      } else if (profileImage.image_url) {
+        imageUrl = profileImage.image_url;
       }
+      
+      // Debug logging to see if images are being found
+      console.log(`Pedigree node ${dog.name} (${relation}):`, {
+        hasProfileImage: !!profileImage,
+        publicId: profileImage.image_public_id,
+        imageUrl: profileImage.image_url,
+        constructedUrl: imageUrl,
+        rawProfileImageArray: dog.profile_image
+      });
+    } else {
+      console.log(`No profile image found for ${dog.name} (${relation})`);
     }
 
     return {

@@ -8,6 +8,7 @@ interface BreedSelectorProps {
   onSelect: (breedId: number) => void;
   onAddNewBreed?: () => void;
   error?: string;
+  className?: string;
 }
 
 export const BreedSelector: React.FC<BreedSelectorProps> = ({
@@ -15,7 +16,8 @@ export const BreedSelector: React.FC<BreedSelectorProps> = ({
   selectedBreedId,
   onSelect,
   onAddNewBreed,
-  error
+  error,
+  className
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +47,7 @@ export const BreedSelector: React.FC<BreedSelectorProps> = ({
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full p-3 text-left border rounded-md bg-white flex justify-between items-center ${
             error ? 'border-red-500' : 'border-gray-300'
-          } hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          } hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
         >
           <span className={selectedBreed ? 'text-gray-900' : 'text-gray-500'}>
             {selectedBreed ? (

@@ -75,7 +75,7 @@ export interface Dog {
   titles?: Title[];
   pedigree_sire?: { parent: Dog & { titles?: Title[] } }[];
   pedigree_dam?: { parent: Dog & { titles?: Title[] } }[];
-  all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed }, relationship_type: 'SIRE' | 'DAM', generation: number }[];
+  all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed, profile_image?: DogImage[] }, relationship_type: 'SIRE' | 'DAM', generation: number }[];
   offspring_as_sire?: { offspring: Dog & { breed?: Breed } }[];
   offspring_as_dam?: { offspring: Dog & { breed?: Breed } }[];
   my_dogs?: MyDog[];
@@ -249,7 +249,8 @@ export const dogService = {
           parent:dogs!fk_pedigree_parent(
             *,
             breed:breeds(*),
-            titles(*)
+            titles(*),
+            profile_image:dog_images!dog_id(*)
           ),
           relationship_type,
           generation

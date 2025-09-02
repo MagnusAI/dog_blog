@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dogService } from '../services/supabaseService';
-import type { Dog, Breed, DogImage } from '../services/supabaseService';
+import type { Dog, Breed } from '../services/supabaseService';
+import { createCloudinaryUploadService, CloudinaryUploadService } from '../services/cloudinaryUploadService';
 import Button from './ui/Button';
 import Typography from './ui/Typography';
 import { BreedSelector } from './BreedSelector';
@@ -112,8 +113,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
 
   const loadInitialData = async () => {
     try {
-      setLoading(true);
-      
       // Load breeds
       const breedsData = await dogService.getBreeds();
       setBreeds(breedsData);
@@ -140,57 +139,97 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         const newFormData: PedigreeFormData = {};
 
         if (parent) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(parent.parent.profile_image)) {
+            profileImage = parent.parent.profile_image.find(img => img.is_profile) || parent.parent.profile_image[0];
+          }
+          
           newFormData.parent = {
             id: parent.parent.id,
             name: parent.parent.name,
             breed_id: parent.parent.breed_id,
             birth_date: parent.parent.birth_date || '',
             gender: parent.parent.gender,
-            color: parent.parent.color || ''
+            color: parent.parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
           };
         }
 
         if (grandparents[0]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(grandparents[0].parent.profile_image)) {
+            profileImage = grandparents[0].parent.profile_image.find(img => img.is_profile) || grandparents[0].parent.profile_image[0];
+          }
+          
           newFormData.grandparent1 = {
             id: grandparents[0].parent.id,
             name: grandparents[0].parent.name,
             breed_id: grandparents[0].parent.breed_id,
             birth_date: grandparents[0].parent.birth_date || '',
             gender: grandparents[0].parent.gender,
-            color: grandparents[0].parent.color || ''
+            color: grandparents[0].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
           };
         }
 
         if (grandparents[1]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(grandparents[1].parent.profile_image)) {
+            profileImage = grandparents[1].parent.profile_image.find(img => img.is_profile) || grandparents[1].parent.profile_image[0];
+          }
+          
           newFormData.grandparent2 = {
             id: grandparents[1].parent.id,
             name: grandparents[1].parent.name,
             breed_id: grandparents[1].parent.breed_id,
             birth_date: grandparents[1].parent.birth_date || '',
             gender: grandparents[1].parent.gender,
-            color: grandparents[1].parent.color || ''
+            color: grandparents[1].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
           };
         }
 
         if (greatGrandparents[0]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(greatGrandparents[0].parent.profile_image)) {
+            profileImage = greatGrandparents[0].parent.profile_image.find(img => img.is_profile) || greatGrandparents[0].parent.profile_image[0];
+          }
+          
           newFormData.greatGrandparent1 = {
             id: greatGrandparents[0].parent.id,
             name: greatGrandparents[0].parent.name,
             breed_id: greatGrandparents[0].parent.breed_id,
             birth_date: greatGrandparents[0].parent.birth_date || '',
             gender: greatGrandparents[0].parent.gender,
-            color: greatGrandparents[0].parent.color || ''
+            color: greatGrandparents[0].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
           };
         }
 
         if (greatGrandparents[1]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(greatGrandparents[1].parent.profile_image)) {
+            profileImage = greatGrandparents[1].parent.profile_image.find(img => img.is_profile) || greatGrandparents[1].parent.profile_image[0];
+          }
+          
           newFormData.greatGrandparent2 = {
             id: greatGrandparents[1].parent.id,
             name: greatGrandparents[1].parent.name,
             breed_id: greatGrandparents[1].parent.breed_id,
             birth_date: greatGrandparents[1].parent.birth_date || '',
             gender: greatGrandparents[1].parent.gender,
-            color: greatGrandparents[1].parent.color || ''
+            color: greatGrandparents[1].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
           };
         }
 
@@ -275,19 +314,63 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
 
     setSaving(true);
     try {
-      // Here you would implement the logic to save the pedigree changes
-      // This might involve creating/updating multiple dog records and their relationships
+      // Process each dog entry with an image
+      const uploadService = createCloudinaryUploadService();
       
-      // For now, we'll just simulate a successful save
-      console.log('Saving pedigree data:', formData);
+      for (const [, dogData] of Object.entries(formData)) {
+        if (dogData && dogData.image) {
+          try {
+            // Upload image to Cloudinary
+            const uploadOptions = CloudinaryUploadService.getDogImageUploadOptions(
+              dogData.id, 
+              'pedigree'
+            );
+            
+            const uploadResult = await uploadService.uploadFile(dogData.image, uploadOptions);
+            
+            // Create or update the dog record first (if it doesn't exist)
+            let existingDog;
+            try {
+              existingDog = await dogService.getDog(dogData.id);
+            } catch (error) {
+              // Dog doesn't exist, create it
+              const newDog = {
+                id: dogData.id,
+                name: dogData.name,
+                breed_id: dogData.breed_id!,
+                gender: dogData.gender,
+                birth_date: dogData.birth_date || undefined,
+                color: dogData.color || undefined,
+                is_deceased: false
+              };
+              existingDog = await dogService.createDog(newDog);
+            }
+            
+            if (existingDog) {
+              // Add the image to the dog
+              const imageData = {
+                dog_id: dogData.id,
+                image_url: uploadResult.secure_url,
+                image_public_id: uploadResult.public_id,
+                is_profile: true, // Set as profile image for pedigree dogs
+                image_type: 'profile' as const,
+                alt_text: `${dogData.name} profile photo`,
+                display_order: 1
+              };
+              
+              await dogService.addDogImage(imageData);
+              console.log(`Successfully uploaded image for ${dogData.name}`);
+            }
+          } catch (uploadError) {
+            console.error(`Failed to upload image for ${dogData.name}:`, uploadError);
+            // Continue with other dogs even if one fails
+          }
+        }
+      }
       
-      // TODO: Implement actual save logic when the backend API is ready
-      // This would typically involve:
-      // 1. Creating/updating each dog in the pedigree
-      // 2. Creating/updating the relationships between dogs
-      // 3. Refreshing the current dog's data
-      
-      onSave?.(currentDog); // For now, return the current dog unchanged
+      // Refresh the current dog's data to show updated pedigree
+      const updatedDog = await dogService.getDogById(currentDog.id);
+      onSave?.(updatedDog || currentDog);
     } catch (error) {
       console.error('Error saving pedigree:', error);
       setErrors({ general: 'Failed to save pedigree data' });
@@ -440,8 +523,7 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
                 <BreedSelector
                   breeds={breeds}
                   selectedBreedId={dogData.breed_id}
-                  onBreedSelect={(breedId) => handleInputChange(dogKey, 'breed_id', breedId)}
-                  placeholder="Select breed"
+                  onSelect={(breedId: any) => handleInputChange(dogKey, 'breed_id', breedId)}
                   className={errors[`${dogKey}.breed_id`] ? 'border-red-500' : ''}
                 />
                 {errors[`${dogKey}.breed_id`] && (
@@ -529,7 +611,7 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         )}
 
         {/* Grandparents (Generation 2) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {renderDogSection(
             'grandparent1',
             isEditingFatherLine ? '👴 Paternal Grandfather' : '👵 Maternal Grandmother',
@@ -543,7 +625,7 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         </div>
 
         {/* Great-Grandparents (Generation 3) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {renderDogSection(
             'greatGrandparent1',
             'Great-Grandparent 1 (Generation 3)',

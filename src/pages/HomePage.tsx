@@ -1,468 +1,272 @@
-import ClickableImage from "../components/ClickableImage";
-import ClickableCloudinaryImage from "../components/ClickableCloudinaryImage";
-import OptimizedProfilePicture from "../components/OptimizedProfilePicture";
-import PedigreeCard from "../components/PedigreeCard";
-import Pedigree from "../components/Pedigree";
-import NewsPost from "../components/NewsPost";
-import DogCard from "../components/DogCard";
-import NewsPostForm from "../components/NewsPostForm";
-import { DogForm } from "../components/DogForm";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Typography from '../components/ui/Typography';
+import Button from '../components/ui/Button';
+import NewsPost from '../components/NewsPost';
+import DogCard from '../components/DogCard';
+import { newsService, dogService } from '../services/supabaseService';
+import type { NewsPost as NewsPostType, MyDog, DogImage } from '../services/supabaseService';
+import { createDogDetailPath } from '../utils/dogUtils';
+import HighlightedNewsPost from '../components/HighlightedNewsPost';
 
 function HomePage() {
-  const handleDemoClick = (dogId: string) => {
-    // For demo purposes, we'll just show an alert since these aren't real dog IDs
-    alert(`Demo: Would navigate to /dogs/${dogId} (this is just a demo dog)`);
+  const navigate = useNavigate();
+  const [latestNews, setLatestNews] = useState<NewsPostType[]>([]);
+  const [featuredDogs, setFeaturedDogs] = useState<MyDog[]>([]);
+  const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadHomePageData();
+  }, []);
+
+  const loadHomePageData = async () => {
+    try {
+      setLoading(true);
+
+      // Load latest news (first 3 posts)
+      const news = await newsService.getPublishedNewsPosts();
+      setLatestNews(news.slice(0, 4));
+
+      // Load featured dogs (first 4 dogs)
+      const myDogs = await dogService.getMyDogs();
+      const featured = myDogs.slice(0, 4);
+      setFeaturedDogs(featured);
+
+      // Load profile images for featured dogs
+      const imagePromises = featured.map(async (myDog) => {
+        if (myDog.dog) {
+          try {
+            const image = await dogService.getDogProfileImage(myDog.dog.id);
+            return { dogId: myDog.dog.id, image };
+          } catch (error) {
+            return { dogId: myDog.dog.id, image: null };
+          }
+        }
+        return null;
+      });
+
+      const imageResults = await Promise.all(imagePromises);
+      const imagesMap: Record<string, DogImage | null> = {};
+      imageResults.forEach(result => {
+        if (result) {
+          imagesMap[result.dogId] = result.image;
+        }
+      });
+
+      setDogImages(imagesMap);
+    } catch (error) {
+      console.error('Error loading homepage data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDogClick = (dogId: string) => {
+    navigate(createDogDetailPath(dogId));
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
-      <div className="text-3xl font-bold underline text-green-500 w-full">
-        Hello World!
-      </div>
-      
-      <div>
-        <h2 className="text-xl font-bold mb-4">Dog Management Demo</h2>
-        <DogForm onSave={(dog) => console.log('Created:', dog)} />
-      </div>
+    <div className="min-h-screen bg-white">
+      {/* Simple Header */}
+      <div className="max-w-6xl mx-auto px-8 py-8">
+        <div className="text-center mb-8">
+          <Typography variant="h1" weight="bold" className="text-4xl md:text-6xl text-gray-900 mb-4">
+            Kennel Speedex
+          </Typography>
+          <Typography variant="h3" className="text-gray-600 max-w-3xl mx-auto text-xl md:text-2xl">
+            Opdræt under DKK og FCI
+          </Typography>
+        </div>
 
-      <div>
-        <h2 className="text-xl font-bold mb-4">Create News Post</h2>
-        <NewsPostForm
-          onSubmit={(data) => {
-            console.log("News post submitted:", data);
-            console.log("Tagged dogs:", data.taggedDogs);
-            alert(`News post created successfully! Tagged ${data.taggedDogs?.length || 0} dogs.`);
-          }}
-          onCancel={() => {
-            console.log("Form cancelled");
-          }}
-        />
-      </div>
-
-      <div>
-        <h2 className="text-xl font-bold mb-4">🖼️ Clickable Cloudinary Image Demo</h2>
-        <p className="text-gray-600 mb-6">
-          Click on any of these images to see them enlarged. The ClickableCloudinaryImage component automatically provides higher quality for the enlarged version.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* Example 1: Dog portrait */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Dog Portrait</h3>
-            <ClickableCloudinaryImage
-              publicId="samples/animals/kitten-playing"
-              width={300}
-              height={300}
-              alt="Adorable kitten playing"
-              gravity="face"
-              crop="fill"
-              quality="auto"
-              className="rounded-lg shadow-md"
-            />
+        {/* Latest News Section */}
+        <div className="mb-20">
+          <div className="mb-12">
+            <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900">
+              Seneste Nyheder
+            </Typography>
           </div>
 
-          {/* Example 2: Landscape orientation */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Landscape Image</h3>
-            <ClickableCloudinaryImage
-              publicId="samples/landscapes/beach-boat"
-              width={300}
-              height={200}
-              alt="Beach with boat"
-              gravity="auto"
-              crop="fill"
-              quality="auto"
-              className="rounded-lg shadow-md"
-            />
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <Typography variant="body" color="secondary">Indlæser nyheder...</Typography>
+            </div>
+          ) : latestNews.length > 0 ? (
+            <div className="space-y-12">
+              {/* Highlighted News Post (First/Latest) */}
+              <HighlightedNewsPost
+                id={latestNews[0].id}
+                title={latestNews[0].title}
+                content={latestNews[0].content}
+                date={latestNews[0].published_date}
+                imageUrl={latestNews[0].image_url || ''}
+                imagePublicId={latestNews[0].image_public_id}
+                imageAlt={latestNews[0].image_alt || ''}
+                taggedDogs={latestNews[0].tagged_dogs?.map(dog => dog.id) || []}
+              />
 
-          {/* Example 3: Custom enlarged size */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Custom Enlarge Size</h3>
-            <ClickableCloudinaryImage
-              publicId="samples/food/dessert"
-              width={300}
-              height={300}
-              alt="Delicious dessert"
-              enlargedWidth={800}
-              enlargedHeight={600}
-              gravity="center"
-              crop="fill"
-              quality="auto"
-              className="rounded-lg shadow-md"
-            />
-            <p className="text-sm text-gray-500">Enlarges to 800x600px</p>
-          </div>
-        </div>
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-semibold text-blue-800 mb-2">Usage Example:</h4>
-          <pre className="text-sm bg-white p-3 rounded border overflow-x-auto">
-{`<ClickableCloudinaryImage
-  publicId="your-image-id"
-  width={300}
-  height={300}
-  alt="Description"
-  gravity="face"
-  crop="fill"
-  className="rounded-lg"
-/>`}
-          </pre>
-        </div>
-      </div>
+              {/* Additional News Cards (if more than 1 post) */}
+              {latestNews.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {latestNews.slice(1).map((post) => (
+                    <NewsPost
+                      imageUrl={post.image_url || ''}
+                      imageAlt={post.image_alt || ''}
+                      date={post.published_date}
+                      title={post.title}
+                      content={post.content}
+                      taggedDogs={post.tagged_dogs?.map(dog => dog.id) || []}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-xl">
+              <Typography variant="body" color="secondary">Ingen nyheder endnu. Kom tilbage senere!</Typography>
+            </div>
+          )}
 
-      <div>
-        <h2 className="text-xl font-bold mb-4">📰 News Post with Dog Tags Demo</h2>
-        <p className="text-gray-600 mb-6">
-          Example of a news post featuring tagged kennel dogs
-        </p>
-        <div className="max-w-xs mx-auto">
-          <NewsPost
-            imageUrl="https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face"
-            imageAlt="Golden Retriever Champion"
-            date="2024-01-15"
-            title="Championship Victory at Regional Show"
-            content="Our kennel dogs dominated the regional dog show this weekend, taking home multiple awards including Best in Show. The competition was fierce but our training paid off."
-            taggedDogs={["sample-dog-1", "sample-dog-2"]} // These would be real dog IDs in production
-          />
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-bold mb-4">🐕 Advanced Dog Image Fitting - Cloudinary Enhanced</h2>
-        <p className="text-gray-600 mb-6">
-          Based on <a href="https://cloudinary.com/documentation/image_transformations#landingpage" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Cloudinary's advanced transformations</a>, 
-          these modes are specifically optimized for fitting dog pictures perfectly onto cards.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* Smart Thumbnail - Best for dog cards! */}
-          <DogCard
-            name="Smart Thumbnail ⭐"
-            breed="AI-Powered Best Fit"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            imageAlt="Smart thumbnail mode"
-            fallbackInitials="ST"
-            subtitle="🎯 AI detects faces & subjects automatically"
-          />
-
-          {/* Enhanced Auto-Focus */}
-          <DogCard
-            name="Auto-Subject Focus"
-            breed="Enhanced Detection"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto:subject"
-            imageAlt="Auto-subject focus mode"
-            fallbackInitials="AS"
-            subtitle="🔍 Enhanced subject detection"
-          />
-
-          {/* Body Detection for full dog photos */}
-          <DogCard
-            name="Body Detection"
-            breed="Full Dog Focus"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="body"
-            imageAlt="Body detection mode"
-            fallbackInitials="BD"
-            subtitle="🐕 Focuses on entire dog body"
-          />
-
-          {/* Enhanced with automatic improvements */}
-          <DogCard
-            name="Enhanced + Auto-Improve"
-            breed="Quality Boost"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            imageEnhance={true}
-            imageAlt="Enhanced with auto-improve"
-            fallbackInitials="EA"
-            subtitle="✨ AI enhancement + smart cropping"
-          />
-
-          {/* Advanced Face Detection */}
-          <DogCard
-            name="Advanced Faces"
-            breed="Multiple Face Detection"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="faces"
-            imageAlt="Advanced face detection"
-            fallbackInitials="AF"
-            subtitle="👥 Detects multiple faces/subjects"
-          />
-
-          {/* Comparison: Basic vs Smart */}
-          <DogCard
-            name="Basic Fill"
-            breed="Standard Crop"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="center"
-            imageAlt="Basic fill mode"
-            fallbackInitials="BF"
-            subtitle="📐 Simple center crop (for comparison)"
-          />
-        </div>
-        
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">🏆 Recommended for Dog Cards:</h3>
-          <ul className="text-blue-800 text-sm space-y-1">
-            <li><strong>Fill + Auto Gravity:</strong> Best overall choice - automatically detects and focuses on the most important parts</li>
-            <li><strong>Body Detection:</strong> Perfect for full-body dog photos where you want to show the entire dog</li>
-            <li><strong>Enhanced + Auto-Improve:</strong> Adds AI-powered quality improvements for older or lower-quality photos</li>
-          </ul>
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-bold mb-4">⚡ React Performance Features</h2>
-        <p className="text-gray-600 mb-6">
-          Based on <a href="https://cloudinary.com/documentation/react_image_transformations" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Cloudinary's React plugins</a>, 
-          these features optimize loading performance and user experience.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* Lazy Loading Demo */}
-          <DogCard
-            name="Lazy Loading ⚡"
-            breed="Performance Optimized"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            enableLazyLoading={true}
-            enablePlaceholder={false}
-            imageAlt="Lazy loading demo"
-            fallbackInitials="LL"
-            subtitle="🚀 Loads only when visible"
-          />
-
-          {/* Blur Placeholder Demo */}
-          <DogCard
-            name="Blur Placeholder"
-            breed="Smooth Loading"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            enableLazyLoading={true}
-            enablePlaceholder={true}
-            placeholderType="blur"
-            imageAlt="Blur placeholder demo"
-            fallbackInitials="BP"
-            subtitle="🌟 Blurred preview while loading"
-          />
-
-          {/* Pixelate Placeholder Demo */}
-          <DogCard
-            name="Pixelate Placeholder"
-            breed="Retro Style"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            enableLazyLoading={true}
-            enablePlaceholder={true}
-            placeholderType="pixelate"
-            imageAlt="Pixelate placeholder demo"
-            fallbackInitials="PP"
-            subtitle="🎮 Pixelated preview effect"
-          />
-
-          {/* Responsive Images Demo */}
-          <DogCard
-            name="Responsive Images"
-            breed="Smart Sizing"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            enableLazyLoading={true}
-            enablePlaceholder={true}
-            responsiveStepSize={100}
-            imageAlt="Responsive images demo"
-            fallbackInitials="RI"
-            subtitle="📱 Adapts to screen size"
-          />
-
-          {/* Accessibility Demo */}
-          <DogCard
-            name="Accessibility Mode"
-            breed="Vision Assistance"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            enableLazyLoading={true}
-            enablePlaceholder={true}
-            enableAccessibility={true}
-            accessibilityMode="colorblind"
-            imageAlt="Accessibility demo"
-            fallbackInitials="AM"
-            subtitle="♿ Enhanced for colorblind users"
-          />
-
-          {/* All Features Combined */}
-          <DogCard
-            name="Full Featured ⭐"
-            breed="Everything Enabled"
-            imagePublicId="dog_images/DK03226_2025_profile_1756131662097"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            imageEnhance={true}
-            enableLazyLoading={true}
-            enablePlaceholder={true}
-            placeholderType="blur"
-            responsiveStepSize={150}
-            imageAlt="Full featured demo"
-            fallbackInitials="FF"
-            subtitle="🎯 All optimizations enabled"
-          />
-        </div>
-        
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <h3 className="font-semibold text-green-900 mb-2">🚀 Performance Benefits:</h3>
-          <ul className="text-green-800 text-sm space-y-1">
-            <li><strong>Lazy Loading:</strong> Images load only when needed, improving initial page load</li>
-            <li><strong>Placeholders:</strong> Prevent layout shifts and provide instant visual feedback</li>
-            <li><strong>Responsive Images:</strong> Automatically deliver the right size for each device</li>
-            <li><strong>Accessibility:</strong> Support users with visual impairments</li>
-          </ul>
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-bold mb-4">Regular Demo Cards</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <DogCard
-            name="Champion Golden Thunder"
-            breed="Golden Retriever"
-            imageUrl="https://images.unsplash.com/photo-1551717743-49959800b1f6?w=400&h=400&fit=crop&crop=face"
-            imageAlt="Golden Retriever Champion"
-            fallbackInitials="GT"
-            dogId="demo-1"
-            onDogClick={handleDemoClick}
-          />
-          
-          <DogCard
-            name="Sunnybrook's Belle"
-            breed="Golden Retriever"
-            imageUrl="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&crop=face"
-            imageAlt="Golden Retriever Female"
-            fallbackInitials="SB"
-          />
-          
-          <DogCard
-            name="Rocky Mountain High"
-            breed="Golden Retriever"
-            imageUrl="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=400&fit=crop&crop=face"
-            imageAlt="Golden Retriever Male"
-            fallbackInitials="RM"
-          />
-          
-          {/* Example using Cloudinary sample image */}
-          <DogCard
-            name="Cloudinary Sample"
-            breed="Demo Image" 
-            imagePublicId="sample"
-            imageSize={266}
-            imageCrop="fill"
-            imageGravity="auto"
-            imageAlt="Cloudinary Sample Image"
-            fallbackInitials="CS"
-            subtitle="Default sample image"
-          />
-          
-          <DogCard
-            name="Meadowlark's Promise"
-            breed="Golden Retriever"
-            fallbackInitials="MP"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-xl font-bold mb-4">Pedigree Cards</h2>
-          <div className="space-y-4">
-            {/* Small size card */}
-            <PedigreeCard
-              imageUrl="https://images.unsplash.com/photo-1551717743-49959800b1f6?w=200&h=200&fit=crop&crop=face"
-              imageAlt="Golden Retriever"
-              relation="Father"
-              regnr="AKC-123456789"
-              name="Champion Golden Thunder of Sunnybrook"
-              titles={["CH", "GRCH", "OTCH", "UDX", "CGC"]}
-              fallbackInitials="GT"
-            />
-            
-            {/* Medium size card */}
-            <PedigreeCard
-              imageUrl="https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop&crop=face"
-              imageAlt="Golden Retriever"
-              relation="Mother"
-              regnr="AKC-987654321"
-              name="Sunnybrook's Golden Belle Supreme"
-              titles={["CH", "GRCH", "TD", "WC", "CGC", "TKN"]}
-              fallbackInitials="GB"
-            />
-            
-            {/* Large size card */}
-            <PedigreeCard
-              imageUrl="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=200&h=200&fit=crop&crop=face"
-              imageAlt="Golden Retriever"
-              relation="Paternal Grandfather"
-              regnr="AKC-456789123"
-              name="Legendary Sunnybrook King of Hearts"
-              titles={["GRCH", "OTCH", "UDX", "WCX", "MH", "CGC", "TKA"]}
-              fallbackInitials="LK"
-            />
+          <div className="text-center mt-8">
+            <Button
+              variant="primary"
+              onClick={() => navigate('/news')}
+            >
+              Se Alle Nyheder
+            </Button>
           </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold mb-4">Pedigree Tree (with PedigreeCard components)</h2>
-          <div className="overflow-x-auto">
-            <Pedigree />
+        {/* About Section */}
+        <div className="mb-20">
+          <div>
+            <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-8">
+              Om Kennel Speedex
+            </Typography>
+
+            <div className="prose prose-lg max-w-none">
+              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-6">
+                Kennel Speedex er et lille, seriøst og passioneret opdræt beliggende i smukke Gilleleje.
+                Bag kennelen står Tine Arnild, som har været aktiv opdrætter siden 2005 og er uddannet og
+                certificeret gennem Dansk Kennel Klub (DKK).
+              </Typography>
+
+              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-6">
+                Gennem årene har vi specialiseret os i opdræt af terriere – herunder bl.a. West Highland
+                White Terriers, Jack Russell Terriers og senest Norfolk Terriers, som i dag er vores
+                primære fokus. Med stor kærlighed til racerne og et stærkt fagligt fundament arbejder vi
+                målrettet for at fremavle sunde, velfungerende og racetypiske hunde med et godt og stabilt
+                temperament.
+              </Typography>
+
+              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed mb-8">
+                Vores opdræt bygger på kvalitet, sundhed og et stærkt netværk af erfarne og ansvarlige
+                opdrættere. Hver hvalp fra Kennel Speedex vokser op i trygge rammer og får den bedst
+                mulige start på livet – både fysisk og mentalt.
+              </Typography>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 pt-8 border-t border-gray-200">
+                <div className="text-center">
+                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                    {new Date().getFullYear() - 2005} års erfaring
+                  </Typography>
+                  <Typography variant="body" color="secondary">
+                    Siden 2005
+                  </Typography>
+                </div>
+
+                <div className="text-center">
+                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                    DKK Certificeret
+                  </Typography>
+                  <Typography variant="body" color="secondary">
+                    Dansk Kennel Klub
+                  </Typography>
+                </div>
+
+                <div className="text-center">
+                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                    Norfolk Terriers
+                  </Typography>
+                  <Typography variant="body" color="secondary">
+                    Primært fokus
+                  </Typography>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold mb-4">Pure ClickableImage (with any URL)</h2>
-          <ClickableImage
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-            alt="Sample User"
-            size="lg"
-            fallbackInitials="SU"
-          />
+        {/* Featured Dogs Section */}
+        <div className="mb-20">
+          <div className="mb-12">
+            <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-6">
+              Mød Vores Hunde
+            </Typography>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <Typography variant="body" color="secondary">Indlæser hunde...</Typography>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredDogs.map((myDog) => {
+                if (!myDog.dog) return null;
+
+                return (
+                  <DogCard
+                    key={myDog.dog.id}
+                    name={myDog.dog.name}
+                    breed={myDog.dog.breed?.name || 'Unknown Breed'}
+                    imagePublicId={dogImages[myDog.dog.id]?.image_public_id}
+                    imageUrl={dogImages[myDog.dog.id]?.image_url}
+                    imageSize={266}
+                    imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
+                    imageGravity='face'
+                    fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
+                    metadata={[
+                      myDog.dog.gender === 'M' ? 'Han' : 'Hun',
+                      myDog.dog.birth_date ? new Date(myDog.dog.birth_date).getFullYear().toString() : undefined,
+                    ].filter((item): item is string => Boolean(item))}
+                    dogId={myDog.dog.id}
+                    onDogClick={() => handleDogClick(myDog.dog!.id)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          <div className="text-center mt-8">
+            <Button
+              variant="primary"
+              onClick={() => navigate('/dogs')}
+            >
+              Se Alle Vores Hunde
+            </Button>
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold mb-4">Optimized ProfilePicture (with Cloudinary React SDK)</h2>
-          <div className="flex gap-4 items-center">
-            <OptimizedProfilePicture
-              publicId="sample" // This is a demo image available in all Cloudinary accounts
-              alt="Cloudinary Sample"
-              size="xxl"
-              fallbackInitials="CS"
-            />
-            
-            <OptimizedProfilePicture
-              publicId="sample"
-              alt="Cloudinary Sample Grayscale"
-              size="lg"
-              fallbackInitials="CS"
-              transformations={["e_grayscale"]} // Make it grayscale
-            />
+        {/* Contact Section */}
+        <div className="border-t border-gray-200 pt-16">
+          <div className="text-center max-w-2xl mx-auto">
+            <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-6">
+              Kontakt
+            </Typography>
+            <Typography variant="body" className="text-lg text-gray-600">
+              For spørgsmål om vores opdræt eller information om kommende kuld.
+            </Typography>
+
+            <div className="inline-block">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = 'mailto:tinearnild@hotmail.com'}
+                className="text-gray-900 border-gray-300 hover:bg-gray-50 px-6 py-3"
+              >
+                tinearnild@hotmail.com
+              </Button>
+            </div>
           </div>
         </div>
       </div>

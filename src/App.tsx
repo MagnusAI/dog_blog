@@ -13,8 +13,7 @@ function AppContent() {
   const navigationLinks = [
     { label: "Home", href: "#/" },
     { label: "Dogs", href: "#/dogs" },
-    { label: "News", href: "#/news" },
-    { label: "About", href: "#/about" }
+    { label: "News", href: "#/news" }
   ];
 
   const handleLoginClick = () => {
@@ -90,12 +89,7 @@ function AppContent() {
             <NewsFormPage />
           </ProtectedRoute>
         } />
-        <Route path="/about" element={
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">About Our Kennel</h1>
-            <p className="text-gray-600">Coming soon...</p>
-          </div>
-        } />
+
         <Route path="*" element={
           <div className="p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h1>

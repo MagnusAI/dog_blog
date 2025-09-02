@@ -56,7 +56,7 @@ const AppBar = ({
               >
                 {logo || (
                   <Typography variant="h5" weight="bold" color="primary">
-                    LOGO
+                    Kennel Speedex
                   </Typography>
                 )}
               </div>

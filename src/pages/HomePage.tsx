@@ -9,10 +9,12 @@ import type { NewsPost as NewsPostType, MyDog, DogImage, ContentSection } from '
 import { createDogDetailPath } from '../utils/dogUtils';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation('pages');
   const [latestNews, setLatestNews] = useState<NewsPostType[]>([]);
   const [featuredDogs, setFeaturedDogs] = useState<MyDog[]>([]);
   const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
@@ -78,10 +80,10 @@ function HomePage() {
       <div className="max-w-6xl mx-auto px-8 py-8">
         <div className="md:text-center mb-8">
           <Typography variant="h1" weight="bold" className="text-4xl md:text-6xl text-gray-900 mb-4">
-            Kennel Speedex
+            {t('home.header.title')}
           </Typography>
           <Typography variant="h3" className="text-gray-600 max-w-3xl mx-auto text-xl md:text-2xl">
-            Opdræt under DKK og FCI
+            {t('home.header.subtitle')}
           </Typography>
         </div>
 
@@ -89,13 +91,13 @@ function HomePage() {
         <div className="mb-20">
           <div className="mb-12">
             <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900">
-              Seneste Nyheder
+              {t('home.sections.latestNews')}
             </Typography>
           </div>
 
           {loading ? (
             <div className="text-center py-12">
-              <Typography variant="body" color="secondary">Indlæser nyheder...</Typography>
+              <Typography variant="body" color="secondary">{t('home.messages.loadingNews')}</Typography>
             </div>
           ) : latestNews.length > 0 ? (
             <div className="space-y-12">
@@ -130,7 +132,7 @@ function HomePage() {
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-xl">
-              <Typography variant="body" color="secondary">Ingen nyheder endnu. Kom tilbage senere!</Typography>
+              <Typography variant="body" color="secondary">{t('home.messages.noNews')}</Typography>
             </div>
           )}
 
@@ -139,7 +141,7 @@ function HomePage() {
               variant="primary"
               onClick={() => navigate('/news')}
             >
-              Se Alle Nyheder
+              {t('home.sections.seeAllNews')}
             </Button>
           </div>
         </div>
@@ -159,7 +161,7 @@ function HomePage() {
                     onClick={() => navigate(`/admin/content/edit/${aboutContent.section_key}`)}
                     className="text-gray-500 hover:text-gray-700 border-gray-300"
                   >
-                    ✏️ Edit
+                    ✏️ {t('actions.editContent', 'common')}
                   </Button>
                 )}
               </div>
@@ -208,13 +210,13 @@ function HomePage() {
         <div className="mb-20">
           <div className="mb-12">
             <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-6">
-              Mød Vores Hunde
+              {t('home.sections.featuredDogs')}
             </Typography>
           </div>
 
           {loading ? (
             <div className="text-center py-12">
-              <Typography variant="body" color="secondary">Indlæser hunde...</Typography>
+              <Typography variant="body" color="secondary">{t('home.messages.loadingDogs')}</Typography>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -250,7 +252,7 @@ function HomePage() {
               variant="primary"
               onClick={() => navigate('/dogs')}
             >
-              Se Alle Vores Hunde
+              {t('home.sections.seeAllDogs')}
             </Button>
           </div>
         </div>
@@ -259,10 +261,10 @@ function HomePage() {
         <div className="border-t border-gray-200 pt-16">
           <div className="text-center max-w-2xl mx-auto">
             <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-6">
-              Kontakt
+              {t('home.sections.contact')}
             </Typography>
             <Typography variant="body" className="text-lg text-gray-600">
-              For spørgsmål om vores opdræt eller information om kommende kuld.
+              {t('home.messages.contactText')}
             </Typography>
 
             <div className="inline-block">

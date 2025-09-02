@@ -6,6 +6,7 @@ import Badge from './ui/Badge';
 import { dogService } from '../services/supabaseService';
 import type { Dog, Title } from '../services/supabaseService';
 import { decodeDogId } from '../utils/dogUtils';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface TitlesEditFormProps {
   dogId: string;
@@ -19,6 +20,7 @@ interface TitleFormData {
 
 function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation('pages');
   const [dog, setDog] = useState<Dog | null>(null);
   const [titles, setTitles] = useState<Title[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
       const decodedDogId = decodeDogId(dogId);
       const dogData = await dogService.getDogById(decodedDogId);
       if (!dogData) {
-        setError('Dog not found');
+        setError(t('dogs.messages.dogNotFound'));
         return;
       }
       
@@ -53,7 +55,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
       setTitles(dogData.titles || []);
     } catch (err) {
       console.error('Error loading dog titles:', err);
-      setError('Failed to load dog titles');
+      setError(t('forms.messages.loadError', 'forms'));
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
 
   const handleAddTitle = async () => {
     if (!newTitle.title_code.trim()) {
-      setError('Title code is required');
+      setError(t('titles.messages.titleCodeRequired'));
       return;
     }
 
@@ -76,12 +78,12 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         year_earned: newTitle.year_earned
       });
       
-      setSuccess('Title added successfully');
+      setSuccess(t('titles.messages.titleAdded'));
       setNewTitle({ title_code: '', year_earned: undefined });
       await loadDogTitles(); // Reload to get updated data
     } catch (err) {
       console.error('Error adding title:', err);
-      setError('Failed to add title');
+      setError(t('forms.messages.saveError', 'forms'));
     } finally {
       setSaving(false);
     }
@@ -99,30 +101,30 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         year_earned: editingTitle.year_earned
       });
       
-      setSuccess('Title updated successfully');
+      setSuccess(t('titles.messages.titleUpdated'));
       setEditingTitle(null);
       await loadDogTitles(); // Reload to get updated data
     } catch (err) {
       console.error('Error updating title:', err);
-      setError('Failed to update title');
+      setError(t('forms.messages.saveError', 'forms'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteTitle = async (titleId: number) => {
-    if (!confirm('Are you sure you want to delete this title?')) return;
+    if (!confirm(t('forms.messages.confirmDelete', 'forms'))) return;
 
     try {
       setSaving(true);
       setError(null);
       
       await dogService.deleteTitle(titleId);
-      setSuccess('Title deleted successfully');
+      setSuccess(t('titles.messages.titleDeleted'));
       await loadDogTitles(); // Reload to get updated data
     } catch (err) {
       console.error('Error deleting title:', err);
-      setError('Failed to delete title');
+      setError(t('forms.messages.deleteError', 'forms'));
     } finally {
       setSaving(false);
     }
@@ -144,7 +146,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
       <div className="min-h-screen bg-white p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
-            <Typography variant="body" color="secondary">Loading titles...</Typography>
+            <Typography variant="body" color="secondary">{t('actions.loading', 'common')}</Typography>
           </div>
         </div>
       </div>
@@ -157,13 +159,13 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <Typography variant="h2" weight="bold" className="text-2xl text-gray-900 mb-4">
-              Dog Not Found
+              {t('dogs.messages.dogNotFound')}
             </Typography>
             <Typography variant="body" color="secondary" className="mb-6">
               {error}
             </Typography>
             <Button variant="primary" onClick={handleCancel}>
-              Go Back
+              {t('actions.back', 'common')}
             </Button>
           </div>
         </div>
@@ -178,7 +180,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         <div className="flex items-center justify-between mb-8">
           <div>
             <Typography variant="h1" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-2">
-              Edit Titles & Achievements
+              {t('titles.title')}
             </Typography>
             {dog && (
               <Typography variant="body" color="secondary">
@@ -187,7 +189,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
             )}
           </div>
           <Button variant="ghost" onClick={handleCancel}>
-            ← Back
+            ← {t('actions.back', 'common')}
           </Button>
         </div>
 
@@ -206,27 +208,27 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         {/* Add New Title */}
         <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
           <Typography variant="h2" weight="semibold" className="text-xl text-gray-900 mb-4">
-            Add New Title
+            {t('titles.sections.addNew')}
           </Typography>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title Code *
+                {t('labels.titleCode', 'forms')} *
               </label>
               <input
                 type="text"
                 value={newTitle.title_code}
                 onChange={(e) => setNewTitle({ ...newTitle, title_code: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                placeholder="e.g., CH, CACIB, BIS, etc."
+                placeholder={t('placeholders.enterTitleCode', 'forms')}
                 disabled={saving}
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Year Earned
+                {t('labels.yearEarned', 'forms')}
               </label>
               <select
                 value={newTitle.year_earned || ''}
@@ -234,7 +236,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                 disabled={saving}
               >
-                <option value="">Select year (optional)</option>
+                <option value="">{t('placeholders.selectYear', 'forms')}</option>
                 {yearOptions.map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
@@ -247,20 +249,20 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
             onClick={handleAddTitle}
             disabled={saving || !newTitle.title_code.trim()}
           >
-            {saving ? 'Adding...' : 'Add Title'}
+            {saving ? t('titles.messages.adding') : t('titles.messages.addTitle')}
           </Button>
         </div>
 
         {/* Existing Titles */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <Typography variant="h2" weight="semibold" className="text-xl text-gray-900 mb-4">
-            Current Titles ({titles.length})
+            {t('titles.sections.current', { count: titles.length })}
           </Typography>
           
           {titles.length === 0 ? (
             <div className="text-center py-8">
               <Typography variant="body" color="secondary">
-                No titles added yet. Add the first title above.
+                {t('titles.messages.noTitles')}
               </Typography>
             </div>
           ) : (
@@ -315,7 +317,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
                           onClick={handleUpdateTitle}
                           disabled={saving || !editingTitle.title_code.trim()}
                         >
-                          Save
+                          {t('actions.save', 'common')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -323,7 +325,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
                           onClick={() => setEditingTitle(null)}
                           disabled={saving}
                         >
-                          Cancel
+                          {t('actions.cancel', 'common')}
                         </Button>
                       </>
                     ) : (
@@ -334,7 +336,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
                           onClick={() => setEditingTitle(title)}
                           disabled={saving || editingTitle !== null}
                         >
-                          Edit
+                          {t('actions.edit', 'common')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -343,7 +345,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
                           disabled={saving}
                           className="text-red-600 hover:text-red-700"
                         >
-                          Delete
+                          {t('actions.delete', 'common')}
                         </Button>
                       </>
                     )}
@@ -357,9 +359,7 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
         {/* Help Text */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <Typography variant="caption" className="text-blue-800">
-            <strong>Common Title Abbreviations:</strong> CH (Champion), CACIB (International Beauty Champion), 
-            BIS (Best in Show), BOB (Best of Breed), BIG (Best in Group), CC (Challenge Certificate), 
-            JCH (Junior Champion), VCH (Veteran Champion)
+            {t('titles.messages.helpText')}
           </Typography>
         </div>
       </div>

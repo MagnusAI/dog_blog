@@ -17,7 +17,8 @@
     "logout": "Log ud",
     "search": "Søg",
     "loading": "Indlæser...",
-    "submit": "Send"
+    "submit": "Send",
+    "editContent": "Rediger"
   },
   "common": {
     "title": "Titel",

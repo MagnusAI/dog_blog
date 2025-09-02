@@ -10,6 +10,7 @@ import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
+import { useTranslation } from '../contexts/LanguageContext';
 
 import ClickableCloudinaryImage from '../components/ClickableCloudinaryImage';
 
@@ -17,6 +18,7 @@ function DogDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation('pages');
   const [dog, setDog] = useState<Dog | null>(null);
   const [profileImage, setProfileImage] = useState<DogImage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ function DogDetailsPage() {
 
   useEffect(() => {
     if (!id) {
-      setError('No dog ID provided');
+      setError(t('dogs.messages.dogNotFound'));
       setLoading(false);
       return;
     }
@@ -53,10 +55,10 @@ function DogDetailsPage() {
           setProfileImage(null);
         }
       } else {
-        setError('Dog not found');
+        setError(t('dogs.messages.dogNotFound'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dog');
+      setError(err instanceof Error ? err.message : t('forms.messages.loadError', 'forms'));
     } finally {
       setLoading(false);
     }
@@ -79,21 +81,21 @@ function DogDetailsPage() {
 
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
+    if (!dateString) return t('dogs.labels.unknown');
     return new Date(dateString).toLocaleDateString();
   };
 
   const calculateAge = (birthDate?: string) => {
-    if (!birthDate) return 'Unknown';
+    if (!birthDate) return t('dogs.labels.unknown');
     const birth = new Date(birthDate);
     const now = new Date();
     const years = now.getFullYear() - birth.getFullYear();
     const months = now.getMonth() - birth.getMonth();
     
     if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) {
-      return `${years - 1} years old`;
+      return t('dogs.labels.yearsOld', { count: years - 1 });
     }
-    return `${years} years old`;
+    return t('dogs.labels.yearsOld', { count: years });
   };
 
   // Helper function to convert dog data to pedigree data format
@@ -247,7 +249,7 @@ function DogDetailsPage() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <Typography variant="h4">Loading dog details...</Typography>
+          <Typography variant="h4">{t('dogs.messages.loadingDog')}</Typography>
         </div>
       </div>
     );
@@ -258,10 +260,10 @@ function DogDetailsPage() {
       <div className="p-8">
         <div className="text-center">
           <Typography variant="h4" color="danger" className="mb-4">
-            {error || 'Dog not found'}
+            {error || t('dogs.messages.dogNotFound')}
           </Typography>
           <Button onClick={() => navigate('/dogs')}>
-            Back to Dogs
+            {t('dogs.actions.backToDogs')}
           </Button>
         </div>
       </div>
@@ -278,7 +280,7 @@ function DogDetailsPage() {
             onClick={() => navigate('/dogs')}
             className="mb-4"
           >
-            ← Back to Dogs
+            ← {t('dogs.actions.backToDogs')}
           </Button>
           <Typography variant="h2" className="mb-2">
             {dog.name}
@@ -298,16 +300,16 @@ function DogDetailsPage() {
                 onClick={handleEditClick}
                 className="mb-2"
               >
-                ✏️ Edit Dog
+                ✏️ {t('dogs.actions.editDog')}
               </Button>
             )}
             <div>
               <Badge variant={dog.gender === 'M' ? 'primary' : 'secondary'}>
-                {dog.gender === 'M' ? 'Male' : 'Female'}
+                {dog.gender === 'M' ? t('dogs.labels.male') : t('dogs.labels.female')}
               </Badge>
               {dog.is_deceased && (
                 <Badge variant="danger" className="ml-2">
-                  Deceased
+                  {t('dogs.labels.deceased')}
                 </Badge>
               )}
             </div>
@@ -353,48 +355,48 @@ function DogDetailsPage() {
             )}
           </div>
           <Typography variant="caption" color="muted" className="text-center block">
-            {profileImage ? `Updated: ${new Date(profileImage.created_at).toLocaleDateString()}` : 'Photo coming soon'}
+            {profileImage ? `Updated: ${new Date(profileImage.created_at).toLocaleDateString()}` : t('dogs.messages.photoComingSoon')}
           </Typography>
         </div>
 
         {/* Basic Info Card */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full md:col-span-2">
-          <Typography variant="h4" className="mb-4">Basic Information</Typography>
+          <Typography variant="h4" className="mb-4">{t('dogs.sections.basicInfo')}</Typography>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <Typography variant="caption" color="muted">Breed</Typography>
-              <Typography variant="body">{dog.breed?.name || 'Unknown'}</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.breed')}</Typography>
+              <Typography variant="body">{dog.breed?.name || t('dogs.labels.unknown')}</Typography>
             </div>
             <div>
-              <Typography variant="caption" color="muted">Registration ID</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.registrationId')}</Typography>
               <Typography variant="body" className="font-mono">{dog.id}</Typography>
             </div>
             <div>
-              <Typography variant="caption" color="muted">Birth Date</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.birthDate')}</Typography>
               <Typography variant="body">{formatDate(dog.birth_date)}</Typography>
             </div>
             <div>
-              <Typography variant="caption" color="muted">Age</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.age')}</Typography>
               <Typography variant="body">{calculateAge(dog.birth_date)}</Typography>
             </div>
             {dog.color && (
               <div>
-                <Typography variant="caption" color="muted">Color</Typography>
+                <Typography variant="caption" color="muted">{t('dogs.labels.color')}</Typography>
                 <Typography variant="body">{dog.color}</Typography>
               </div>
             )}
             {dog.death_date && (
               <div>
-                <Typography variant="caption" color="muted">Death Date</Typography>
+                <Typography variant="caption" color="muted">{t('dogs.labels.deathDate')}</Typography>
                 <Typography variant="body">{formatDate(dog.death_date)}</Typography>
               </div>
             )}
             <div>
-              <Typography variant="caption" color="muted">Titles</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.titles')}</Typography>
               <Typography variant="body">{dog.titles?.length || 0}</Typography>
             </div>
             <div>
-              <Typography variant="caption" color="muted">Offspring</Typography>
+              <Typography variant="caption" color="muted">{t('dogs.labels.offspring')}</Typography>
               <Typography variant="body">
                 {(() => {
                   const sireCount = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE').length || 0;
@@ -410,7 +412,7 @@ function DogDetailsPage() {
       {/* Titles Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <Typography variant="h4">Titles & Achievements</Typography>
+          <Typography variant="h4">{t('dogs.sections.titlesAchievements')}</Typography>
           {user && (
             <Button
               variant="ghost"
@@ -418,7 +420,7 @@ function DogDetailsPage() {
               onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/titles`)}
               className="text-gray-500 hover:text-gray-700 border-gray-300"
             >
-              ✏️ Edit Titles
+              ✏️ {t('dogs.actions.editTitles')}
             </Button>
           )}
         </div>
@@ -433,9 +435,9 @@ function DogDetailsPage() {
           </div>
         ) : (
           <Typography variant="body" color="secondary">
-            No titles added yet.
+            {t('dogs.messages.noTitles')}
             {user && (
-              <> Click "Edit Titles" to add achievements.</>
+              <> {t('dogs.messages.clickEditTitles')}</>
             )}
           </Typography>
         )}
@@ -455,7 +457,7 @@ function DogDetailsPage() {
             return (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between mb-6">
-                  <Typography variant="h4">Pedigree (3 Generations)</Typography>
+                  <Typography variant="h4">{t('dogs.sections.pedigree')}</Typography>
                   {user && (
                     <div className="flex gap-2">
                       {fatherTree && (
@@ -464,7 +466,7 @@ function DogDetailsPage() {
                           size="sm"
                           onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/father`)}
                         >
-                          ✏️ Edit Father's Line
+                          ✏️ {t('dogs.actions.editFatherLine')}
                         </Button>
                       )}
                       {motherTree && (
@@ -473,7 +475,7 @@ function DogDetailsPage() {
                           size="sm"
                           onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/mother`)}
                         >
-                          ✏️ Edit Mother's Line
+                          ✏️ {t('dogs.actions.editMotherLine')}
                         </Button>
                       )}
                     </div>

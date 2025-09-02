@@ -17,7 +17,8 @@
     "logout": "Logout",
     "search": "Search",
     "loading": "Loading...",
-    "submit": "Submit"
+    "submit": "Submit",
+    "editContent": "Edit"
   },
   "common": {
     "title": "Title",

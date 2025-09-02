@@ -5,10 +5,12 @@ import Button from '../components/ui/Button';
 import { contentService } from '../services/supabaseService';
 import type { ContentSection } from '../services/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 function PuppiesPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { t } = useTranslation('pages');
     const [contentSections, setContentSections] = useState<ContentSection[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -85,7 +87,7 @@ function PuppiesPage() {
                                 onClick={() => navigate(`/admin/content/edit/${statusContent.section_key}`)}
                                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 border-gray-300"
                             >
-                                ✏️ Edit
+                                ✏️ {t('actions.editContent', 'common')}
                             </Button>
                         )}
                         <div className="flex items-center gap-4">
@@ -120,7 +122,7 @@ function PuppiesPage() {
                                     onClick={() => navigate(`/admin/content/edit/${introContent.section_key}`)}
                                     className="text-gray-500 hover:text-gray-700 border-gray-300"
                                 >
-                                    ✏️ Edit
+                                    ✏️ {t('actions.editContent', 'common')}
                                 </Button>
                             )}
                         </div>
@@ -144,7 +146,7 @@ function PuppiesPage() {
                                     onClick={() => navigate(`/admin/content/edit/${includesContent.section_key}`)}
                                     className="text-gray-500 hover:text-gray-700 border-gray-300"
                                 >
-                                    ✏️ Edit
+                                    ✏️ {t('actions.editContent', 'common')}
                                 </Button>
                             )}
                         </div>
@@ -166,7 +168,7 @@ function PuppiesPage() {
                                     onClick={() => navigate(`/admin/content/edit/${contactTextContent.section_key}`)}
                                     className="text-gray-500 hover:text-gray-700 border-gray-300"
                                 >
-                                    ✏️ Edit
+                                    ✏️ {t('actions.editContent', 'common')}
                                 </Button>
                             )}
                         </div>
@@ -176,7 +178,7 @@ function PuppiesPage() {
 
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
                             <Typography variant="body" className="text-lg text-gray-700">
-                                E-mail:
+                                {t('common.email', 'common')}:
                             </Typography>
                             <Button
                                 variant="ghost"

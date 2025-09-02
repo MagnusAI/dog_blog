@@ -96,8 +96,35 @@
   },
   "content": {
     "title": "Content Management",
+    "sections": {
+      "overview": "Content Overview",
+      "editSection": "Edit Section",
+      "addSection": "Add Section"
+    },
+    "labels": {
+      "sectionKey": "Section Key",
+      "sectionType": "Section Type",
+      "sortOrder": "Sort Order",
+      "page": "Page",
+      "isActive": "Is Active"
+    },
+    "types": {
+      "text": "Text",
+      "list": "List",
+      "card": "Card"
+    },
     "actions": {
-      "editContent": "Edit Content"
+      "editContent": "Edit Content",
+      "editSection": "Edit",
+      "deleteSection": "Delete",
+      "addNewSection": "Add New Section"
+    },
+    "messages": {
+      "loadingContent": "Loading content...",
+      "noSections": "No sections found.",
+      "confirmDelete": "Are you sure you want to delete this section?",
+      "deleteSuccess": "Section deleted successfully",
+      "saveSuccess": "Section saved successfully"
     }
   }
 }

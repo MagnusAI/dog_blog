@@ -3,12 +3,14 @@ import Typography from './ui/Typography';
 import Button from './ui/Button';
 import { contentService } from '../services/supabaseService';
 import type { ContentSection, ContentSectionUpdateData } from '../services/supabaseService';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface ContentManagerProps {
   onClose?: () => void;
 }
 
 function ContentManager({ onClose }: ContentManagerProps) {
+  const { t } = useTranslation('content');
   const [contentSections, setContentSections] = useState<ContentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSection, setEditingSection] = useState<ContentSection | null>(null);
@@ -122,7 +124,7 @@ function ContentManager({ onClose }: ContentManagerProps) {
       <div className="min-h-screen bg-white p-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">
-            <Typography variant="body" color="secondary">Loading content sections...</Typography>
+            <Typography variant="body" color="secondary">{t('messages.loadingContent')}</Typography>
           </div>
         </div>
       </div>
@@ -135,7 +137,7 @@ function ContentManager({ onClose }: ContentManagerProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Typography variant="h1" weight="bold" className="text-3xl md:text-4xl text-gray-900">
-            Content Management
+            {t('title')}
           </Typography>
           {onClose && (
             <Button variant="ghost" onClick={onClose}>

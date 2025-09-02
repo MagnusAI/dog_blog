@@ -96,8 +96,35 @@
   },
   "content": {
     "title": "Indholdsadministration",
+    "sections": {
+      "overview": "Indholdsovversigt",
+      "editSection": "Rediger Sektion",
+      "addSection": "Tilføj Sektion"
+    },
+    "labels": {
+      "sectionKey": "Sektion Nøgle",
+      "sectionType": "Sektion Type",
+      "sortOrder": "Sorteringsrækkefølge",
+      "page": "Side",
+      "isActive": "Er Aktiv"
+    },
+    "types": {
+      "text": "Tekst",
+      "list": "Liste",
+      "card": "Kort"
+    },
     "actions": {
-      "editContent": "Rediger Indhold"
+      "editContent": "Rediger Indhold",
+      "editSection": "Rediger",
+      "deleteSection": "Slet",
+      "addNewSection": "Tilføj Ny Sektion"
+    },
+    "messages": {
+      "loadingContent": "Indlæser indhold...",
+      "noSections": "Ingen sektioner fundet.",
+      "confirmDelete": "Er du sikker på, at du vil slette denne sektion?",
+      "deleteSuccess": "Sektion slettet succesfuldt",
+      "saveSuccess": "Sektion gemt succesfuldt"
     }
   }
 }

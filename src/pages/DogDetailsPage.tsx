@@ -408,9 +408,21 @@ function DogDetailsPage() {
       </div>
 
       {/* Titles Section */}
-      {dog.titles && dog.titles.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <Typography variant="h4" className="mb-4">Titles & Achievements</Typography>
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <Typography variant="h4">Titles & Achievements</Typography>
+          {user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/titles`)}
+              className="text-gray-500 hover:text-gray-700 border-gray-300"
+            >
+              ✏️ Edit Titles
+            </Button>
+          )}
+        </div>
+        {dog.titles && dog.titles.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {dog.titles.map((title, index) => (
               <Badge key={index} variant="secondary">
@@ -419,8 +431,15 @@ function DogDetailsPage() {
               </Badge>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <Typography variant="body" color="secondary">
+            No titles added yet.
+            {user && (
+              <> Click "Edit Titles" to add achievements.</>
+            )}
+          </Typography>
+        )}
+      </div>
 
       {/* Full Width Content */}
       <div className="space-y-6">

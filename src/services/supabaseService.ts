@@ -605,6 +605,55 @@ export const dogService = {
     if (errors.length > 0) {
       throw new Error(`Failed to reorder images: ${errors.map(e => e.error?.message).join(', ')}`);
     }
+  },
+
+  // Title management
+  async addTitle(dogId: string, titleData: { title_code: string; year_earned?: number }): Promise<Title> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('titles')
+      .insert({
+        dog_id: dogId,
+        title_code: titleData.title_code,
+        year_earned: titleData.year_earned
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async updateTitle(titleId: number, titleData: { title_code: string; year_earned?: number }): Promise<Title> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('titles')
+      .update({
+        title_code: titleData.title_code,
+        year_earned: titleData.year_earned
+      })
+      .eq('id', titleId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteTitle(titleId: number): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('titles')
+      .delete()
+      .eq('id', titleId);
+    
+    if (error) throw error;
   }
 };
 

@@ -3,18 +3,21 @@ import { HashRouter as Router, Routes, Route, useNavigate } from 'react-router-d
 import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContentManagementPage, ContentEditPage, TitlesEditPage, LoginPage, PedigreeFormPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const navigationLinks = [
-    { label: "Home", href: "#/" },
-    { label: "Dogs", href: "#/dogs" },
-    { label: "News", href: "#/news" },
-    { label: "Puppies", href: "#/puppies" }
+    { label: t('navigation.home'), href: "#/" },
+    { label: t('navigation.dogs'), href: "#/dogs" },
+    { label: t('navigation.news'), href: "#/news" },
+    { label: t('navigation.puppies'), href: "#/puppies" }
   ];
 
   const handleLoginClick = () => {
@@ -30,19 +33,24 @@ function AppContent() {
     }
   };
 
-  const actionItem = user ? (
-    <div className="flex items-center space-x-2">
-      <span className="text-sm text-gray-600">
-        {user.email}
-      </span>
-      <Button variant="ghost" size="sm" onClick={handleLogoutClick}>
-        Logout
-      </Button>
+  const actionItem = (
+    <div className="flex items-center space-x-3">
+      <LanguageSwitcher />
+      {user ? (
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-600">
+            {user.email}
+          </span>
+          <Button variant="ghost" size="sm" onClick={handleLogoutClick}>
+            {t('actions.logout')}
+          </Button>
+        </div>
+      ) : (
+        <Button variant="primary" size="sm" onClick={handleLoginClick}>
+          {t('actions.login')}
+        </Button>
+      )}
     </div>
-  ) : (
-    <Button variant="primary" size="sm" onClick={handleLoginClick}>
-      Login
-    </Button>
   );
 
   return (
@@ -120,11 +128,13 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

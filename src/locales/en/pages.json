@@ -1,0 +1,103 @@
+{
+  "home": {
+    "header": {
+      "title": "Kennel Speedex",
+      "subtitle": "Breeding under DKK and FCI"
+    },
+    "sections": {
+      "latestNews": "Latest News",
+      "featuredDogs": "Meet Our Dogs",
+      "contact": "Contact",
+      "seeAllNews": "See All News",
+      "seeAllDogs": "See All Our Dogs"
+    },
+    "messages": {
+      "noNews": "No news yet. Come back later!",
+      "loadingNews": "Loading news...",
+      "loadingDogs": "Loading dogs...",
+      "contactText": "For questions about our breeding or information about upcoming litters."
+    }
+  },
+  "dogs": {
+    "title": "Our Dogs",
+    "sections": {
+      "basicInfo": "Basic Information",
+      "titlesAchievements": "Titles & Achievements",
+      "pedigree": "Pedigree (3 Generations)",
+      "offspring": "Offspring"
+    },
+    "labels": {
+      "breed": "Breed",
+      "registrationId": "Registration ID",
+      "birthDate": "Birth Date",
+      "age": "Age",
+      "color": "Color",
+      "deathDate": "Death Date",
+      "titles": "Titles",
+      "offspring": "Offspring",
+      "male": "Male",
+      "female": "Female",
+      "deceased": "Deceased",
+      "yearsOld": "{{count}} years old",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "editDog": "Edit Dog",
+      "editTitles": "Edit Titles",
+      "editFatherLine": "Edit Father's Line",
+      "editMotherLine": "Edit Mother's Line",
+      "backToDogs": "Back to Dogs"
+    },
+    "messages": {
+      "noTitles": "No titles added yet.",
+      "clickEditTitles": "Click \"Edit Titles\" to add achievements.",
+      "dogNotFound": "Dog not found",
+      "loadingDog": "Loading dog details...",
+      "photoComingSoon": "Photo coming soon"
+    }
+  },
+  "news": {
+    "title": "News",
+    "actions": {
+      "addNews": "Add News",
+      "editNews": "Edit News",
+      "readMore": "Read more"
+    }
+  },
+  "puppies": {
+    "title": "Puppies at Kennel Speedex",
+    "sections": {
+      "puppyPhotos": "Pictures of our puppies"
+    },
+    "messages": {
+      "morePicturesComing": "More pictures coming"
+    }
+  },
+  "titles": {
+    "title": "Edit Titles & Achievements",
+    "sections": {
+      "addNew": "Add New Title",
+      "current": "Current Titles ({{count}})"
+    },
+    "labels": {
+      "titleCode": "Title Code",
+      "yearEarned": "Year Earned"
+    },
+    "messages": {
+      "noTitles": "No titles added yet. Add the first title above.",
+      "titleCodeRequired": "Title code is required",
+      "titleAdded": "Title added successfully",
+      "titleUpdated": "Title updated successfully",
+      "titleDeleted": "Title deleted successfully",
+      "addTitle": "Add Title",
+      "adding": "Adding...",
+      "helpText": "Common Title Abbreviations: CH (Champion), CACIB (International Beauty Champion), BIS (Best in Show), BOB (Best of Breed), BIG (Best in Group), CC (Challenge Certificate), JCH (Junior Champion), VCH (Veteran Champion)"
+    }
+  },
+  "content": {
+    "title": "Content Management",
+    "actions": {
+      "editContent": "Edit Content"
+    }
+  }
+}

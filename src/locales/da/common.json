@@ -1,0 +1,42 @@
+{
+  "navigation": {
+    "home": "Hjem",
+    "dogs": "Hunde",
+    "news": "Nyheder",
+    "puppies": "Hvalpe"
+  },
+  "actions": {
+    "edit": "Rediger",
+    "save": "Gem",
+    "cancel": "Annuller",
+    "delete": "Slet",
+    "add": "Tilføj",
+    "back": "Tilbage",
+    "close": "Luk",
+    "login": "Log ind",
+    "logout": "Log ud",
+    "search": "Søg",
+    "loading": "Indlæser...",
+    "submit": "Send"
+  },
+  "common": {
+    "title": "Titel",
+    "name": "Navn",
+    "date": "Dato",
+    "year": "År",
+    "email": "E-mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "status": "Status",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "required": "Påkrævet",
+    "optional": "Valgfri",
+    "yes": "Ja",
+    "no": "Nej"
+  },
+  "language": {
+    "danish": "Dansk",
+    "english": "English"
+  }
+}

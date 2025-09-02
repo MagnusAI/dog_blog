@@ -1,0 +1,39 @@
+{
+  "labels": {
+    "title": "Title",
+    "content": "Content",
+    "image": "Image",
+    "breed": "Breed",
+    "gender": "Gender",
+    "birthDate": "Birth Date",
+    "deathDate": "Death Date",
+    "color": "Color",
+    "nickname": "Nickname",
+    "registrationId": "Registration ID",
+    "titleCode": "Title Code",
+    "yearEarned": "Year Earned"
+  },
+  "placeholders": {
+    "enterTitle": "Enter title...",
+    "enterContent": "Enter content...",
+    "searchDogs": "Search for dogs...",
+    "selectBreed": "Select breed",
+    "selectYear": "Select year (optional)",
+    "enterTitleCode": "e.g. CH, CACIB, BIS, etc."
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Minimum {{count}} characters required",
+    "maxLength": "Maximum {{count}} characters allowed",
+    "invalidEmail": "Invalid email address",
+    "invalidDate": "Invalid date"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "saveError": "Error saving",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Error deleting",
+    "loadError": "Error loading",
+    "confirmDelete": "Are you sure you want to delete this?"
+  }
+}

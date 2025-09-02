@@ -1,0 +1,42 @@
+{
+  "navigation": {
+    "home": "Home",
+    "dogs": "Dogs",
+    "news": "News",
+    "puppies": "Puppies"
+  },
+  "actions": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "back": "Back",
+    "close": "Close",
+    "login": "Login",
+    "logout": "Logout",
+    "search": "Search",
+    "loading": "Loading...",
+    "submit": "Submit"
+  },
+  "common": {
+    "title": "Title",
+    "name": "Name",
+    "date": "Date",
+    "year": "Year",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "required": "Required",
+    "optional": "Optional",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "language": {
+    "danish": "Dansk",
+    "english": "English"
+  }
+}

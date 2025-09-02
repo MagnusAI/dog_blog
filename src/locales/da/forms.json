@@ -1,0 +1,39 @@
+{
+  "labels": {
+    "title": "Titel",
+    "content": "Indhold",
+    "image": "Billede",
+    "breed": "Race",
+    "gender": "Køn",
+    "birthDate": "Fødselsdato",
+    "deathDate": "Dødsdato",
+    "color": "Farve",
+    "nickname": "Kaldenavn",
+    "registrationId": "Registrerings-ID",
+    "titleCode": "Titelkode",
+    "yearEarned": "År opnået"
+  },
+  "placeholders": {
+    "enterTitle": "Indtast titel...",
+    "enterContent": "Indtast indhold...",
+    "searchDogs": "Søg efter hunde...",
+    "selectBreed": "Vælg race",
+    "selectYear": "Vælg år (valgfrit)",
+    "enterTitleCode": "f.eks. CH, CACIB, BIS, osv."
+  },
+  "validation": {
+    "required": "Dette felt er påkrævet",
+    "minLength": "Minimum {{count}} tegn påkrævet",
+    "maxLength": "Maksimum {{count}} tegn tilladt",
+    "invalidEmail": "Ugyldig e-mailadresse",
+    "invalidDate": "Ugyldig dato"
+  },
+  "messages": {
+    "saveSuccess": "Gemt med succes",
+    "saveError": "Fejl ved gemning",
+    "deleteSuccess": "Slettet med succes",
+    "deleteError": "Fejl ved sletning",
+    "loadError": "Fejl ved indlæsning",
+    "confirmDelete": "Er du sikker på, at du vil slette dette?"
+  }
+}

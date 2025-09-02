@@ -1,0 +1,103 @@
+{
+  "home": {
+    "header": {
+      "title": "Kennel Speedex",
+      "subtitle": "Opdræt under DKK og FCI"
+    },
+    "sections": {
+      "latestNews": "Seneste Nyheder",
+      "featuredDogs": "Mød Vores Hunde",
+      "contact": "Kontakt",
+      "seeAllNews": "Se Alle Nyheder",
+      "seeAllDogs": "Se Alle Vores Hunde"
+    },
+    "messages": {
+      "noNews": "Ingen nyheder endnu. Kom tilbage senere!",
+      "loadingNews": "Indlæser nyheder...",
+      "loadingDogs": "Indlæser hunde...",
+      "contactText": "For spørgsmål om vores opdræt eller information om kommende kuld."
+    }
+  },
+  "dogs": {
+    "title": "Vores Hunde",
+    "sections": {
+      "basicInfo": "Grundlæggende Information",
+      "titlesAchievements": "Titler & Præstationer",
+      "pedigree": "Stamtavle (3 Generationer)",
+      "offspring": "Afkom"
+    },
+    "labels": {
+      "breed": "Race",
+      "registrationId": "Registrerings-ID",
+      "birthDate": "Fødselsdato",
+      "age": "Alder",
+      "color": "Farve",
+      "deathDate": "Dødsdato",
+      "titles": "Titler",
+      "offspring": "Afkom",
+      "male": "Han",
+      "female": "Hun",
+      "deceased": "Afdød",
+      "yearsOld": "{{count}} år gammel",
+      "unknown": "Ukendt"
+    },
+    "actions": {
+      "editDog": "Rediger Hund",
+      "editTitles": "Rediger Titler",
+      "editFatherLine": "Rediger Fars Linje",
+      "editMotherLine": "Rediger Mors Linje",
+      "backToDogs": "Tilbage til Hunde"
+    },
+    "messages": {
+      "noTitles": "Ingen titler tilføjet endnu.",
+      "clickEditTitles": "Klik \"Rediger Titler\" for at tilføje præstationer.",
+      "dogNotFound": "Hund ikke fundet",
+      "loadingDog": "Indlæser hundeoplysninger...",
+      "photoComingSoon": "Foto kommer snart"
+    }
+  },
+  "news": {
+    "title": "Nyheder",
+    "actions": {
+      "addNews": "Tilføj Nyhed",
+      "editNews": "Rediger Nyhed",
+      "readMore": "Læs mere"
+    }
+  },
+  "puppies": {
+    "title": "Hvalpe hos Kennel Speedex",
+    "sections": {
+      "puppyPhotos": "Billeder af vores hvalpe"
+    },
+    "messages": {
+      "morePicturesComing": "Flere billeder kommer"
+    }
+  },
+  "titles": {
+    "title": "Rediger Titler & Præstationer",
+    "sections": {
+      "addNew": "Tilføj Ny Titel",
+      "current": "Nuværende Titler ({{count}})"
+    },
+    "labels": {
+      "titleCode": "Titelkode",
+      "yearEarned": "År Opnået"
+    },
+    "messages": {
+      "noTitles": "Ingen titler tilføjet endnu. Tilføj den første titel ovenfor.",
+      "titleCodeRequired": "Titelkode er påkrævet",
+      "titleAdded": "Titel tilføjet med succes",
+      "titleUpdated": "Titel opdateret med succes",
+      "titleDeleted": "Titel slettet med succes",
+      "addTitle": "Tilføj Titel",
+      "adding": "Tilføjer...",
+      "helpText": "Almindelige Titelsforkortelser: CH (Champion), CACIB (International Beauty Champion), BIS (Best in Show), BOB (Best of Breed), BIG (Best in Group), CC (Challenge Certificate), JCH (Junior Champion), VCH (Veteran Champion)"
+    }
+  },
+  "content": {
+    "title": "Indholdsadministration",
+    "actions": {
+      "editContent": "Rediger Indhold"
+    }
+  }
+}

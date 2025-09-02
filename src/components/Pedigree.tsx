@@ -4,7 +4,6 @@ import HorizontalTree, {
   type LineStyle,
 } from "./HorizontalTree";
 import PedigreeCard from "./PedigreeCard";
-import dogPlaceholder from "../assets/dog_placeholder_2.png";
 
 // Pedigree-specific data type
 export type PedigreeData = {
@@ -13,19 +12,16 @@ export type PedigreeData = {
   titles: string[]; // Changed to array to match PedigreeCard
   regnr: string; // Added registration number
   imageUrl?: string; // Optional image URL
+  imagePublicId?: string; // Optional Cloudinary public ID
   fallbackInitials?: string; // Optional fallback initials
 };
 
 // Render function for pedigree data using PedigreeCard
 const renderPedigreeNode = (data: PedigreeData, _level: number) => {
-  // Generate placeholder image URL if not provided
-  const imageUrl =
-    data.imageUrl ||
-    dogPlaceholder;
-
   return (
     <PedigreeCard
-      imageUrl={imageUrl}
+      imageUrl={data.imageUrl || ''}
+      imagePublicId={data.imagePublicId}
       imageAlt={`${data.name} - ${data.relation}`}
       relation={data.relation}
       regnr={data.regnr}

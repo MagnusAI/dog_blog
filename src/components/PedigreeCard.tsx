@@ -1,10 +1,13 @@
 import type { HTMLAttributes } from "react";
 import { Badge, CloseButton, Typography } from "./ui";
-import { useModal, useImageFallback } from "../hooks/useModal";
+import { useModal } from "../hooks/useModal";
+import { useState } from "react";
+import CloudinaryImage from "./CloudinaryImage";
 
 export interface PedigreeCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
   // Image props
-  imageUrl: string;
+  imageUrl?: string;
+  imagePublicId?: string;  // Cloudinary public ID
   imageAlt: string;
   
   // Pedigree details
@@ -20,6 +23,7 @@ export interface PedigreeCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 
 
 const PedigreeCard = ({
   imageUrl,
+  imagePublicId,
   imageAlt,
   relation,
   regnr,
@@ -31,7 +35,7 @@ const PedigreeCard = ({
   ...rest
 }: PedigreeCardProps) => {
   const { isOpen: isExpanded, open: openModal, close: closeModal } = useModal();
-  const { handleError } = useImageFallback(undefined);
+  const [imageError, setImageError] = useState(false);
 
   const handleCardClick = () => {
     openModal();
@@ -42,7 +46,29 @@ const PedigreeCard = ({
     closeModal();
   };
 
-  // Format titles string with ellipsis
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Check if we have a valid image (either Cloudinary publicId or direct URL)
+  const hasCloudinaryImage = imagePublicId && imagePublicId.trim() !== '';
+  const hasDirectImage = imageUrl && imageUrl.trim() !== '' && !imageError;
+  const hasValidImage = hasCloudinaryImage || hasDirectImage;
+  
+  // Debug logging for image URLs
+  if (imagePublicId || imageUrl) {
+    console.log(`PedigreeCard for ${name}:`, {
+      imageUrl,
+      imagePublicId,
+      hasCloudinaryImage,
+      hasDirectImage,
+      hasValidImage,
+      imageError,
+      relation
+    });
+  }
+
+  // Format titles string
   const titlesText = titles.length > 0 ? titles.join(", ") : "";
 
   return (
@@ -63,19 +89,33 @@ const PedigreeCard = ({
       >
         {/* Image */}
         <div className="w-16 h-16 flex-shrink-0">
-          <img
-            src={imageUrl}
-            alt={imageAlt}
-            className="w-full h-full object-cover rounded-md"
-            onError={handleError}
-          />
-          {/* Fallback */}
-          <div 
-            className="w-full h-full bg-gray-300 rounded-md flex items-center justify-center text-base font-semibold text-gray-600"
-            style={{ display: 'none' }}
-          >
-            {fallbackInitials || name.charAt(0)}
-          </div>
+          {hasValidImage ? (
+            hasCloudinaryImage ? (
+              <CloudinaryImage
+                publicId={imagePublicId!}
+                width={64}
+                height={64}
+                alt={imageAlt}
+                crop="fill"
+                gravity="face"
+                className="w-full h-full rounded-md"
+                enableLazyLoading={false}
+                enablePlaceholder={false}
+                enableAccessibility={false}
+              />
+            ) : (
+              <img
+                src={imageUrl}
+                alt={imageAlt}
+                className="w-full h-full object-cover rounded-md"
+                onError={handleImageError}
+              />
+            )
+          ) : (
+            <div className="w-full h-full bg-gray-300 rounded-md flex items-center justify-center text-base font-semibold text-gray-600">
+              {fallbackInitials || name.charAt(0)}
+            </div>
+          )}
         </div>
 
         {/* Details */}
@@ -137,19 +177,33 @@ const PedigreeCard = ({
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Enlarged Image */}
                 <div className="flex-shrink-0">
-                  <img
-                    src={imageUrl}
-                    alt={imageAlt}
-                    className="w-48 h-48 object-cover rounded-lg shadow-md mx-auto md:mx-0"
-                    onError={handleError}
-                  />
-                  {/* Modal Fallback */}
-                  <div 
-                    className="w-48 h-48 bg-gray-300 rounded-lg shadow-md mx-auto md:mx-0 items-center justify-center text-4xl text-gray-600 font-semibold"
-                    style={{ display: 'none' }}
-                  >
-                    {fallbackInitials || name.charAt(0)}
-                  </div>
+                  {hasValidImage ? (
+                    hasCloudinaryImage ? (
+                      <CloudinaryImage
+                        publicId={imagePublicId!}
+                        width={192}
+                        height={192}
+                        alt={imageAlt}
+                        crop="fill"
+                        gravity="face"
+                        className="w-48 h-48 rounded-lg shadow-md mx-auto md:mx-0"
+                        enableLazyLoading={false}
+                        enablePlaceholder={false}
+                        enableAccessibility={false}
+                      />
+                    ) : (
+                      <img
+                        src={imageUrl}
+                        alt={imageAlt}
+                        className="w-48 h-48 object-cover rounded-lg shadow-md mx-auto md:mx-0"
+                        onError={handleImageError}
+                      />
+                    )
+                  ) : (
+                    <div className="w-48 h-48 bg-gray-300 rounded-lg shadow-md mx-auto md:mx-0 flex items-center justify-center text-4xl text-gray-600 font-semibold">
+                      {fallbackInitials || name.charAt(0)}
+                    </div>
+                  )}
                 </div>
                 
                 {/* Detailed Information */}

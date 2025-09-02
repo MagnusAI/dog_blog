@@ -98,22 +98,23 @@ function DogDetailsPage() {
 
   // Helper function to convert dog data to pedigree data format
   const dogToPedigreeData = (dog: any, relation: string): PedigreeData => {
-    // Try to get image URL from the dog's profile image if available
+    // Try to get image data from the dog's profile image if available
     let imageUrl: string | undefined;
+    let imagePublicId: string | undefined;
     
     // Check if profile_image is an array (from ancestor data) or a single object
     let profileImage;
     if (Array.isArray(dog.profile_image)) {
       // Filter for profile images (is_profile = true) and take the first one
-      profileImage = dog.profile_image.find(img => img.is_profile) || dog.profile_image[0];
+      profileImage = dog.profile_image.find((img: any) => img.is_profile) || dog.profile_image[0];
     } else {
       profileImage = dog.profile_image;
     }
     
     if (profileImage) {
       if (profileImage.image_public_id) {
-        // For Cloudinary images, we'll construct the URL
-        imageUrl = `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dsstocv9w'}/image/upload/c_fill,w_96,h_96,g_face/${profileImage.image_public_id}`;
+        // Prefer Cloudinary public ID over manual URL construction
+        imagePublicId = profileImage.image_public_id;
       } else if (profileImage.image_url) {
         imageUrl = profileImage.image_url;
       }
@@ -122,8 +123,9 @@ function DogDetailsPage() {
       console.log(`Pedigree node ${dog.name} (${relation}):`, {
         hasProfileImage: !!profileImage,
         publicId: profileImage.image_public_id,
-        imageUrl: profileImage.image_url,
-        constructedUrl: imageUrl,
+        directImageUrl: profileImage.image_url,
+        usingPublicId: !!imagePublicId,
+        usingDirectUrl: !!imageUrl,
         rawProfileImageArray: dog.profile_image
       });
     } else {
@@ -136,7 +138,8 @@ function DogDetailsPage() {
       titles: dog.titles?.map((t: any) => t.title_code) || [],
       regnr: dog.id,
       fallbackInitials: dog.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
-      imageUrl
+      imageUrl,
+      imagePublicId
     };
   };
 

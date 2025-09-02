@@ -1,9 +1,9 @@
 import ClickableImage from "../components/ClickableImage";
+import ClickableCloudinaryImage from "../components/ClickableCloudinaryImage";
 import OptimizedProfilePicture from "../components/OptimizedProfilePicture";
 import PedigreeCard from "../components/PedigreeCard";
 import Pedigree from "../components/Pedigree";
 import NewsPost from "../components/NewsPost";
-import HighlightedNewsPost from "../components/HighlightedNewsPost";
 import DogCard from "../components/DogCard";
 import NewsPostForm from "../components/NewsPostForm";
 import { DogForm } from "../components/DogForm";
@@ -37,6 +37,76 @@ function HomePage() {
             console.log("Form cancelled");
           }}
         />
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold mb-4">🖼️ Clickable Cloudinary Image Demo</h2>
+        <p className="text-gray-600 mb-6">
+          Click on any of these images to see them enlarged. The ClickableCloudinaryImage component automatically provides higher quality for the enlarged version.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* Example 1: Dog portrait */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Dog Portrait</h3>
+            <ClickableCloudinaryImage
+              publicId="samples/animals/kitten-playing"
+              width={300}
+              height={300}
+              alt="Adorable kitten playing"
+              gravity="face"
+              crop="fill"
+              quality="auto"
+              className="rounded-lg shadow-md"
+            />
+          </div>
+
+          {/* Example 2: Landscape orientation */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Landscape Image</h3>
+            <ClickableCloudinaryImage
+              publicId="samples/landscapes/beach-boat"
+              width={300}
+              height={200}
+              alt="Beach with boat"
+              gravity="auto"
+              crop="fill"
+              quality="auto"
+              className="rounded-lg shadow-md"
+            />
+          </div>
+
+          {/* Example 3: Custom enlarged size */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Custom Enlarge Size</h3>
+            <ClickableCloudinaryImage
+              publicId="samples/food/dessert"
+              width={300}
+              height={300}
+              alt="Delicious dessert"
+              enlargedWidth={800}
+              enlargedHeight={600}
+              gravity="center"
+              crop="fill"
+              quality="auto"
+              className="rounded-lg shadow-md"
+            />
+            <p className="text-sm text-gray-500">Enlarges to 800x600px</p>
+          </div>
+        </div>
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-800 mb-2">Usage Example:</h4>
+          <pre className="text-sm bg-white p-3 rounded border overflow-x-auto">
+{`<ClickableCloudinaryImage
+  publicId="your-image-id"
+  width={300}
+  height={300}
+  alt="Description"
+  gravity="face"
+  crop="fill"
+  className="rounded-lg"
+/>`}
+          </pre>
+        </div>
       </div>
 
       <div>

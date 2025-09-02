@@ -7,10 +7,10 @@ import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
 import HorizontalTree, { type TreeNode } from '../components/HorizontalTree';
 import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
-import CloudinaryImage from '../components/CloudinaryImage';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
+import ClickableCloudinaryImage from '../components/ClickableCloudinaryImage';
 
 function DogDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -284,7 +284,7 @@ function DogDetailsPage() {
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
             {profileImage ? (
               profileImage.image_public_id ? (
-                <CloudinaryImage
+                <ClickableCloudinaryImage
                   publicId={profileImage.image_public_id}
                   width={400}
                   height={400}

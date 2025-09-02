@@ -8,15 +8,12 @@
 
   color-scheme: light dark;
   background-color: #242424;
+  color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-form {
-  color: #242424;
 }
 
 body {

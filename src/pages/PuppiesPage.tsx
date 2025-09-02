@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Typography from '../components/ui/Typography';
 import Button from '../components/ui/Button';
 import { contentService } from '../services/supabaseService';
 import type { ContentSection } from '../services/supabaseService';
+import { useAuth } from '../contexts/AuthContext';
 
 function PuppiesPage() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [contentSections, setContentSections] = useState<ContentSection[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -14,7 +18,6 @@ function PuppiesPage() {
 
     const loadPuppiesContent = async () => {
         try {
-            setLoading(true);
             const content = await contentService.getPageContent('puppies');
             setContentSections(content);
         } catch (error) {
@@ -74,7 +77,17 @@ function PuppiesPage() {
             <div className="max-w-6xl mx-auto px-8 py-16">
                 {/* Current Status Card */}
                 {statusContent && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 mb-12">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 mb-12 relative">
+                        {user && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/admin/content/edit/${statusContent.section_key}`)}
+                                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 border-gray-300"
+                            >
+                                ✏️ Edit
+                            </Button>
+                        )}
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,9 +109,21 @@ function PuppiesPage() {
                 {/* Main Content */}
                 {introContent && (
                     <>
-                        <Typography variant="h1" weight="bold" className="text-4xl md:text-5xl text-gray-900 mb-8">
-                            {introContent.title}
-                        </Typography>
+                        <div className="flex items-center justify-between mb-8">
+                            <Typography variant="h1" weight="bold" className="text-4xl md:text-5xl text-gray-900">
+                                {introContent.title}
+                            </Typography>
+                            {user && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/admin/content/edit/${introContent.section_key}`)}
+                                    className="text-gray-500 hover:text-gray-700 border-gray-300"
+                                >
+                                    ✏️ Edit
+                                </Button>
+                            )}
+                        </div>
                         <div className="space-y-8 mb-16">
                             {renderTextContent(introContent.content)}
                         </div>
@@ -108,9 +133,21 @@ function PuppiesPage() {
                 {/* What Comes With Puppies */}
                 {includesContent && (
                     <div className="mb-16">
-                        <Typography variant="h2" weight="bold" className="text-2xl md:text-3xl text-gray-900 mb-8">
-                            {includesContent.title}
-                        </Typography>
+                        <div className="flex items-center justify-between mb-8">
+                            <Typography variant="h2" weight="bold" className="text-2xl md:text-3xl text-gray-900">
+                                {includesContent.title}
+                            </Typography>
+                            {user && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/admin/content/edit/${includesContent.section_key}`)}
+                                    className="text-gray-500 hover:text-gray-700 border-gray-300"
+                                >
+                                    ✏️ Edit
+                                </Button>
+                            )}
+                        </div>
                         {renderListContent(includesContent.content)}
                     </div>
                 )}
@@ -118,6 +155,21 @@ function PuppiesPage() {
                 {/* Interest Contact */}
                 {contactTextContent && (
                     <div className="mb-16">
+                        <div className="flex items-center justify-between mb-6">
+                            <Typography variant="h2" weight="bold" className="text-2xl md:text-3xl text-gray-900">
+                                {contactTextContent.title}
+                            </Typography>
+                            {user && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/admin/content/edit/${contactTextContent.section_key}`)}
+                                    className="text-gray-500 hover:text-gray-700 border-gray-300"
+                                >
+                                    ✏️ Edit
+                                </Button>
+                            )}
+                        </div>
                         <div className="space-y-8 mb-8">
                             {renderTextContent(contactTextContent.content)}
                         </div>

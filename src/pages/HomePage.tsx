@@ -8,9 +8,11 @@ import { newsService, dogService, contentService } from '../services/supabaseSer
 import type { NewsPost as NewsPostType, MyDog, DogImage, ContentSection } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
+import { useAuth } from '../contexts/AuthContext';
 
 function HomePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [latestNews, setLatestNews] = useState<NewsPostType[]>([]);
   const [featuredDogs, setFeaturedDogs] = useState<MyDog[]>([]);
   const [dogImages, setDogImages] = useState<Record<string, DogImage | null>>({});
@@ -23,7 +25,6 @@ function HomePage() {
 
   const loadHomePageData = async () => {
     try {
-      setLoading(true);
 
       // Load latest news (first 3 posts)
       const news = await newsService.getPublishedNewsPosts();
@@ -146,9 +147,21 @@ function HomePage() {
         {aboutContent && (
           <div className="mb-20">
             <div>
-              <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900 mb-8">
-                {aboutContent.title}
-              </Typography>
+              <div className="flex items-center justify-between mb-8">
+                <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900">
+                  {aboutContent.title}
+                </Typography>
+                {user && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/admin/content/edit/${aboutContent.section_key}`)}
+                    className="text-gray-500 hover:text-gray-700 border-gray-300"
+                  >
+                    ✏️ Edit
+                  </Button>
+                )}
+              </div>
 
               <div className="prose prose-lg max-w-none">
                 {aboutContent.content.split('\n\n').map((paragraph, index) => (

@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, useNavigate } from 'react-router-d
 import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContentManagementPage, LoginPage, PedigreeFormPage } from './pages';
+import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContentManagementPage, ContentEditPage, LoginPage, PedigreeFormPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -95,6 +95,11 @@ function AppContent() {
         <Route path="/admin/content" element={
           <ProtectedRoute>
             <ContentManagementPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/content/edit/:sectionKey" element={
+          <ProtectedRoute>
+            <ContentEditPage />
           </ProtectedRoute>
         } />
 

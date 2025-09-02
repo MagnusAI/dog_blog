@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, useNavigate } from 'react-router-d
 import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, LoginPage, PedigreeFormPage } from './pages';
+import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, LoginPage, PedigreeFormPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -13,7 +13,8 @@ function AppContent() {
   const navigationLinks = [
     { label: "Home", href: "#/" },
     { label: "Dogs", href: "#/dogs" },
-    { label: "News", href: "#/news" }
+    { label: "News", href: "#/news" },
+    { label: "Puppies", href: "#/puppies" }
   ];
 
   const handleLoginClick = () => {
@@ -89,6 +90,7 @@ function AppContent() {
             <NewsFormPage />
           </ProtectedRoute>
         } />
+        <Route path="/puppies" element={<PuppiesPage />} />
 
         <Route path="*" element={
           <div className="p-8">

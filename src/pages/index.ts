@@ -4,5 +4,6 @@ export { default as DogFormPage } from './DogFormPage';
 export { default as DogDetailsPage } from './DogDetailsPage';
 export { default as NewsPage } from './NewsPage';
 export { default as NewsFormPage } from './NewsFormPage';
+export { default as PuppiesPage } from './PuppiesPage';
 export { default as LoginPage } from './LoginPage';
 export { default as PedigreeFormPage } from './PedigreeFormPage';

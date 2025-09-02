@@ -72,9 +72,11 @@ const AppBar = ({
                   <button
                     key={index}
                     onClick={() => handleLinkClick(link)}
-                    className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                    className="relative text-gray-600 hover:text-gray-900 transition-colors duration-300 font-medium cursor-pointer group"
                   >
                     {link.label}
+                    {/* Animated underline - center out */}
+                    <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gray-900 transition-all duration-300 ease-out group-hover:w-full group-hover:left-0"></span>
                   </button>
                 ))}
               </nav>
@@ -97,7 +99,7 @@ const AppBar = ({
             >
               {logo || (
                 <Typography variant="h5" weight="bold" color="primary">
-                  LOGO
+                  Kennel Speedex
                 </Typography>
               )}
             </div>
@@ -186,7 +188,7 @@ const AppBar = ({
               <button
                 key={index}
                 onClick={() => handleLinkClick(link)}
-                className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors font-medium"
+                className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-all duration-200 font-medium cursor-pointer transform hover:translate-x-1"
               >
                 {link.label}
               </button>

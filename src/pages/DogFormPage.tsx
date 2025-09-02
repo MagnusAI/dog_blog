@@ -3,12 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { DogForm } from '../components/DogForm';
 import Button from '../components/ui/Button';
 import { dogService, type Dog } from '../services/supabaseService';
-import { useAuth } from '../contexts/AuthContext';
+
 
 function DogFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dogExists, setDogExists] = useState<boolean | null>(null);
@@ -46,7 +46,7 @@ function DogFormPage() {
     }
   };
 
-  const handleDogSave = (dog: Dog) => {
+  const handleDogSave = (_dog: Dog) => {
     // Navigate back to dogs page after successful save
     navigate('/dogs');
   };

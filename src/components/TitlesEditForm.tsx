@@ -73,7 +73,8 @@ function TitlesEditForm({ dogId, onClose }: TitlesEditFormProps) {
       
       // Decode the dog ID to handle encoded special characters like forward slashes
       const decodedDogId = decodeDogId(dogId);
-      await dogService.addTitle(decodedDogId, {
+      await dogService.addTitle({
+        dog_id: decodedDogId,
         title_code: newTitle.title_code.trim(),
         year_earned: newTitle.year_earned
       });

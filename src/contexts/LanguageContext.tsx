@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 // Supported languages
 export type Language = 'da' | 'en';
@@ -157,7 +157,14 @@ export function useTranslation(namespace: string = 'common') {
   const { t, language, setLanguage, isLoading } = useLanguage();
   
   return {
-    t: (key: string, params?: Record<string, string | number>) => t(key, namespace, params),
+    t: (key: string, paramsOrNamespace?: Record<string, string | number> | string, params?: Record<string, string | number>) => {
+      // If second parameter is a string, it's a namespace
+      if (typeof paramsOrNamespace === 'string') {
+        return t(key, paramsOrNamespace, params);
+      }
+      // If second parameter is an object, it's parameters for the default namespace
+      return t(key, namespace, paramsOrNamespace);
+    },
     language,
     setLanguage,
     isLoading

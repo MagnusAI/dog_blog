@@ -10,6 +10,7 @@ import { renderPedigreeNode, type PedigreeData } from '../components/Pedigree';
 import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
+
 import ClickableCloudinaryImage from '../components/ClickableCloudinaryImage';
 
 function DogDetailsPage() {
@@ -75,6 +76,8 @@ function DogDetailsPage() {
     setShowEditForm(false);
   };
 
+
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Unknown';
     return new Date(dateString).toLocaleDateString();
@@ -95,13 +98,24 @@ function DogDetailsPage() {
 
   // Helper function to convert dog data to pedigree data format
   const dogToPedigreeData = (dog: any, relation: string): PedigreeData => {
+    // Try to get image URL from the dog's profile image if available
+    let imageUrl: string | undefined;
+    if (dog.profile_image) {
+      if (dog.profile_image.image_public_id) {
+        // For Cloudinary images, we'll construct the URL
+        imageUrl = `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dsstocv9w'}/image/upload/c_fill,w_96,h_96,g_face/${dog.profile_image.image_public_id}`;
+      } else if (dog.profile_image.image_url) {
+        imageUrl = dog.profile_image.image_url;
+      }
+    }
+
     return {
       relation,
       name: dog.name,
       titles: dog.titles?.map((t: any) => t.title_code) || [],
       regnr: dog.id,
       fallbackInitials: dog.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
-      imageUrl: undefined // We'll use fallback initials for now
+      imageUrl
     };
   };
 
@@ -397,7 +411,31 @@ function DogDetailsPage() {
             
             return (
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <Typography variant="h4" className="mb-6">Pedigree (3 Generations)</Typography>
+                <div className="flex items-center justify-between mb-6">
+                  <Typography variant="h4">Pedigree (3 Generations)</Typography>
+                  {user && (
+                    <div className="flex gap-2">
+                      {fatherTree && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/father`)}
+                        >
+                          ✏️ Edit Father's Line
+                        </Button>
+                      )}
+                      {motherTree && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/mother`)}
+                        >
+                          ✏️ Edit Mother's Line
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="space-y-8 lg:flex gap-4 ">
                   {fatherTree && (
                     <div>
@@ -529,6 +567,8 @@ function DogDetailsPage() {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }

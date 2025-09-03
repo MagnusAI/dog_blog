@@ -3,19 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Debug logging for deployment
-console.log('Environment check:', {
-  hasUrl: !!supabaseUrl,
-  hasKey: !!supabaseAnonKey,
-  urlStart: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : 'missing',
-  keyStart: supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'missing'
-});
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing environment variables:', {
-    VITE_SUPABASE_URL: !!supabaseUrl,
-    VITE_SUPABASE_PUBLISHABLE_KEY: !!supabaseAnonKey
-  });
   throw new Error('Missing Supabase environment variables');
 }
 
@@ -29,7 +17,7 @@ export const authService = {
       email,
       password,
     });
-    
+
     if (error) throw error;
     return data;
   },
@@ -225,7 +213,7 @@ export const dogService = {
       .from('breeds')
       .select('*')
       .order('name');
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -236,7 +224,7 @@ export const dogService = {
       .insert(breed)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -248,7 +236,7 @@ export const dogService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -258,7 +246,7 @@ export const dogService = {
       .from('breeds')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -271,11 +259,11 @@ export const dogService = {
         breed:breeds(*)
       `)
       .order('name');
-    
+
     if (limit) {
       query = query.limit(limit);
     }
-    
+
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
@@ -316,7 +304,7 @@ export const dogService = {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null; // Not found
       throw error;
@@ -335,7 +323,7 @@ export const dogService = {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null; // Not found
       throw error;
@@ -349,7 +337,7 @@ export const dogService = {
       .insert(dog)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -361,7 +349,7 @@ export const dogService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -371,7 +359,7 @@ export const dogService = {
       .from('dogs')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -382,7 +370,7 @@ export const dogService = {
       .select('*')
       .eq('dog_id', dogId)
       .order('year_earned', { ascending: false });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -393,7 +381,7 @@ export const dogService = {
       .insert(title)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -405,7 +393,7 @@ export const dogService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -415,7 +403,7 @@ export const dogService = {
       .from('titles')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -429,7 +417,7 @@ export const dogService = {
       `)
       .eq('dog_id', dogId)
       .order('relationship_type');
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -442,7 +430,7 @@ export const dogService = {
       .insert(relationship)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -452,11 +440,11 @@ export const dogService = {
       .from('pedigree_relationships')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
-    // My Dogs
+  // My Dogs
   async getMyDogs(): Promise<MyDog[]> {
     const { data, error } = await supabase
       .from('my_dogs')
@@ -468,7 +456,7 @@ export const dogService = {
         )
       `)
       .order('acquisition_date', { ascending: false });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -479,7 +467,7 @@ export const dogService = {
       .insert(myDog)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -491,7 +479,7 @@ export const dogService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -501,7 +489,7 @@ export const dogService = {
       .from('my_dogs')
       .delete()
       .eq('dog_id', dogId);
-    
+
     if (error) throw error;
   },
 
@@ -516,7 +504,7 @@ export const dogService = {
       .or(`name.ilike.%${query}%,id.ilike.%${query}%`)
       .order('name')
       .limit(20);
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -531,7 +519,7 @@ export const dogService = {
         .order('is_profile', { ascending: false })
         .order('display_order', { ascending: true })
         .order('created_at', { ascending: true });
-      
+
       if (error) throw error;
       return data || [];
     } catch (error: any) {
@@ -545,18 +533,18 @@ export const dogService = {
   },
 
   async getDogProfileImage(dogId: string): Promise<DogImage | null> {
-      const { data, error } = await supabase
-        .from('dog_images')
-        .select('*')
-        .eq('dog_id', dogId)
-        .eq('is_profile', true)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile image:', error);
-        return null; // Return null instead of throwing
-      }
-      return data;
+    const { data, error } = await supabase
+      .from('dog_images')
+      .select('*')
+      .eq('dog_id', dogId)
+      .eq('is_profile', true)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile image:', error);
+      return null; // Return null instead of throwing
+    }
+    return data;
   },
 
   async addDogImage(image: Omit<DogImage, 'id' | 'created_at' | 'updated_at'>): Promise<DogImage> {
@@ -565,7 +553,7 @@ export const dogService = {
       .insert(image)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -577,7 +565,7 @@ export const dogService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -587,7 +575,7 @@ export const dogService = {
       .from('dog_images')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -598,7 +586,7 @@ export const dogService = {
       .update({ is_profile: true })
       .eq('id', imageId)
       .eq('dog_id', dogId);
-    
+
     if (error) throw error;
   },
 
@@ -610,10 +598,10 @@ export const dogService = {
         .update({ display_order })
         .eq('id', id)
     );
-    
+
     const results = await Promise.all(updates);
     const errors = results.filter(result => result.error);
-    
+
     if (errors.length > 0) {
       throw new Error(`Failed to reorder images: ${errors.map(e => e.error?.message).join(', ')}`);
     }
@@ -634,9 +622,9 @@ export const newsService = {
       `)
       .eq('status', 'published')
       .order('published_date', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     // Transform the data to match our interface
     return data?.map(post => ({
       ...post,
@@ -659,12 +647,12 @@ export const newsService = {
       .order('published_date', { ascending: false })
       .limit(1)
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null; // No rows found
       throw error;
     }
-    
+
     // Transform the data to match our interface
     return {
       ...data,
@@ -685,12 +673,12 @@ export const newsService = {
       .eq('id', id)
       .eq('status', 'published')
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    
+
     return {
       ...data,
       tagged_dogs: data.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
@@ -710,12 +698,12 @@ export const newsService = {
       .eq('slug', slug)
       .eq('status', 'published')
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    
+
     return {
       ...data,
       tagged_dogs: data.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
@@ -737,9 +725,9 @@ export const newsService = {
       `)
       .eq('author_id', user.id)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     return data?.map(post => ({
       ...post,
       tagged_dogs: post.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
@@ -752,7 +740,7 @@ export const newsService = {
     if (!user) throw new Error('User not authenticated');
 
     const { tagged_dog_ids, ...postData } = newsPostData;
-    
+
     // Create the news post
     const { data: newsPost, error: postError } = await supabase
       .from('news_posts')
@@ -762,7 +750,7 @@ export const newsService = {
       })
       .select()
       .single();
-    
+
     if (postError) throw postError;
 
     // Add dog tags if provided
@@ -775,7 +763,7 @@ export const newsService = {
       const { error: tagsError } = await supabase
         .from('news_posts_dogs')
         .insert(dogTags);
-      
+
       if (tagsError) throw tagsError;
     }
 
@@ -799,7 +787,7 @@ export const newsService = {
       .eq('author_id', user.id) // Ensure user owns the post
       .select()
       .single();
-    
+
     if (postError) throw postError;
 
     // Update dog tags if provided
@@ -820,7 +808,7 @@ export const newsService = {
         const { error: tagsError } = await supabase
           .from('news_posts_dogs')
           .insert(dogTags);
-        
+
         if (tagsError) throw tagsError;
       }
     }
@@ -840,7 +828,7 @@ export const newsService = {
       .delete()
       .eq('id', id)
       .eq('author_id', user.id); // Ensure user owns the post
-    
+
     if (error) throw error;
   },
 
@@ -863,9 +851,9 @@ export const newsService = {
       .eq('author_id', user.id)
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     const updatedPost = await this.getNewsPostById(id);
     return updatedPost || newsPost;
   }
@@ -881,7 +869,7 @@ export const contentService = {
       .eq('page', page)
       .eq('is_active', true)
       .order('sort_order', { ascending: true });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -894,12 +882,12 @@ export const contentService = {
       .eq('section_key', sectionKey)
       .eq('is_active', true)
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    
+
     return data;
   },
 
@@ -913,7 +901,7 @@ export const contentService = {
       .select('*')
       .order('page', { ascending: true })
       .order('sort_order', { ascending: true });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -928,7 +916,7 @@ export const contentService = {
       .insert(contentData)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -944,7 +932,7 @@ export const contentService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
@@ -958,7 +946,7 @@ export const contentService = {
       .from('content_sections')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
   },
 
@@ -973,7 +961,7 @@ export const contentService = {
       .select('is_active')
       .eq('id', id)
       .single();
-    
+
     if (fetchError) throw fetchError;
 
     // Toggle status
@@ -983,7 +971,7 @@ export const contentService = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }

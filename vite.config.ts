@@ -5,4 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [tailwindcss()],
   base: '/dog_blog/',
+  build: {
+    outDir: 'dist',
+    sourcemap: true
+  }
 })

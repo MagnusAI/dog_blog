@@ -4,7 +4,6 @@ import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
-import LanguageSwitcher from './components/LanguageSwitcher';
 import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContentManagementPage, ContentEditPage, TitlesEditPage, LoginPage, PedigreeFormPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 

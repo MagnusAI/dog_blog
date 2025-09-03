@@ -54,19 +54,6 @@ const PedigreeCard = ({
   const hasCloudinaryImage = imagePublicId && imagePublicId.trim() !== '';
   const hasDirectImage = imageUrl && imageUrl.trim() !== '' && !imageError;
   const hasValidImage = hasCloudinaryImage || hasDirectImage;
-  
-  // Debug logging for image URLs
-  if (imagePublicId || imageUrl) {
-    console.log(`PedigreeCard for ${name}:`, {
-      imageUrl,
-      imagePublicId,
-      hasCloudinaryImage,
-      hasDirectImage,
-      hasValidImage,
-      imageError,
-      relation
-    });
-  }
 
   // Format titles string
   const titlesText = titles.length > 0 ? titles.join(", ") : "";

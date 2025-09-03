@@ -121,16 +121,6 @@ function DogDetailsPage() {
       } else if (profileImage.image_url) {
         imageUrl = profileImage.image_url;
       }
-      
-      // Debug logging to see if images are being found
-      console.log(`Pedigree node ${dog.name} (${relation}):`, {
-        hasProfileImage: !!profileImage,
-        publicId: profileImage.image_public_id,
-        directImageUrl: profileImage.image_url,
-        usingPublicId: !!imagePublicId,
-        usingDirectUrl: !!imageUrl,
-        rawProfileImageArray: dog.profile_image
-      });
     } else {
       // Do nothing
     }

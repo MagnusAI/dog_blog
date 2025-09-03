@@ -102,7 +102,7 @@ function HomePage() {
               <HighlightedNewsPostSkeleton />
               
               {/* Regular News Post Skeletons */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 place-items-center">
                 <NewsPostSkeleton size="md" />
                 <NewsPostSkeleton size="md" />
                 <NewsPostSkeleton size="md" />
@@ -124,7 +124,7 @@ function HomePage() {
 
               {/* Additional News Cards (if more than 1 post) */}
               {latestNews.length > 1 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 place-items-center">
                   {latestNews.slice(1).map((post) => (
                     <NewsPost
                       key={post.id}
@@ -244,7 +244,6 @@ function HomePage() {
                     imageUrl={dogImages[myDog.dog.id]?.image_url}
                     imageSize={266}
                     imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
-                    imageGravity='face'
                     fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                     subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
                     metadata={[

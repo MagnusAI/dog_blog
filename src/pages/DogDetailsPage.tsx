@@ -384,7 +384,6 @@ function DogDetailsPage() {
                   width={400}
                   height={400}
                   alt={profileImage.alt_text || `${dog.name} profile`}
-                  gravity="auto"
                   className="w-full h-full object-cover"
                 />
               ) : (

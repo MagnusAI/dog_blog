@@ -4,6 +4,7 @@ import { useImageFallback } from "../hooks/useModal";
 import CloudinaryImage from "./CloudinaryImage";
 import { useState, useEffect } from "react";
 import { dogService, type Dog } from "../services/supabaseService";
+import { dog, FocusOnValue } from "@cloudinary/url-gen/qualifiers/focusOn";
 
 export interface NewsModalProps extends HTMLAttributes<HTMLDivElement> {
   // Core props
@@ -20,7 +21,7 @@ export interface NewsModalProps extends HTMLAttributes<HTMLDivElement> {
     quality?: "auto" | number;
     format?: "auto" | "webp" | "jpg" | "png";
     crop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
-    gravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+    gravity?: FocusOnValue;
   }>;
   // Legacy props for backward compatibility
   imageUrl?: string;
@@ -30,7 +31,7 @@ export interface NewsModalProps extends HTMLAttributes<HTMLDivElement> {
   imageQuality?: "auto" | number;
   imageFormat?: "auto" | "webp" | "jpg" | "png";
   imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
-  imageGravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  imageGravity?: FocusOnValue;
   
   date: string | Date;
   title: string;
@@ -52,7 +53,7 @@ const NewsModal = ({
   imageQuality = "auto",
   imageFormat = "auto",
   imageCrop = "fill",
-  imageGravity = "auto",
+  imageGravity = dog(),
   date,
   title,
   excerpt,
@@ -136,7 +137,7 @@ const NewsModal = ({
           quality={image.quality || "auto"}
           format={image.format || "auto"}
           crop={image.crop || "fill"}
-          gravity={image.gravity || "auto"}
+          gravity={image.gravity || dog()}
           enableLazyLoading={true}
           enablePlaceholder={true}
           placeholderType="blur"

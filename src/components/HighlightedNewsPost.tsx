@@ -3,6 +3,7 @@ import NewsModal from "./NewsModal";
 import { formatDate, Typography } from "./ui";
 import { useModal, useImageFallback } from "../hooks/useModal";
 import CloudinaryImage from "./CloudinaryImage";
+import { dog, FocusOnValue } from "@cloudinary/url-gen/qualifiers/focusOn";
 
 export interface HighlightedNewsPostProps extends HTMLAttributes<HTMLDivElement> {
   // Content props
@@ -23,7 +24,7 @@ export interface HighlightedNewsPostProps extends HTMLAttributes<HTMLDivElement>
   imageQuality?: "auto" | number;
   imageFormat?: "auto" | "webp" | "jpg" | "png";
   imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
-  imageGravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  imageGravity?: FocusOnValue;
   enableLazyLoading?: boolean;
   enablePlaceholder?: boolean;
   placeholderType?: "blur" | "pixelate" | "vectorize";
@@ -47,7 +48,7 @@ const HighlightedNewsPost = ({
   imageQuality = "auto",
   imageFormat = "auto", 
   imageCrop = "fill",
-  imageGravity = "auto",
+  imageGravity = dog(),
   enableLazyLoading = true,
   enablePlaceholder = true,
   placeholderType = "blur",

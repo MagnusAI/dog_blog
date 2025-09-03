@@ -3,6 +3,7 @@ import type { HTMLAttributes } from "react";
 import { CloseButton } from "./ui";
 import { useModal } from "../hooks/useModal";
 import CloudinaryImage, { type CloudinaryImageProps } from "./CloudinaryImage";
+import { dog } from "@cloudinary/url-gen/qualifiers/focusOn";
 
 export interface ClickableCloudinaryImageProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
   // CloudinaryImage props
@@ -59,7 +60,7 @@ const ClickableCloudinaryImage = ({
   // CloudinaryImage props
   quality = "auto",
   format = "auto",
-  gravity = "auto",
+  gravity = dog(),
   crop = "fill",
   transformations = [],
   cloudName,

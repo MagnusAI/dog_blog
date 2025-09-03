@@ -421,7 +421,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
                     width={96}
                     height={96}
                     alt={`${dogData.name || 'Dog'} photo`}
-                    gravity="face"
                     crop="fill"
                     className="rounded-lg"
                     disableEnlarge={true}

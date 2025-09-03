@@ -2,6 +2,7 @@ import type { HTMLAttributes } from "react";
 import Typography from "./ui/Typography";
 import { useOptimizedImage } from "../hooks/useOptimizedImage";
 import CloudinaryImage from "./CloudinaryImage";
+import { dog, type FocusOnValue } from "@cloudinary/url-gen/qualifiers/focusOn";
 
 export interface DogCardProps extends HTMLAttributes<HTMLDivElement> {
   name: string;
@@ -18,7 +19,7 @@ export interface DogCardProps extends HTMLAttributes<HTMLDivElement> {
   imageQuality?: "auto" | number;
   imageFormat?: "auto" | "webp" | "jpg" | "png";
   imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
-  imageGravity?: "auto" | "face" | "faces" | "body" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  imageGravity?: FocusOnValue;
   imageTransformations?: string[];
   imageResponsive?: boolean;
   imageEnhance?: boolean;
@@ -46,7 +47,7 @@ const DogCard = ({
   imageQuality = "auto",
   imageFormat = "auto",
   imageCrop = "fill",
-  imageGravity = "auto",
+  imageGravity = dog(),
   imageTransformations = [],
   imageResponsive = true,
   imageEnhance = false,
@@ -90,25 +91,21 @@ const DogCard = ({
       <div className="relative aspect-square overflow-hidden">
         {imagePublicId ? (
           <CloudinaryImage
-            publicId={imagePublicId}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          publicId={imagePublicId}
             width={imageSize}
             height={imageSize}
             alt={imageAlt || `${name} - ${breed}`}
-            gravity={imageGravity}
-            crop={imageCrop}
             quality={imageQuality}
             format={imageFormat}
-            responsive={imageResponsive}
-            enhance={imageEnhance}
+            crop={imageCrop}
+            gravity={imageGravity}
             enableLazyLoading={enableLazyLoading}
-            enableResponsive={imageResponsive}
-            responsiveStepSize={responsiveStepSize}
             enablePlaceholder={enablePlaceholder}
             placeholderType={placeholderType}
             enableAccessibility={enableAccessibility}
-            accessibilityMode={accessibilityMode}
-            transformations={imageTransformations}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            enableResponsive={imageResponsive}
+            enhance={imageEnhance}
           />
         ) : finalImageUrl ? (
           <img

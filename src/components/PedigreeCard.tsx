@@ -3,6 +3,7 @@ import { Badge, CloseButton, Typography } from "./ui";
 import { useModal } from "../hooks/useModal";
 import { useState } from "react";
 import CloudinaryImage from "./CloudinaryImage";
+import { dog } from "@cloudinary/url-gen/qualifiers/focusOn";
 
 export interface PedigreeCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
   // Image props
@@ -84,7 +85,7 @@ const PedigreeCard = ({
                 height={64}
                 alt={imageAlt}
                 crop="fill"
-                gravity="face"
+                gravity={dog()}
                 className="w-full h-full rounded-md"
                 enableLazyLoading={false}
                 enablePlaceholder={false}
@@ -172,7 +173,7 @@ const PedigreeCard = ({
                         height={192}
                         alt={imageAlt}
                         crop="fill"
-                        gravity="face"
+                        gravity={dog()}
                         className="w-48 h-48 rounded-lg shadow-md mx-auto md:mx-0"
                         enableLazyLoading={false}
                         enablePlaceholder={false}

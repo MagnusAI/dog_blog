@@ -6,10 +6,12 @@ import { format } from "@cloudinary/url-gen/actions/delivery";
 import { auto } from "@cloudinary/url-gen/qualifiers/quality";
 import { auto as autoFormat } from "@cloudinary/url-gen/qualifiers/format";
 import { fill, fit, scale, crop, pad, limitFit } from "@cloudinary/url-gen/actions/resize";
-import { focusOn, autoGravity, compass } from "@cloudinary/url-gen/qualifiers/gravity";
-import { face } from "@cloudinary/url-gen/qualifiers/focusOn";
 import { improve } from "@cloudinary/url-gen/actions/adjust";
 import { useMemo } from 'react';
+import { autoGravity } from "@cloudinary/url-gen/qualifiers/gravity";
+import { focusOn } from "@cloudinary/url-gen/qualifiers/autoFocus";
+import type { FocusOnValue } from '@cloudinary/url-gen/qualifiers/gravity/qualifiers/focusOn/FocusOnValue';
+import { faces } from '@cloudinary/url-gen/qualifiers/focusOn';
 
 export interface CloudinaryImageProps {
   publicId: string;
@@ -19,7 +21,7 @@ export interface CloudinaryImageProps {
   className?: string;
   quality?: "auto" | number;
   format?: "auto" | "webp" | "jpg" | "png";
-  gravity?: "auto" | "face" | "faces" | "body" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
+  gravity?: FocusOnValue
   crop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
   transformations?: string[];
   cloudName?: string;
@@ -46,7 +48,7 @@ const CloudinaryImage = ({
   className = "",
   quality: qualityOption = "auto",
   format: formatOption = "auto",
-  gravity = "auto",
+  gravity,
   crop: cropMode = "fill",
   transformations = [],
   cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dsstocv9w",
@@ -114,18 +116,11 @@ const CloudinaryImage = ({
 
     // Apply advanced gravity options for modes that support it
     if ((cropMode === "fill" || cropMode === "crop") && gravity) {
-      if (gravity === "face") {
-        resizeTransform = (resizeTransform as any).gravity(focusOn(face()));
-      } else if (gravity === "auto") {
-        resizeTransform = (resizeTransform as any).gravity(autoGravity());
-      } else if (gravity === "auto:subject") {
-        // Enhanced auto-gravity focusing on main subject
-        resizeTransform = (resizeTransform as any).gravity(autoGravity());
-      } else if (gravity === "auto:classic") {
-        // Classic auto-gravity algorithm
-        resizeTransform = (resizeTransform as any).gravity(autoGravity());
-      } else if (["center", "north", "south", "east", "west"].includes(gravity)) {
-        resizeTransform = (resizeTransform as any).gravity(compass(gravity as any));
+      if (gravity !== undefined) {
+        resizeTransform = (resizeTransform as any).gravity(autoGravity().autoFocus(focusOn(gravity)));
+      } else {
+        console.log('Using faces() gravity');
+        resizeTransform = (resizeTransform as any).gravity(autoGravity().autoFocus(focusOn(faces())));
       }
     }
 

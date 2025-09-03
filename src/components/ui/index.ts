@@ -14,4 +14,6 @@ export type { CloseButtonProps } from './CloseButton';
 export { default as ClickableCloudinaryImage } from '../ClickableCloudinaryImage';
 export type { ClickableCloudinaryImageProps } from '../ClickableCloudinaryImage';
 
+export { default as Skeleton, SkeletonText, SkeletonImage, SkeletonAvatar } from './Skeleton';
+
 export * from './utils';

@@ -10,6 +10,7 @@ import { createDogDetailPath } from '../utils/dogUtils';
 import HighlightedNewsPost from '../components/HighlightedNewsPost';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import { HighlightedNewsPostSkeleton, NewsPostSkeleton, DogCardSkeleton } from '../components/skeletons';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -96,8 +97,16 @@ function HomePage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <Typography variant="body" color="secondary">{t('home.messages.loadingNews')}</Typography>
+            <div className="space-y-12">
+              {/* Highlighted News Skeleton */}
+              <HighlightedNewsPostSkeleton />
+              
+              {/* Regular News Post Skeletons */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <NewsPostSkeleton size="md" />
+                <NewsPostSkeleton size="md" />
+                <NewsPostSkeleton size="md" />
+              </div>
             </div>
           ) : latestNews.length > 0 ? (
             <div className="space-y-12">
@@ -215,8 +224,11 @@ function HomePage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <Typography variant="body" color="secondary">{t('home.messages.loadingDogs')}</Typography>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <DogCardSkeleton />
+              <DogCardSkeleton />
+              <DogCardSkeleton />
+              <DogCardSkeleton />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

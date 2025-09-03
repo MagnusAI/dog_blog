@@ -11,6 +11,7 @@ import { decodeDogId, createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
 import { useTranslation } from '../contexts/LanguageContext';
+import { ProfilePictureSkeleton } from '../components/skeletons';
 
 import ClickableCloudinaryImage from '../components/ClickableCloudinaryImage';
 
@@ -247,9 +248,73 @@ function DogDetailsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="text-center">
-          <Typography variant="h4">{t('dogs.messages.loadingDog')}</Typography>
+      <div className="max-w-6xl mx-auto p-8">
+        {/* Back Button Skeleton */}
+        <div className="w-32 h-10 bg-gray-200 rounded animate-pulse mb-4" />
+        
+        {/* Header Section Skeleton */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
+          <div className="space-y-2">
+            <div className="w-48 h-8 bg-gray-200 rounded animate-pulse" />
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="flex items-center space-x-3 mt-4 md:mt-0">
+            <div className="w-24 h-10 bg-gray-200 rounded animate-pulse" />
+            <div className="flex space-x-2">
+              <div className="w-12 h-6 bg-gray-200 rounded animate-pulse" />
+              <div className="w-16 h-6 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          {/* Profile Picture Skeleton */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col items-center text-center">
+            <ProfilePictureSkeleton size="2xl" className="mb-4" />
+            <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
+          </div>
+
+          {/* Basic Info Skeleton */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full md:col-span-2">
+            <div className="w-40 h-6 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {Array.from({ length: 8 }, (_, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="w-24 h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="w-32 h-5 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Titles Section Skeleton */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-48 h-6 bg-gray-200 rounded animate-pulse" />
+            <div className="w-24 h-8 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="w-16 h-6 bg-gray-200 rounded animate-pulse" />
+            <div className="w-20 h-6 bg-gray-200 rounded animate-pulse" />
+            <div className="w-12 h-6 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+
+        {/* Pedigree Section Skeleton */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-56 h-6 bg-gray-200 rounded animate-pulse" />
+            <div className="flex gap-2">
+              <div className="w-32 h-8 bg-gray-200 rounded animate-pulse" />
+              <div className="w-32 h-8 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-8">
+            <div className="w-full h-32 bg-gray-200 rounded animate-pulse" />
+            <div className="w-full h-32 bg-gray-200 rounded animate-pulse" />
+          </div>
         </div>
       </div>
     );

@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { CloseButton, Typography, formatDate, createBackdropClickHandler, createModalKeyHandler } from "./ui";
 import { useImageFallback } from "../hooks/useModal";
-import ClickableImage from "./ClickableImage";
+import CloudinaryImage from "./CloudinaryImage";
 import { useState, useEffect } from "react";
 import { dogService, type Dog } from "../services/supabaseService";
 
@@ -12,12 +12,25 @@ export interface NewsModalProps extends HTMLAttributes<HTMLDivElement> {
 
   // Content props - either new images array OR legacy single image props
   images?: Array<{
-    url: string;
+    url?: string;           // Regular image URL
     alt: string;
+    publicId?: string;      // Cloudinary public ID
+    width?: number;         // Image width for Cloudinary
+    height?: number;        // Image height for Cloudinary
+    quality?: "auto" | number;
+    format?: "auto" | "webp" | "jpg" | "png";
+    crop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+    gravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
   }>;
   // Legacy props for backward compatibility
   imageUrl?: string;
   imageAlt?: string;
+  // Legacy Cloudinary props
+  imagePublicId?: string;
+  imageQuality?: "auto" | number;
+  imageFormat?: "auto" | "webp" | "jpg" | "png";
+  imageCrop?: "fill" | "fit" | "scale" | "crop" | "pad" | "limitFit";
+  imageGravity?: "auto" | "face" | "faces" | "center" | "north" | "south" | "east" | "west" | "auto:subject" | "auto:classic";
   
   date: string | Date;
   title: string;
@@ -35,6 +48,11 @@ const NewsModal = ({
   images,
   imageUrl,
   imageAlt,
+  imagePublicId,
+  imageQuality = "auto",
+  imageFormat = "auto",
+  imageCrop = "fill",
+  imageGravity = "auto",
   date,
   title,
   excerpt,
@@ -49,8 +67,18 @@ const NewsModal = ({
   // Handle backward compatibility: convert legacy props to images array
   const finalImages = images && images.length > 0 
     ? images 
-    : imageUrl 
-      ? [{ url: imageUrl, alt: imageAlt || "" }]
+    : (imageUrl || imagePublicId)
+      ? [{
+          url: imageUrl,
+          alt: imageAlt || "",
+          publicId: imagePublicId,
+          width: 800,  // Default size for modal
+          height: 600,
+          quality: imageQuality,
+          format: imageFormat,
+          crop: imageCrop,
+          gravity: imageGravity
+        }]
       : [];
 
   const { } = useImageFallback(fallbackImageUrl);
@@ -84,6 +112,50 @@ const NewsModal = ({
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [finalImages]);
+
+  // Component to render either CloudinaryImage or regular img
+  const ImageRenderer = ({ 
+    image, 
+    className = "", 
+    width = 800, 
+    height = 600 
+  }: { 
+    image: typeof finalImages[0], 
+    className?: string,
+    width?: number,
+    height?: number
+  }) => {
+    if (image.publicId) {
+      return (
+        <CloudinaryImage
+          publicId={image.publicId}
+          width={image.width || width}
+          height={image.height || height}
+          alt={image.alt}
+          className={className}
+          quality={image.quality || "auto"}
+          format={image.format || "auto"}
+          crop={image.crop || "fill"}
+          gravity={image.gravity || "auto"}
+          enableLazyLoading={true}
+          enablePlaceholder={true}
+          placeholderType="blur"
+          enableResponsive={true}
+          enhance={true}
+        />
+      );
+    } else if (image.url) {
+      return (
+        <img
+          src={image.url}
+          alt={image.alt}
+          className={className}
+          loading="lazy"
+        />
+      );
+    }
+    return null;
+  };
 
   // Fetch dog details when taggedDogs changes
   useEffect(() => {
@@ -143,11 +215,14 @@ const NewsModal = ({
                   <div className="space-y-4">
                     {/* Main Image */}
                     <div className="flex justify-center">
-                      <ClickableImage
-                        src={finalImages[currentImageIndex].url}
-                        alt={finalImages[currentImageIndex].alt}
-                        size="xxxl"
-                      />
+                      <div className="max-w-4xl w-full">
+                        <ImageRenderer
+                          image={finalImages[currentImageIndex]}
+                          className="w-full h-auto max-h-[60vh] object-contain rounded-lg"
+                          width={800}
+                          height={600}
+                        />
+                      </div>
                     </div>
                     
                     {/* Image Navigation */}
@@ -192,10 +267,11 @@ const NewsModal = ({
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <img
-                                src={image.url}
-                                alt={`Thumbnail ${index + 1}`}
+                              <ImageRenderer
+                                image={image}
                                 className="w-full h-full object-cover"
+                                width={64}
+                                height={64}
                               />
                             </button>
                           ))}

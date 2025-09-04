@@ -49,12 +49,24 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showBreedManager, setShowBreedManager] = useState(false);
+  const [checkingExistingDog, setCheckingExistingDog] = useState(false);
+  const [existingDogFound, setExistingDogFound] = useState<Dog | null>(null);
+  const [dogIdTimeout, setDogIdTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const isEditing = Boolean(dogId);
 
   useEffect(() => {
     loadInitialData();
   }, [dogId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (dogIdTimeout) {
+        clearTimeout(dogIdTimeout);
+      }
+    };
+  }, [dogIdTimeout]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -157,10 +169,14 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
 
       let savedDog: Dog;
       if (isEditing) {
+        // We're editing an existing dog in our kennel
         const { id, ...updates } = dogData;
         savedDog = await dogService.updateDog(dogId!, updates);
       } else {
-        savedDog = await dogService.createDog(dogData);
+        // We're adding a new dog (might exist in database or not)
+        const result = await dogService.upsertDogAndAddToMyDogs(dogData);
+        savedDog = result.dog;
+        console.log('Dog added to kennel:', result);
       }
 
       onSave?.(savedDog);
@@ -184,6 +200,26 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         ...prev,
         [field]: ''
       }));
+    }
+
+    // Check for existing dog when ID is entered (with debounce)
+    if (field === 'id' && !isEditing) {
+      // Clear any previous timeout
+      if (dogIdTimeout) {
+        clearTimeout(dogIdTimeout);
+      }
+      
+      // Clear existing dog found state immediately when typing
+      setExistingDogFound(null);
+      
+      if (value && value.trim()) {
+        // Set new timeout to check for existing dog
+        const timeoutId = setTimeout(() => {
+          checkExistingDog(value.trim());
+        }, 500); // 500ms debounce
+        
+        setDogIdTimeout(timeoutId);
+      }
     }
   };
 
@@ -211,6 +247,59 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         // Don't show this as an error to the user since it's expected behavior
         setProfileImage(null);
       }
+    }
+  };
+
+  // Check if a dog with the entered ID already exists and prefill data
+  const checkExistingDog = async (dogIdToCheck: string) => {
+    if (!dogIdToCheck.trim() || isEditing) return;
+    
+    setCheckingExistingDog(true);
+    setExistingDogFound(null);
+    
+    try {
+      const existingDog = await dogService.checkDogExists(dogIdToCheck);
+      
+      if (existingDog) {
+        setExistingDogFound(existingDog);
+        
+        // Prefill form with existing dog data
+        setFormData(prev => ({
+          ...prev,
+          name: existingDog.name,
+          nickname: existingDog.nickname || '',
+          gender: existingDog.gender,
+          breed_id: existingDog.breed_id,
+          birth_date: existingDog.birth_date || '',
+          death_date: existingDog.death_date || '',
+          is_deceased: existingDog.is_deceased,
+          color: existingDog.color || '',
+          owner_person_id: existingDog.owner_person_id || '',
+          original_dog_id: existingDog.original_dog_id || ''
+        }));
+        
+        console.log('Found existing dog:', existingDog);
+      } else {
+        // Clear any existing data when dog is not found
+        setFormData(prev => ({
+          ...prev,
+          name: '',
+          nickname: '',
+          gender: 'M',
+          breed_id: null,
+          birth_date: '',
+          death_date: '',
+          is_deceased: false,
+          color: '',
+          owner_person_id: '',
+          original_dog_id: ''
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking existing dog:', error);
+      setExistingDogFound(null);
+    } finally {
+      setCheckingExistingDog(false);
     }
   };
 
@@ -319,19 +408,45 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Dog ID *
                 </label>
-                <input
-                  type="text"
-                  value={formData.id}
-                  onChange={(e) => handleInputChange('id', e.target.value)}
-                  disabled={isEditing}
-                  className={`w-full p-3 border rounded-md ${
-                    errors.id ? 'border-red-500' : 'border-gray-300'
-                  } ${isEditing ? 'bg-gray-100' : ''}`}
-                  placeholder="e.g., DK12345/2024"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.id}
+                    onChange={(e) => handleInputChange('id', e.target.value)}
+                    disabled={isEditing}
+                    className={`w-full p-3 border rounded-md ${
+                      errors.id ? 'border-red-500' : 
+                      existingDogFound ? 'border-green-500' : 'border-gray-300'
+                    } ${isEditing ? 'bg-gray-100' : ''}`}
+                    placeholder="e.g., DK12345/2024"
+                  />
+                  {checkingExistingDog && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                </div>
+                
                 {errors.id && (
                   <Typography variant="caption" className="text-red-500 mt-1">
                     {errors.id}
+                  </Typography>
+                )}
+                
+                {existingDogFound && !errors.id && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                    <Typography variant="caption" className="text-green-700">
+                      ✓ Found existing dog: <strong>{existingDogFound.name}</strong>
+                      {existingDogFound.breed?.name && ` (${existingDogFound.breed.name})`}
+                      <br />
+                      <span className="text-green-600">Form has been pre-filled with existing data.</span>
+                    </Typography>
+                  </div>
+                )}
+                
+                {!isEditing && formData.id && !existingDogFound && !checkingExistingDog && (
+                  <Typography variant="caption" className="text-blue-600 mt-1">
+                    This will create a new dog record.
                   </Typography>
                 )}
               </div>

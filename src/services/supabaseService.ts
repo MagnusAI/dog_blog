@@ -493,6 +493,84 @@ export const dogService = {
     if (error) throw error;
   },
 
+  // Upsert dog and add to my_dogs (for the "Add New Dog" functionality)
+  async upsertDogAndAddToMyDogs(
+    dogData: Omit<Dog, 'created_at' | 'updated_at'>,
+    myDogData?: Partial<Omit<MyDog, 'id' | 'dog_id' | 'created_at' | 'updated_at'>>
+  ): Promise<{ dog: Dog; myDog: MyDog }> {
+    // First, upsert the dog (create or update)
+    const { data: dog, error: dogError } = await supabase
+      .from('dogs')
+      .upsert(dogData, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (dogError) throw dogError;
+
+    // Check if this dog is already in my_dogs
+    const { data: existingMyDog } = await supabase
+      .from('my_dogs')
+      .select('*')
+      .eq('dog_id', dog.id)
+      .single();
+
+    let myDog: MyDog;
+    
+    if (existingMyDog) {
+      // Dog is already in my_dogs, just return it (or update if needed)
+      if (myDogData && Object.keys(myDogData).length > 0) {
+        const { data: updatedMyDog, error: updateError } = await supabase
+          .from('my_dogs')
+          .update(myDogData)
+          .eq('id', existingMyDog.id)
+          .select()
+          .single();
+        
+        if (updateError) throw updateError;
+        myDog = updatedMyDog;
+      } else {
+        myDog = existingMyDog;
+      }
+    } else {
+      // Add to my_dogs
+      const { data: newMyDog, error: myDogError } = await supabase
+        .from('my_dogs')
+        .insert({
+          dog_id: dog.id,
+          ...myDogData
+        })
+        .select()
+        .single();
+
+      if (myDogError) throw myDogError;
+      myDog = newMyDog;
+    }
+
+    return { dog, myDog };
+  },
+
+  // Check if a dog exists by ID
+  async checkDogExists(dogId: string): Promise<Dog | null> {
+    const { data, error } = await supabase
+      .from('dogs')
+      .select(`
+        *,
+        breed:breeds(*)
+      `)
+      .eq('id', dogId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned, dog doesn't exist
+        return null;
+      }
+      throw error;
+    }
+
+    return data;
+  },
+
   // Search dogs for pedigree selection
   async searchDogs(query: string): Promise<Dog[]> {
     const { data, error } = await supabase

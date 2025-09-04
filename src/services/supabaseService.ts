@@ -571,6 +571,17 @@ export const dogService = {
     return data;
   },
 
+  // Clear pedigree relationships for a specific dog and relationship type
+  async clearPedigreeRelationships(dogId: string, relationshipType: 'SIRE' | 'DAM'): Promise<void> {
+    const { error } = await supabase
+      .from('pedigree_relationships')
+      .delete()
+      .eq('dog_id', dogId)
+      .eq('relationship_type', relationshipType);
+
+    if (error) throw error;
+  },
+
   // Search dogs for pedigree selection
   async searchDogs(query: string): Promise<Dog[]> {
     const { data, error } = await supabase

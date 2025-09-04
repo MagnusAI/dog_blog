@@ -77,6 +77,28 @@ interface PedigreeFormData {
     imageUrl?: string;
     imagePublicId?: string;
   };
+  greatGrandparent3?: {
+    id: string;
+    name: string;
+    breed_id: number | null;
+    birth_date: string;
+    gender: 'M' | 'F';
+    color: string;
+    image?: File;
+    imageUrl?: string;
+    imagePublicId?: string;
+  };
+  greatGrandparent4?: {
+    id: string;
+    name: string;
+    breed_id: number | null;
+    birth_date: string;
+    gender: 'M' | 'F';
+    color: string;
+    image?: File;
+    imageUrl?: string;
+    imagePublicId?: string;
+  };
 }
 
 type DogFormEntry = NonNullable<PedigreeFormData[keyof PedigreeFormData]>;
@@ -107,6 +129,20 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
   const isEditingFatherLine = pedigreeType === 'father';
   const lineTitle = isEditingFatherLine ? "Father's Line" : "Mother's Line";
 
+  // Helper function to get generation from dog key
+  const getGenerationFromDogKey = (dogKey: string): number => {
+    switch (dogKey) {
+      case 'parent': return 1;
+      case 'grandparent1':
+      case 'grandparent2': return 2;
+      case 'greatGrandparent1':
+      case 'greatGrandparent2':
+      case 'greatGrandparent3':
+      case 'greatGrandparent4': return 3;
+      default: return 0;
+    }
+  };
+
   useEffect(() => {
     loadInitialData();
   }, [currentDog, pedigreeType]);
@@ -131,10 +167,10 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           .filter(a => a.generation === 2 && a.relationship_type === relationshipType)
           .slice(0, 2);
 
-        // Find great-grandparents (generation 3) - we'll take up to 2
+        // Find great-grandparents (generation 3) - we'll take up to 4
         const greatGrandparents = currentDog.all_ancestors
           .filter(a => a.generation === 3 && a.relationship_type === relationshipType)
-          .slice(0, 2);
+          .slice(0, 4);
 
         const newFormData: PedigreeFormData = {};
 
@@ -233,6 +269,44 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           };
         }
 
+        if (greatGrandparents[2]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(greatGrandparents[2].parent.profile_image)) {
+            profileImage = greatGrandparents[2].parent.profile_image.find(img => img.is_profile) || greatGrandparents[2].parent.profile_image[0];
+          }
+          
+          newFormData.greatGrandparent3 = {
+            id: greatGrandparents[2].parent.id,
+            name: greatGrandparents[2].parent.name,
+            breed_id: greatGrandparents[2].parent.breed_id,
+            birth_date: greatGrandparents[2].parent.birth_date || '',
+            gender: greatGrandparents[2].parent.gender,
+            color: greatGrandparents[2].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
+          };
+        }
+
+        if (greatGrandparents[3]) {
+          // Get profile image if available
+          let profileImage;
+          if (Array.isArray(greatGrandparents[3].parent.profile_image)) {
+            profileImage = greatGrandparents[3].parent.profile_image.find(img => img.is_profile) || greatGrandparents[3].parent.profile_image[0];
+          }
+          
+          newFormData.greatGrandparent4 = {
+            id: greatGrandparents[3].parent.id,
+            name: greatGrandparents[3].parent.name,
+            breed_id: greatGrandparents[3].parent.breed_id,
+            birth_date: greatGrandparents[3].parent.birth_date || '',
+            gender: greatGrandparents[3].parent.gender,
+            color: greatGrandparents[3].parent.color || '',
+            imageUrl: profileImage?.image_url,
+            imagePublicId: profileImage?.image_public_id
+          };
+        }
+
         setFormData(newFormData);
       }
     } catch (error) {
@@ -314,39 +388,45 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
 
     setSaving(true);
     try {
-      // Process each dog entry with an image
       const uploadService = createCloudinaryUploadService();
+      const relationshipType = isEditingFatherLine ? 'SIRE' : 'DAM';
       
-      for (const [, dogData] of Object.entries(formData)) {
-        if (dogData && dogData.image) {
+      // First, clear existing pedigree relationships for this line
+      await dogService.clearPedigreeRelationships(currentDog.id, relationshipType);
+      
+      // Process each dog entry
+      for (const [dogKey, dogData] of Object.entries(formData)) {
+        if (!dogData || !dogData.id || !dogData.name) continue;
+        
+        try {
+          // Create or update the dog record first (if it doesn't exist)
+          let existingDog;
           try {
-            // Upload image to Cloudinary
-            const uploadOptions = CloudinaryUploadService.getDogImageUploadOptions(
-              dogData.id, 
-              'pedigree'
-            );
-            
-            const uploadResult = await uploadService.uploadFile(dogData.image, uploadOptions);
-            
-            // Create or update the dog record first (if it doesn't exist)
-            let existingDog;
+            existingDog = await dogService.getDog(dogData.id);
+          } catch (error) {
+            // Dog doesn't exist, create it
+            const newDog = {
+              id: dogData.id,
+              name: dogData.name,
+              breed_id: dogData.breed_id!,
+              gender: dogData.gender,
+              birth_date: dogData.birth_date || undefined,
+              color: dogData.color || undefined,
+              is_deceased: false
+            };
+            existingDog = await dogService.createDog(newDog);
+          }
+          
+          // Upload image if provided
+          if (dogData.image && existingDog) {
             try {
-              existingDog = await dogService.getDog(dogData.id);
-            } catch (error) {
-              // Dog doesn't exist, create it
-              const newDog = {
-                id: dogData.id,
-                name: dogData.name,
-                breed_id: dogData.breed_id!,
-                gender: dogData.gender,
-                birth_date: dogData.birth_date || undefined,
-                color: dogData.color || undefined,
-                is_deceased: false
-              };
-              existingDog = await dogService.createDog(newDog);
-            }
-            
-            if (existingDog) {
+              const uploadOptions = CloudinaryUploadService.getDogImageUploadOptions(
+                dogData.id, 
+                'pedigree'
+              );
+              
+              const uploadResult = await uploadService.uploadFile(dogData.image, uploadOptions);
+              
               // Add the image to the dog
               const imageData = {
                 dog_id: dogData.id,
@@ -360,11 +440,29 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
               
               await dogService.addDogImage(imageData);
               console.log(`Successfully uploaded image for ${dogData.name}`);
+            } catch (uploadError) {
+              console.error(`Failed to upload image for ${dogData.name}:`, uploadError);
+              // Continue even if image upload fails
             }
-          } catch (uploadError) {
-            console.error(`Failed to upload image for ${dogData.name}:`, uploadError);
-            // Continue with other dogs even if one fails
           }
+          
+          // Create pedigree relationship
+          const generation = getGenerationFromDogKey(dogKey);
+          if (generation > 0) {
+            const relationshipData = {
+              dog_id: currentDog.id,
+              parent_id: dogData.id,
+              relationship_type: relationshipType as 'SIRE' | 'DAM',
+              generation: generation
+            };
+            
+            await dogService.addPedigreeRelationship(relationshipData);
+            console.log(`Created pedigree relationship: ${dogData.name} as ${relationshipType} generation ${generation}`);
+          }
+          
+        } catch (error) {
+          console.error(`Error processing ${dogData.name}:`, error);
+          // Continue with other dogs even if one fails
         }
       }
       
@@ -634,6 +732,16 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
             'greatGrandparent2',
             'Great-Grandparent 2 (Generation 3)',
             formData.greatGrandparent2
+          )}
+          {renderDogSection(
+            'greatGrandparent3',
+            'Great-Grandparent 3 (Generation 3)',
+            formData.greatGrandparent3
+          )}
+          {renderDogSection(
+            'greatGrandparent4',
+            'Great-Grandparent 4 (Generation 3)',
+            formData.greatGrandparent4
           )}
         </div>
 

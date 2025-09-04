@@ -6,6 +6,7 @@ import { dogService } from '../services/supabaseService';
 import type { MyDog, DogImage } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
+import { dog } from '@cloudinary/url-gen/qualifiers/focusOn';
 
 function DogsPage() {
   const navigate = useNavigate();
@@ -235,7 +236,7 @@ function DogsPage() {
                   imageUrl={dogImages[myDog.dog.id]?.image_url}
                   imageSize={266}
                   imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
-                  imageGravity='face'
+                  imageGravity={dog()}
                   fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                   subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
                   metadata={[

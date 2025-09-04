@@ -38,7 +38,7 @@ function DogDetailsPage() {
 
   const loadDog = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       // Decode the dog ID to handle encoded special characters like forward slashes
@@ -46,7 +46,7 @@ function DogDetailsPage() {
       const dogData = await dogService.getDogById(decodedDogId);
       if (dogData) {
         setDog(dogData);
-        
+
         // Load profile image if available
         try {
           const imageData = await dogService.getDogProfileImage(decodedDogId);
@@ -92,7 +92,7 @@ function DogDetailsPage() {
     const now = new Date();
     const years = now.getFullYear() - birth.getFullYear();
     const months = now.getMonth() - birth.getMonth();
-    
+
     if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) {
       return t('dogs.labels.yearsOld', { count: years - 1 });
     }
@@ -104,7 +104,7 @@ function DogDetailsPage() {
     // Try to get image data from the dog's profile image if available
     let imageUrl: string | undefined;
     let imagePublicId: string | undefined;
-    
+
     // Check if profile_image is an array (from ancestor data) or a single object
     let profileImage;
     if (Array.isArray(dog.profile_image)) {
@@ -113,7 +113,7 @@ function DogDetailsPage() {
     } else {
       profileImage = dog.profile_image;
     }
-    
+
     if (profileImage) {
       if (profileImage.image_public_id) {
         // Prefer Cloudinary public ID over manual URL construction
@@ -159,10 +159,10 @@ function DogDetailsPage() {
 
     // Get all paternal ancestors (assuming the first half are paternal lineage)
     const paternalAncestors = dog.all_ancestors.filter(a => a.generation >= 2).slice(0, Math.floor(dog.all_ancestors.filter(a => a.generation >= 2).length / 2));
-    
+
     // Build children for the father
     const fatherChildren: TreeNode<PedigreeData>[] = [];
-    
+
     // Add generation 2 (grandparents)
     const generation2Paternal = paternalAncestors.filter(a => a.generation === 2).slice(0, 2);
     generation2Paternal.forEach(grandparent => {
@@ -197,10 +197,10 @@ function DogDetailsPage() {
     // Get all maternal ancestors (assuming the second half are maternal lineage)
     const allGenerationTwoPlusAncestors = dog.all_ancestors.filter(a => a.generation >= 2);
     const maternalAncestors = allGenerationTwoPlusAncestors.slice(Math.floor(allGenerationTwoPlusAncestors.length / 2));
-    
+
     // Build children for the mother
     const motherChildren: TreeNode<PedigreeData>[] = [];
-    
+
     // Add generation 2 (grandparents)
     const generation2Maternal = maternalAncestors.filter(a => a.generation === 2).slice(0, 2);
     generation2Maternal.forEach(grandparent => {
@@ -241,7 +241,7 @@ function DogDetailsPage() {
       <div className="max-w-6xl mx-auto p-8">
         {/* Back Button Skeleton */}
         <div className="w-32 h-10 bg-gray-200 rounded animate-pulse mb-4" />
-        
+
         {/* Header Section Skeleton */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
           <div className="space-y-2">
@@ -330,8 +330,8 @@ function DogDetailsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate('/dogs')}
             className="mb-4"
           >
@@ -500,142 +500,166 @@ function DogDetailsPage() {
       {/* Full Width Content */}
       <div className="space-y-6">
 
-          {/* Pedigree */}
-          {(() => {
-            const fatherTree = buildFatherTree();
-            const motherTree = buildMotherTree();
-            const hasPedigree = fatherTree || motherTree;
-            
-            if (!hasPedigree) return null;
-            
-            return (
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <Typography variant="h4">{t('dogs.sections.pedigree')}</Typography>
-                  {user && (
-                    <div className="flex gap-2">
-                      {fatherTree && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/father`)}
-                        >
-                          ✏️ {t('dogs.actions.editFatherLine')}
-                        </Button>
-                      )}
-                      {motherTree && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/mother`)}
-                        >
-                          ✏️ {t('dogs.actions.editMotherLine')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-8 lg:flex gap-4 ">
-                  {fatherTree && (
-                    <div>
-                      <Typography variant="h5" className="mb-4">Father's Line</Typography>
-                      <div className="overflow-x-auto">
-                        <HorizontalTree
-                          tree={fatherTree}
-                          renderNode={renderClickablePedigreeNode}
-                          maxDepth={3}
-                          lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {motherTree && (
-                    <div>
-                      <Typography variant="h5" className="mb-4">Mother's Line</Typography>
-                      <div className="overflow-x-auto">
-                        <HorizontalTree
-                          tree={motherTree}
-                          renderNode={renderClickablePedigreeNode}
-                          maxDepth={3}
-                          lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
+        {/* Pedigree */}
+        {(() => {
+          const fatherTree = buildFatherTree();
+          const motherTree = buildMotherTree();
+          const hasPedigree = fatherTree || motherTree;
 
-          {/* Offspring */}
-          {(() => {
-            // Filter offspring by relationship type
-            const sireOffspring = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE') || [];
-            const damOffspring = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM') || [];
-            const hasOffspring = sireOffspring.length > 0 || damOffspring.length > 0;
-            
-            if (!hasOffspring) return null;
-            
-            return (
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <Typography variant="h4" className="mb-4">Offspring</Typography>
-                <div className="space-y-4">
-                  {sireOffspring.length > 0 && (
-                    <div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {sireOffspring.slice(0, 6).map((rel: any) => (
-                          <button
-                            key={`sire-${rel.offspring.id}`}
-                            onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
-                            className="text-left p-2 border rounded hover:bg-gray-50 transition-colors"
-                          >
-                            <Typography variant="caption" weight="semibold">
-                              {rel.offspring.name}
-                            </Typography>
-                            <Typography variant="caption" color="muted" className="block">
-                              {rel.offspring.breed?.name}
-                            </Typography>
-                          </button>
-                        ))}
-                        {sireOffspring.length > 6 && (
-                          <Typography variant="caption" color="muted">
-                            ...and {sireOffspring.length - 6} more
-                          </Typography>
-                        )}
-                      </div>
-                    </div>
-                  )}
+          if (!hasPedigree) return <>{user && (<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <Typography variant="h4">{t('dogs.sections.pedigree')}</Typography>
+              {user && (
+                <div className="flex gap-2">
 
-                  {damOffspring.length > 0 && (
-                    <div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {damOffspring.slice(0, 6).map((rel: any) => (
-                          <button
-                            key={`dam-${rel.offspring.id}`}
-                            onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
-                            className="text-left p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-                          >
-                            <Typography variant="caption" weight="semibold">
-                              {rel.offspring.name}
-                            </Typography>
-                            <Typography variant="caption" color="muted" className="block">
-                              {rel.offspring.breed?.name}
-                            </Typography>
-                          </button>
-                        ))}
-                        {damOffspring.length > 6 && (
-                          <Typography variant="caption" color="muted">
-                            ...and {damOffspring.length - 6} more
-                          </Typography>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/father`)}
+                  >
+                    ✏️ {t('dogs.actions.editFatherLine')}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/mother`)}
+                  >
+                    ✏️ {t('dogs.actions.editMotherLine')}
+                  </Button>
+
                 </div>
+              )}
+            </div>
+          </div>)}</>;
+
+          return (
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <Typography variant="h4">{t('dogs.sections.pedigree')}</Typography>
+                {user && (
+                  <div className="flex gap-2">
+                    {fatherTree && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/father`)}
+                      >
+                        ✏️ {t('dogs.actions.editFatherLine')}
+                      </Button>
+                    )}
+                    {motherTree && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/dogs/${encodeURIComponent(dog.id)}/pedigree/mother`)}
+                      >
+                        ✏️ {t('dogs.actions.editMotherLine')}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-            );
-          })()}
+              <div className="space-y-8 lg:flex gap-4 ">
+                {fatherTree && (
+                  <div>
+                    <Typography variant="h5" className="mb-4">Father's Line</Typography>
+                    <div className="overflow-x-auto">
+                      <HorizontalTree
+                        tree={fatherTree}
+                        renderNode={renderClickablePedigreeNode}
+                        maxDepth={3}
+                        lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {motherTree && (
+                  <div>
+                    <Typography variant="h5" className="mb-4">Mother's Line</Typography>
+                    <div className="overflow-x-auto">
+                      <HorizontalTree
+                        tree={motherTree}
+                        renderNode={renderClickablePedigreeNode}
+                        maxDepth={3}
+                        lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Offspring */}
+        {(() => {
+          // Filter offspring by relationship type
+          const sireOffspring = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE') || [];
+          const damOffspring = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM') || [];
+          const hasOffspring = sireOffspring.length > 0 || damOffspring.length > 0;
+
+          if (!hasOffspring) return null;
+
+          return (
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <Typography variant="h4" className="mb-4">Offspring</Typography>
+              <div className="space-y-4">
+                {sireOffspring.length > 0 && (
+                  <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {sireOffspring.slice(0, 6).map((rel: any) => (
+                        <button
+                          key={`sire-${rel.offspring.id}`}
+                          onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
+                          className="text-left p-2 border rounded hover:bg-gray-50 transition-colors"
+                        >
+                          <Typography variant="caption" weight="semibold">
+                            {rel.offspring.name}
+                          </Typography>
+                          <Typography variant="caption" color="muted" className="block">
+                            {rel.offspring.breed?.name}
+                          </Typography>
+                        </button>
+                      ))}
+                      {sireOffspring.length > 6 && (
+                        <Typography variant="caption" color="muted">
+                          ...and {sireOffspring.length - 6} more
+                        </Typography>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {damOffspring.length > 0 && (
+                  <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {damOffspring.slice(0, 6).map((rel: any) => (
+                        <button
+                          key={`dam-${rel.offspring.id}`}
+                          onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
+                          className="text-left p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                        >
+                          <Typography variant="caption" weight="semibold">
+                            {rel.offspring.name}
+                          </Typography>
+                          <Typography variant="caption" color="muted" className="block">
+                            {rel.offspring.breed?.name}
+                          </Typography>
+                        </button>
+                      ))}
+                      {damOffspring.length > 6 && (
+                        <Typography variant="caption" color="muted">
+                          ...and {damOffspring.length - 6} more
+                        </Typography>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Edit Form Modal - Only shown when editing */}

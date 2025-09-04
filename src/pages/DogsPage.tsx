@@ -7,6 +7,7 @@ import type { MyDog, DogImage } from '../services/supabaseService';
 import { createDogDetailPath } from '../utils/dogUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { dog } from '@cloudinary/url-gen/qualifiers/focusOn';
+import { useTranslation } from '../contexts/LanguageContext';
 
 function DogsPage() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ function DogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [selectedDogs, setSelectedDogs] = useState<Set<number>>(new Set());
+
+  const { t } = useTranslation('pages');
 
   useEffect(() => {
     loadMyDogs();
@@ -138,7 +141,7 @@ function DogsPage() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <div className="text-lg">Loading your dogs...</div>
+          <div className="text-lg">{t('dogs.messages.loadingDogs')}</div>
         </div>
       </div>
     );
@@ -150,7 +153,7 @@ function DogsPage() {
         <div className="text-center text-red-600">
           <div className="text-lg">Error: {error}</div>
           <Button onClick={loadMyDogs} className="mt-4">
-            Try Again
+            {t('dogs.messages.tryAgain')}
           </Button>
         </div>
       </div>
@@ -160,7 +163,7 @@ function DogsPage() {
   return (
     <div className="p-8 space-y-8 max-w-7xl justify-center mx-auto">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">My Dogs</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('dogs.sections.myDogs')}</h1>
         <div className="flex gap-3">
           {user && (
             <>
@@ -168,21 +171,21 @@ function DogsPage() {
                 variant={editMode ? "secondary" : "ghost"}
                 onClick={toggleEditMode}
               >
-                {editMode ? "Cancel Edit" : "Edit"}
+                {editMode ? t('dogs.messages.cancelEdit') : t('dogs.messages.edit')}
               </Button>
               {editMode && selectedDogs.size > 0 && (
                 <Button
                   variant="primary"
                   onClick={saveDogStatusChanges}
                 >
-                  Save Changes ({selectedDogs.size} selected)
+                  {t('dogs.messages.saveChanges', {count: selectedDogs.size})}
                 </Button>
               )}
               <Button
                 variant="primary"
                 onClick={handleAddNewDog}
               >
-                Add New Dog
+                {t('dogs.messages.addNewDog')}
               </Button>
             </>
           )}
@@ -192,28 +195,28 @@ function DogsPage() {
       {visibleDogs.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-4">
-            {user ? "You haven't added any dogs yet." : "No active dogs available."}
+            {user ? t('dogs.messages.noDogs') : t('dogs.messages.noActiveDogs')}
           </div>
           {user && (
             <Button
               variant="primary"
               onClick={handleAddNewDog}
             >
-              Add Your First Dog
+              {t('dogs.messages.addYourFirstDog')}
             </Button>
           )}
         </div>
       ) : (
         <div>
           <div className="text-sm text-gray-600 mb-4">
-            {visibleDogs.length} dog{visibleDogs.length !== 1 ? 's' : ''} in your kennel
-            {!user && " (active dogs only)"}
+            {visibleDogs.length !== 1 ? t('dogs.messages.dogsInYourKennel', {count: visibleDogs.length}) : t('dogs.messages.dogInYourKennel', {count: visibleDogs.length})}
+            {!user && t('dogs.messages.activeDogsOnly')}
             {editMode && user && (
               <span className="block mt-1 text-blue-600">
-                Active dogs are pre-selected. Inactive dogs are also visible for editing. Click to select/deselect dogs, then save to update their status.
+                {t('dogs.messages.activeDogsPreSelected')}
                 {selectedDogs.size > 0 && (
                   <span className="block mt-1">
-                    {selectedDogs.size} dogs will be active, {visibleDogs.length - selectedDogs.size} will be inactive.
+                    {t('dogs.messages.selectedCount', {count: selectedDogs.size})}
                   </span>
                 )}
               </span>

@@ -21,6 +21,7 @@
   "dogs": {
     "title": "Vores Hunde",
     "sections": {
+      "myDogs": "Mine Hunde",
       "basicInfo": "Grundlæggende Information",
       "titlesAchievements": "Titler & Præstationer",
       "pedigree": "Stamtavle (3 Generationer)",
@@ -53,7 +54,21 @@
       "clickEditTitles": "Klik \"Rediger Titler\" for at tilføje præstationer.",
       "dogNotFound": "Hund ikke fundet",
       "loadingDog": "Indlæser hundeoplysninger...",
-      "photoComingSoon": "Foto kommer snart"
+      "loadingDogs": "Indlæser hunde...",
+      "photoComingSoon": "Foto kommer snart",
+      "saveChanges": "Gem ændringer ({{count}} valgt)",
+      "addNewDog": "Tilføj Ny Hund",
+      "cancelEdit": "Annuller Redigering",
+      "edit": "Rediger",
+      "noDogs": "Du har ikke tilføjet nogen hunde endnu.",
+      "noActiveDogs": "Ingen aktive hunde tilgængelige.",
+      "addYourFirstDog": "Tilføj Din Første Hund",
+      "dogsInYourKennel": "{{count}} hunde i dit kennel",
+      "dogInYourKennel": "{{count}} hund i dit kennel",
+      "activeDogsOnly": " (aktive hunde kun)",
+      "activeDogsPreSelected": "Aktive hunde er forvalgt. Inaktive hunde er også synlige for redigering. Klik for at vælge/fjern hunde, og gem for at opdatere deres status.",
+      "selectedCount": "{{count}} valgt",
+      "tryAgain": "Prøv igen"
     }
   },
   "news": {

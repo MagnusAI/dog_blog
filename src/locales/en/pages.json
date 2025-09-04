@@ -21,6 +21,7 @@
   "dogs": {
     "title": "Our Dogs",
     "sections": {
+      "myDogs": "My Dogs",
       "basicInfo": "Basic Information",
       "titlesAchievements": "Titles & Achievements",
       "pedigree": "Pedigree (3 Generations)",
@@ -53,7 +54,21 @@
       "clickEditTitles": "Click \"Edit Titles\" to add achievements.",
       "dogNotFound": "Dog not found",
       "loadingDog": "Loading dog details...",
-      "photoComingSoon": "Photo coming soon"
+      "loadingDogs": "Loading dogs...",
+      "photoComingSoon": "Photo coming soon",
+      "saveChanges": "Save Changes ({{count}} selected)",
+      "addNewDog": "Add New Dog",
+      "cancelEdit": "Cancel Edit",
+      "edit": "Edit",
+      "noDogs": "You haven't added any dogs yet.",
+      "noActiveDogs": "No active dogs available.",
+      "addYourFirstDog": "Add Your First Dog",
+      "dogsInYourKennel": "{{count}} dogs in your kennel",
+      "dogInYourKennel": "{{count}} dog in your kennel",
+      "activeDogsOnly": " (active dogs only)",
+      "activeDogsPreSelected": "Active dogs are pre-selected. Inactive dogs are also visible for editing. Click to select/deselect dogs, then save to update their status.",
+      "selectedCount": "{{count}} selected",
+      "tryAgain": "Try Again"
     }
   },
   "news": {

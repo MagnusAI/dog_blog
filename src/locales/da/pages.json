@@ -62,6 +62,22 @@
       "addNews": "Tilføj Nyhed",
       "editNews": "Rediger Nyhed",
       "readMore": "Læs mere"
+    },
+    "sections": {
+      "archive": "Nyhedsarkiv",
+      "archiveDescription": "Hold dig opdateret med de seneste nyheder, præstationer og indsigter fra vores kennel.",
+      "featured": "Fremhævet",
+      "moreNews": "Flere Nyheder",
+      "allNews": "Alle Nyheder"
+    },
+    "messages": {
+      "confirmDelete": "Er du sikker på, at du vil slette denne nyhed?",
+      "confirmDeleteMultiple": "Er du sikker på, at du vil slette disse {{count}} nyheder?",
+      "tryAgain": "Prøv igen",
+      "noNewsPostsYet": "Ingen nyheder endnu.",
+      "checkBackLater": "Tjek tilbage senere for de seneste nyheder og opdateringer fra vores kennel.",
+      "showing": "Viser {{count}} nyhed",
+      "showingPlural": "Viser {{count}} nyheder"
     }
   },
   "puppies": {

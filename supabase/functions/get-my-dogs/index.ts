@@ -1,5 +1,5 @@
 // Edge Function for retrieving "my dogs" list from hundeweb.dk
-// Uses stored session cookies and only fetches the dog list
+// Uses stored session cookies and optionally saves to my_dogs table
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore
@@ -32,15 +32,24 @@ interface MyDogsResponse {
     expiresAt: string;
     loginMethod: string;
   };
+  syncStats?: {
+    newDogsCreated: number;
+    existingDogsUpdated: number;
+    errors: string[];
+  };
   error?: string;
 }
 
 class MyDogsRetriever {
   private supabase: any;
   private mineHunderUrl: string;
+  private supabaseUrl: string;
+  private supabaseServiceKey: string;
 
   constructor(supabaseUrl: string, supabaseServiceKey: string) {
     this.supabase = createClient(supabaseUrl, supabaseServiceKey);
+    this.supabaseUrl = supabaseUrl;
+    this.supabaseServiceKey = supabaseServiceKey;
     this.mineHunderUrl = "https://www.hundeweb.dk/dkk-hundedatabase-backend/rest/mineHunder";
   }
 
@@ -81,114 +90,133 @@ class MyDogsRetriever {
     }
   }
 
-  async fetchMyDogs(session: SessionRecord): Promise<MyDogsResponse> {
-    try {
-      console.log("Fetching dog list from mineHunder endpoint...");
-      console.log(`Using cookies from session: ${session.session_id}`);
-      
-      const response = await fetch(this.mineHunderUrl, {
-        method: "GET",
-        headers: {
-          "accept": "*/*",
-          "accept-language": "en-US,en;q=0.9",
-          "priority": "u=1, i",
-          "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"",
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-platform": "\"Windows\"",
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
-          "Cookie": session.cookies,
-          "Referer": "https://www.hundeweb.dk/hundedatabase/hund"
-        },
-        mode: "cors",
-        credentials: "include"
-      });
+  async invalidateSession(sessionId: string): Promise<void> {
+    await this.supabase
+      .from('scraper_sessions')
+      .update({ is_active: false })
+      .eq('session_id', sessionId);
+  }
 
-      console.log(`API response status: ${response.status}`);
+  async fetchMyDogs(session: SessionRecord): Promise<DogBasicInfo[]> {
+    console.log(`Fetching dog list from mineHunder endpoint with session ID: ${session.session_id}`);
+    
+    const response = await fetch(this.mineHunderUrl, {
+      method: "GET",
+      headers: {
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+        "priority": "u=1, i",
+        "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+        "Cookie": session.cookies,
+        "Referer": "https://www.hundeweb.dk/hundedatabase/hund"
+      },
+      mode: "cors",
+      credentials: "include"
+    });
 
-      if (!response.ok) {
-        console.error(`Dog list fetch failed: ${response.status} ${response.statusText}`);
-        const responseText = await response.text();
-        console.error("Response body:", responseText.substring(0, 500));
+    if (!response.ok) {
+      const responseText = await response.text();
+      console.error(`Error ${response.status} ${response.statusText}:`, "Response body:", responseText.substring(0, 500));
 
-        // Check if it's an authentication issue
-        if (response.status === 401 || response.status === 403) {
-          return {
-            success: false,
-            dogsCount: 0,
-            dogs: [],
-            error: `Authentication failed (${response.status}). Session may be expired.`
+      if (responseText.includes('redirectUrl') && responseText.includes('cas/login')) {
+        await this.invalidateSession(session.session_id);
+        throw new Error(`Session expired. Redirect to login page detected.`);
+      }
+
+      // Check if it's an authentication issue
+      if (response.status === 401 || response.status === 403) {
+        
+        throw new Error(`Authentication failed (${response.status}). Session may be expired.`);
+      }
+
+      throw new Error(`Failed to fetch dog list: ${response.status} ${response.statusText}`);
+    }
+
+    const dogs: DogBasicInfo[] = await response.json();
+
+    console.log(`Successfully fetched ${dogs.length} dogs. ${JSON.stringify(dogs, null, 2)}`);
+
+    return dogs;
+  }
+
+  async saveDogsToMyDogsTable(dogs: DogBasicInfo[]): Promise<{newDogsCreated: number, existingDogsUpdated: number, errors: string[]}> {
+    const stats: {newDogsCreated: number, existingDogsUpdated: number, errors: string[]} = {
+      newDogsCreated: 0,
+      existingDogsUpdated: 0,
+      errors: []
+    };
+
+    console.log(`Saving ${dogs.length} dogs to my_dogs table...`);
+
+    for (const dog of dogs) {
+      try {
+        // Check if this dog already exists in my_dogs table
+        const { data: existingMyDog, error: checkError } = await this.supabase
+          .from('my_dogs')
+          .select('id, is_active')
+          .eq('dog_id', dog.id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          // Real error, not just "not found"
+          stats.errors.push(`Error checking my_dogs for ${dog.id}: ${checkError.message}`);
+          continue;
+        }
+
+        if (existingMyDog) {
+          // Dog already exists, update without changing is_active
+          const { error: updateError } = await this.supabase
+            .from('my_dogs')
+            .update({ 
+              notes: `Updated from hundeweb.dk sync on ${new Date().toISOString().split('T')[0]}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('dog_id', dog.id);
+
+          if (updateError) {
+            stats.errors.push(`Error updating ${dog.id}: ${updateError.message}`);
+          } else {
+            stats.existingDogsUpdated++;
+          }
+        } else {
+          // Create new my_dogs record with is_active = false
+          const myDogRecord = {
+            dog_id: dog.id,
+            acquisition_date: null,
+            notes: `Added from hundeweb.dk sync on ${new Date().toISOString().split('T')[0]}`,
+            is_active: false // New dogs default to inactive as requested
           };
-        }
 
-        return {
-          success: false,
-          dogsCount: 0,
-          dogs: [],
-          error: `Failed to fetch dog list: ${response.status} ${response.statusText}`
-        };
+          const { error: insertError } = await this.supabase
+            .from('my_dogs')
+            .insert(myDogRecord);
+
+          if (insertError) {
+            stats.errors.push(`Error creating my_dogs record for ${dog.id}: ${insertError.message}`);
+          } else {
+            stats.newDogsCreated++;
+            console.log(`Created new my_dogs record for: ${dog.id} - ${dog.navn} (is_active: false)`);
+          }
+        }
+      } catch (error) {
+        stats.errors.push(`Unexpected error processing ${dog.id}: ${error.message}`);
+        console.error(`Error processing dog ${dog.id}:`, error);
       }
-
-      const dogs: DogBasicInfo[] = await response.json();
-      
-      console.log(`Successfully fetched ${dogs.length} dogs`);
-      console.log("Dogs list:");
-      dogs.forEach((dog, index) => {
-        console.log(`${index + 1}. ID: ${dog.id}`);
-        console.log(`   Name: ${dog.navn || 'N/A'}`);
-        console.log(`   Nickname: ${dog.kallenavn || 'N/A'}`);
-        console.log(`   Breed: ${dog.rase || 'N/A'}`);
-        console.log(`   Gender: ${dog.kjoenn || 'N/A'}`);
-        console.log(`   Born: ${dog.foedt || 'N/A'}`);
-        console.log(`   Full data:`, JSON.stringify(dog, null, 2));
-        console.log('---');
-      });
-
-      return {
-        success: true,
-        dogsCount: dogs.length,
-        dogs: dogs,
-        sessionInfo: {
-          sessionId: session.session_id,
-          expiresAt: session.expires_at,
-          loginMethod: session.login_method
-        }
-      };
-
-    } catch (error) {
-      console.error("Error fetching dog list:", error);
-      return {
-        success: false,
-        dogsCount: 0,
-        dogs: [],
-        error: `Network error: ${error.message}`
-      };
     }
+
+    console.log(`My dogs sync completed: ${stats.newDogsCreated} created, ${stats.existingDogsUpdated} updated, ${stats.errors.length} errors`);
+    return stats;
   }
 
-  async updateSessionLastUsed(sessionId: string): Promise<void> {
+  async retrieveMyDogs(sessionId?: string, saveToDatabase: boolean = true): Promise<MyDogsResponse> {
     try {
-      // Optional: Track when the session was last used
-      // This assumes you have a last_used_at column, if not this will just log an error
-      const { error } = await this.supabase
-        .from('scraper_sessions')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('session_id', sessionId);
-
-      if (error && !error.message.includes('column "last_used_at" does not exist')) {
-        console.error("Error updating session last used:", error);
-      }
-    } catch (error) {
-      // Silently ignore - this is just for tracking
-      console.log("Note: Could not update session last_used_at (column may not exist)");
-    }
-  }
-
-  async retrieveMyDogs(sessionId?: string): Promise<MyDogsResponse> {
-    try {
-      console.log("Starting my dogs retrieval...");
+      console.log(`Starting my dogs retrieval. [Save to database: ${saveToDatabase}] `);
       
       // Get valid session
       const session = await this.getValidSession(sessionId);
@@ -204,11 +232,28 @@ class MyDogsRetriever {
         };
       }
 
-      // Update session usage tracking
-      await this.updateSessionLastUsed(session.session_id);
-
       // Fetch the dogs
-      const result = await this.fetchMyDogs(session);
+      const dogs = await this.fetchMyDogs(session);
+
+      // Save to database if requested
+      let syncStats: {newDogsCreated: number, existingDogsUpdated: number, errors: string[]} | undefined = undefined;
+      if (saveToDatabase) {
+        syncStats = await this.saveDogsToMyDogsTable(dogs);
+      } else {
+        console.log("Skipping database save (saveToDatabase = false)");
+      }
+
+      const result: MyDogsResponse = {
+        success: true,
+        dogsCount: dogs.length,
+        dogs: dogs,
+        sessionInfo: {
+          sessionId: session.session_id,
+          expiresAt: session.expires_at,
+          loginMethod: session.login_method
+        },
+        syncStats: syncStats
+      };
 
       console.log(`Operation completed. Success: ${result.success}, Dogs found: ${result.dogsCount}`);
       
@@ -220,7 +265,7 @@ class MyDogsRetriever {
         success: false,
         dogsCount: 0,
         dogs: [],
-        error: `Unexpected error: ${error.message}`
+        error: `Error: ${error.message}`
       };
     }
   }
@@ -263,15 +308,16 @@ serve(async (req) => {
       });
     }
 
-    // Get optional session ID from query params
+    // Get optional session ID and save flag from query params
     const url = new URL(req.url);
     const sessionId = url.searchParams.get('sessionId') || undefined;
+    const saveToDb = url.searchParams.get('save') !== 'false'; // Default to true
 
-    console.log(`Processing request with session ID: ${sessionId || 'auto-select most recent'}`);
+    console.log(`Processing request with session ID: ${sessionId || 'auto-select most recent'}, save to DB: ${saveToDb}`);
 
     // Create retriever and fetch dogs
     const retriever = new MyDogsRetriever(supabaseUrl, supabaseServiceKey);
-    const result = await retriever.retrieveMyDogs(sessionId);
+    const result = await retriever.retrieveMyDogs(sessionId, saveToDb);
 
     return new Response(JSON.stringify(result), {
       status: result.success ? 200 : 400,

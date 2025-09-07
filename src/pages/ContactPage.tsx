@@ -4,7 +4,7 @@ import Button from '../components/ui/Button';
 import { useTranslation } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import CloudinaryImage from '../components/CloudinaryImage';
-import { face } from '@cloudinary/url-gen/qualifiers/focusOn';
+import { faces } from '@cloudinary/url-gen/qualifiers/focusOn';
 import dkkLogo from '../assets/dkk_uddannet.png';
 import { CloudinaryUploadService } from '../services/cloudinaryUploadService';
 import { dogService, type StaticImage } from '../services/supabaseService';
@@ -154,30 +154,30 @@ function ContactPage() {
         {/* Contact Information Section */}
         <div className="mb-16">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="mb-8">
+            <div className="mb-4">
               <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900">
                 {t('contact.sections.contactInfo')}
               </Typography>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
               {/* Contact Details */}
-              <div className="space-y-8">
+              <div className="space-y-8 pt-10">
                 {/* Kennel Owner Section */}
                 <div className="text-start">
-                  <div className="mb-6 relative">
-                    <div className="w-48 h-48 md:w-56 md:h-56 mx-auto rounded-lg shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div className="mb-6 relative place-">
+                    <div className="w-full mx-auto rounded-lg shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center" style={{ aspectRatio: '4/3' }}>
                       {ownerImage ? (
                         ownerImage.image_public_id ? (
                           <CloudinaryImage
                             key={ownerImage.image_public_id}
                             publicId={ownerImage.image_public_id}
-                            width={200}
-                            height={200}
+                            width={650}
+                            height={650}
                             alt={ownerImage.alt_text || "Tine Arnild - Kennel Owner"}
                             className="w-full h-full object-cover"
                             crop="fill"
-                            gravity={face()}
+                            gravity={faces()}
                             enablePlaceholder={false}
                           />
                         ) : (
@@ -222,9 +222,6 @@ function ContactPage() {
                     )}
                   </div>
                   <div>
-                    <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                      {t('contact.labels.breeder')}
-                    </Typography>
                     <Typography variant="h3" weight="bold" className="text-2xl text-gray-900 mb-2">
                       Tine Arnild
                     </Typography>
@@ -274,15 +271,15 @@ function ContactPage() {
               </div>
 
               {/* Kennel Images */}
-              <div className="space-y-6">
+              <div className="space-y-6 h-full flex flex-col">
                 <Typography variant="h4" weight="semibold" className="text-gray-900 mb-4">
                   {t('contact.sections.kennelEnvironment')}
                 </Typography>
                 
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-6 flex-1">
                   {/* Main Kennel Image */}
-                  <div className="relative">
-                    <div className="w-full h-64 rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div className="relative flex-1">
+                    <div className="w-full h-full min-h-64 rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
                       {mainKennelImage ? (
                         mainKennelImage.image_public_id ? (
                           <CloudinaryImage
@@ -317,11 +314,6 @@ function ContactPage() {
                         </div>
                       )}
                     </div>
-                    <div className="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded">
-                      <Typography variant="caption" className="text-white">
-                        {t('contact.labels.mainFacility')}
-                      </Typography>
-                    </div>
                     {user && (
                       <>
                         <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
@@ -343,9 +335,9 @@ function ContactPage() {
                   </div>
 
                   {/* Secondary Images */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 flex-shrink-0">
                     <div className="relative">
-                      <div className="w-full h-32 rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                      <div className="w-full h-full rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
                         {outdoorImage ? (
                           outdoorImage.image_public_id ? (
                             <CloudinaryImage
@@ -380,9 +372,6 @@ function ContactPage() {
                           </div>
                         )}
                       </div>
-                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-                        {t('contact.labels.outdoorArea')}
-                      </div>
                       {user && (
                         <>
                           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
@@ -404,7 +393,7 @@ function ContactPage() {
                     </div>
 
                     <div className="relative">
-                      <div className="w-full h-32 rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                      <div className="w-full h-full rounded-lg shadow-md overflow-hidden bg-gray-100 flex items-center justify-center">
                         {indoorImage ? (
                           indoorImage.image_public_id ? (
                             <CloudinaryImage
@@ -438,9 +427,6 @@ function ContactPage() {
                             <span className="text-gray-400 text-2xl">🏠</span>
                           </div>
                         )}
-                      </div>
-                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-                        {t('contact.labels.indoorFacilities')}
                       </div>
                       {user && (
                         <>
@@ -528,11 +514,10 @@ function ContactPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed">
+              <Typography variant="body" className="text-lg text-gray-600 leading-relaxed pt-8">
                 {t('contact.messages.contactEncouragement')}
               </Typography>
-            </div>
+
           </div>
         </div>
       </div>

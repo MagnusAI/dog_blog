@@ -455,9 +455,6 @@ function DogDetailsPage() {
               </Button>
             )}
             <div>
-              <Badge variant={dog.gender === 'M' ? 'primary' : 'secondary'}>
-                {dog.gender === 'M' ? t('dogs.labels.male') : t('dogs.labels.female')}
-              </Badge>
               {dog.is_deceased && (
                 <Badge variant="danger" className="ml-2">
                   {t('dogs.labels.deceased')}

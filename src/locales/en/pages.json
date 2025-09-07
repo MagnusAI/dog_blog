@@ -80,14 +80,16 @@
     "actions": {
       "addNews": "Add News",
       "editNews": "Edit News",
-      "readMore": "Read more"
+      "readMore": "Read more",
+      "visitOldSite": "Visit Old Website"
     },
     "sections": {
       "archive": "News Archive",
       "archiveDescription": "Stay updated with the latest news, achievements, and insights from our kennel.",
       "featured": "Featured",
       "moreNews": "More News",
-      "allNews": "All News"
+      "allNews": "All News",
+      "lookingForMore": "Looking for More Articles?"
     },
     "messages": {
       "confirmDelete": "Are you sure you want to delete this news post?",
@@ -96,7 +98,8 @@
       "noNewsPostsYet": "No news posts yet.",
       "checkBackLater": "Check back later for the latest news and updates from our kennel.",
       "showing": "Showing {{count}} news post",
-      "showingPlural": "Showing {{count}} news posts"
+      "showingPlural": "Showing {{count}} news posts",
+      "archiveNotice": "If you didn't find what you were looking for, you can browse our older articles on our previous website."
     }
   },
   "puppies": {

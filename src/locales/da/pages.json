@@ -82,14 +82,16 @@
     "actions": {
       "addNews": "Tilføj Nyhed",
       "editNews": "Rediger Nyhed",
-      "readMore": "Læs mere"
+      "readMore": "Læs mere",
+      "visitOldSite": "Besøg Gammel Hjemmeside"
     },
     "sections": {
       "archive": "Nyhedsarkiv",
       "archiveDescription": "Hold dig opdateret med de seneste nyheder, præstationer og indsigter fra vores kennel.",
       "featured": "Fremhævet",
       "moreNews": "Flere Nyheder",
-      "allNews": "Alle Nyheder"
+      "allNews": "Alle Nyheder",
+      "lookingForMore": "Leder du efter flere artikler?"
     },
     "messages": {
       "confirmDelete": "Er du sikker på, at du vil slette denne nyhed?",
@@ -98,7 +100,8 @@
       "noNewsPostsYet": "Ingen nyheder endnu.",
       "checkBackLater": "Tjek tilbage senere for de seneste nyheder og opdateringer fra vores kennel.",
       "showing": "Viser {{count}} nyhed",
-      "showingPlural": "Viser {{count}} nyheder"
+      "showingPlural": "Viser {{count}} nyheder",
+      "archiveNotice": "Hvis du ikke fandt det, du ledte efter, kan du gennemse vores ældre artikler på vores tidligere hjemmeside."
     }
   },
   "puppies": {

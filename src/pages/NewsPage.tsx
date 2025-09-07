@@ -311,6 +311,27 @@ function NewsPage() {
         </div>
       </div>
           )}
+
+          {/* Archive Notice */}
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-6 text-center">
+              <div className="text-gray-400 text-4xl mb-4">📚</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {t('news.sections.lookingForMore')}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {t('news.messages.archiveNotice')}
+              </p>
+              <Button
+                variant="secondary"
+                onClick={() => window.open('https://www.speedex.dk', '_blank')}
+                className="inline-flex items-center gap-2"
+              >
+                <span>🌐</span>
+                {t('news.actions.visitOldSite')}
+              </Button>
+            </div>
+          </div>
         </>
       )}
     </div>

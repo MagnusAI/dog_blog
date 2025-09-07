@@ -160,6 +160,31 @@ export interface ContentSectionUpdateData {
   is_active?: boolean;
 }
 
+export interface Person {
+  id: string;
+  name: string;
+  type: 'owner' | 'breeder' | 'unknown' | string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePersonData {
+  id: string;
+  name: string;
+  type?: 'owner' | 'breeder' | 'unknown' | string;
+  notes?: string;
+  is_active?: boolean;
+}
+
+export interface UpdatePersonData {
+  name?: string;
+  type?: 'owner' | 'breeder' | 'unknown' | string;
+  notes?: string;
+  is_active?: boolean;
+}
+
 export interface NewsPost {
   id: string;
   title: string;
@@ -1068,6 +1093,143 @@ export const contentService = {
 
     if (error) throw error;
     return data;
+  }
+};
+
+// Person service for managing person/entity mappings
+export const personService = {
+  // Get all persons
+  async getPersons(limit?: number): Promise<Person[]> {
+    let query = supabase
+      .from('persons')
+      .select('*')
+      .order('name');
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get person by ID
+  async getPersonById(id: string): Promise<Person | null> {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
+  },
+
+  // Search persons by name (supports partial matching)
+  async searchPersonsByName(query: string): Promise<Person[]> {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .ilike('name', `%${query}%`)
+      .order('name')
+      .limit(20);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get persons by type
+  async getPersonsByType(type: string): Promise<Person[]> {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .eq('type', type)
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Create person
+  async createPerson(personData: CreatePersonData): Promise<Person> {
+    const { data, error } = await supabase
+      .from('persons')
+      .insert(personData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Update person
+  async updatePerson(id: string, updates: UpdatePersonData): Promise<Person> {
+    const { data, error } = await supabase
+      .from('persons')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete person
+  async deletePerson(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('persons')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // Upsert person (create if doesn't exist, update if exists)
+  async upsertPerson(personData: CreatePersonData): Promise<Person> {
+    const { data, error } = await supabase
+      .from('persons')
+      .upsert(personData, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get or create person by ID (useful for auto-creating unknown persons)
+  async getOrCreatePerson(id: string, defaultName?: string, type?: string): Promise<Person> {
+    // First try to get existing person
+    const existing = await this.getPersonById(id);
+    if (existing) return existing;
+
+    // Create new person with provided or default data
+    const personData: CreatePersonData = {
+      id,
+      name: defaultName || `Unknown Person (${id})`,
+      type: type || 'unknown',
+      is_active: true
+    };
+
+    return await this.createPerson(personData);
+  },
+
+  // Batch get persons by IDs
+  async getPersonsByIds(ids: string[]): Promise<Person[]> {
+    if (ids.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .in('id', ids)
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
   }
 };
 

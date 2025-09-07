@@ -40,7 +40,10 @@
       "female": "Hun",
       "deceased": "Afdød",
       "yearsOld": "{{count}} år gammel",
-      "unknown": "Ukendt"
+      "unknown": "Ukendt",
+      "owner": "Ejer",
+      "gender": "Køn",
+      "nickname": "Kaldenavn"
     },
     "actions": {
       "editDog": "Rediger Hund",

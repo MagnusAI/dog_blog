@@ -97,10 +97,17 @@ function DogDetailsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const calculateAge = (birthDate?: string) => {
+  const calculateAge = (birthDate?: string, deathDate?: string) => {
     if (!birthDate) return t('dogs.labels.unknown');
     const birth = new Date(birthDate);
+    const death = deathDate ? new Date(deathDate) : null;
     const now = new Date();
+
+    if (death) {
+      const age = death.getFullYear() - birth.getFullYear();
+      return t('dogs.labels.yearsOld', { count: age });
+    }
+
     const years = now.getFullYear() - birth.getFullYear();
     const months = now.getMonth() - birth.getMonth();
 
@@ -166,7 +173,7 @@ function DogDetailsPage() {
 
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
-    
+
     // Debug logging
     console.log('All ancestors:', dog.all_ancestors);
     console.log('Filtered ancestors (generation <= 3):', filteredAncestors);
@@ -185,7 +192,7 @@ function DogDetailsPage() {
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];
-      
+
       // Add father (append "0" to current path)
       const fatherPath = path + '0';
       const fatherChild = buildTreeFromPath(fatherPath);
@@ -215,7 +222,7 @@ function DogDetailsPage() {
 
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
-    
+
     // Debug logging
     const motherPaths = filteredAncestors.filter(a => a.path?.startsWith('1')).map(a => ({ path: a.path, name: a.parent.name }));
     console.log('Mother line paths found:', motherPaths);
@@ -232,7 +239,7 @@ function DogDetailsPage() {
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];
-      
+
       // Add father (append "0" to current path)
       const fatherPath = path + '0';
       const fatherChild = buildTreeFromPath(fatherPath);
@@ -272,15 +279,15 @@ function DogDetailsPage() {
     if (path === '101') return 'Maternal Great-Grandmother (Mother\'s Father\'s Mother)';
     if (path === '110') return 'Maternal Great-Grandfather (Mother\'s Mother\'s Father)';
     if (path === '111') return 'Maternal Great-Grandmother (Mother\'s Mother\'s Mother)';
-    
+
     // For deeper generations, provide a more generic label
     const generation = path.length;
     const lastDigit = path[path.length - 1];
     const gender = lastDigit === '0' ? 'Grandfather' : 'Grandmother';
-    
+
     if (generation === 4) return `Great-Great-${gender}`;
     if (generation === 5) return `Great-Great-Great-${gender}`;
-    
+
     return `${generation}th Generation ${gender}`;
   };
 
@@ -474,12 +481,24 @@ function DogDetailsPage() {
               <Typography variant="body" className="font-mono">{dog.id}</Typography>
             </div>
             <div>
+              <Typography variant="caption" color="muted">{t('dogs.labels.name')}</Typography>
+              <Typography variant="body">{dog.name}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">{t('dogs.labels.nickname')}</Typography>
+              <Typography variant="body">{dog.nickname || t('dogs.labels.unknown')}</Typography>
+            </div>
+            <div>
               <Typography variant="caption" color="muted">{t('dogs.labels.birthDate')}</Typography>
               <Typography variant="body">{formatDate(dog.birth_date)}</Typography>
             </div>
             <div>
               <Typography variant="caption" color="muted">{t('dogs.labels.age')}</Typography>
-              <Typography variant="body">{calculateAge(dog.birth_date)}</Typography>
+              <Typography variant="body">{calculateAge(dog.birth_date, dog.death_date)}</Typography>
+            </div>
+            <div>
+              <Typography variant="caption" color="muted">{t('dogs.labels.gender')}</Typography>
+              <Typography variant="body">{dog.gender === 'M' ? t('dogs.labels.male') : t('dogs.labels.female')}</Typography>
             </div>
             {dog.color && (
               <div>
@@ -493,20 +512,12 @@ function DogDetailsPage() {
                 <Typography variant="body">{formatDate(dog.death_date)}</Typography>
               </div>
             )}
-            <div>
-              <Typography variant="caption" color="muted">{t('dogs.labels.titles')}</Typography>
-              <Typography variant="body">{dog.titles?.length || 0}</Typography>
-            </div>
-            <div>
-              <Typography variant="caption" color="muted">{t('dogs.labels.offspring')}</Typography>
-              <Typography variant="body">
-                {(() => {
-                  const sireCount = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE').length || 0;
-                  const damCount = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM').length || 0;
-                  return sireCount + damCount;
-                })()}
-              </Typography>
-            </div>
+            {dog.owner_person_id && (
+              <div>
+                <Typography variant="caption" color="muted">{t('dogs.labels.owner')}</Typography>
+                <Typography variant="body">{dog.owner_person_id}</Typography>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -632,75 +643,6 @@ function DogDetailsPage() {
                         maxDepth={3}
                         lineStyle={{ color: "#e5e7eb", thickness: 2, style: "solid" }}
                       />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Offspring */}
-        {(() => {
-          // Filter offspring by relationship type
-          const sireOffspring = dog.offspring_as_sire?.filter((rel: any) => rel.relationship_type === 'SIRE') || [];
-          const damOffspring = dog.offspring_as_dam?.filter((rel: any) => rel.relationship_type === 'DAM') || [];
-          const hasOffspring = sireOffspring.length > 0 || damOffspring.length > 0;
-
-          if (!hasOffspring) return null;
-
-          return (
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <Typography variant="h4" className="mb-4">Offspring</Typography>
-              <div className="space-y-4">
-                {sireOffspring.length > 0 && (
-                  <div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {sireOffspring.slice(0, 6).map((rel: any) => (
-                        <button
-                          key={`sire-${rel.offspring.id}`}
-                          onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
-                          className="text-left p-2 border rounded hover:bg-gray-50 transition-colors"
-                        >
-                          <Typography variant="caption" weight="semibold">
-                            {rel.offspring.name}
-                          </Typography>
-                          <Typography variant="caption" color="muted" className="block">
-                            {rel.offspring.breed?.name}
-                          </Typography>
-                        </button>
-                      ))}
-                      {sireOffspring.length > 6 && (
-                        <Typography variant="caption" color="muted">
-                          ...and {sireOffspring.length - 6} more
-                        </Typography>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {damOffspring.length > 0 && (
-                  <div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {damOffspring.slice(0, 6).map((rel: any) => (
-                        <button
-                          key={`dam-${rel.offspring.id}`}
-                          onClick={() => navigate(createDogDetailPath(rel.offspring.id))}
-                          className="text-left p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-                        >
-                          <Typography variant="caption" weight="semibold">
-                            {rel.offspring.name}
-                          </Typography>
-                          <Typography variant="caption" color="muted" className="block">
-                            {rel.offspring.breed?.name}
-                          </Typography>
-                        </button>
-                      ))}
-                      {damOffspring.length > 6 && (
-                        <Typography variant="caption" color="muted">
-                          ...and {damOffspring.length - 6} more
-                        </Typography>
-                      )}
                     </div>
                   </div>
                 )}

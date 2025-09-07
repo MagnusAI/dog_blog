@@ -130,6 +130,18 @@ export interface DogImage {
   updated_at: string;
 }
 
+export interface StaticImage {
+  id: number;
+  page_type: string;
+  section_id: string;
+  image_url: string;
+  image_public_id: string;
+  alt_text?: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ContentSection {
   id: string;
   section_key: string;
@@ -725,6 +737,52 @@ export const dogService = {
     if (errors.length > 0) {
       throw new Error(`Failed to reorder images: ${errors.map(e => e.error?.message).join(', ')}`);
     }
+  },
+
+  // Static Images (for contact page and other static pages)
+  async getStaticImages(pageType: string, sectionIds: string[]): Promise<Record<string, StaticImage | null>> {
+    const { data, error } = await supabase
+      .from('static_images')
+      .select('*')
+      .eq('page_type', pageType)
+      .in('section_id', sectionIds)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Convert array to object with section_id as key
+    const images: Record<string, StaticImage | null> = {};
+    sectionIds.forEach(sectionId => {
+      images[sectionId] = data?.find(img => img.section_id === sectionId) || null;
+    });
+
+    return images;
+  },
+
+  async saveStaticImage(pageType: string, sectionId: string, imageData: { publicId: string, url: string, altText?: string }): Promise<StaticImage> {
+    // First, delete any existing image for this page section
+    await supabase
+      .from('static_images')
+      .delete()
+      .eq('page_type', pageType)
+      .eq('section_id', sectionId);
+
+    // Insert the new image
+    const { data, error } = await supabase
+      .from('static_images')
+      .insert({
+        page_type: pageType,
+        section_id: sectionId,
+        image_url: imageData.url,
+        image_public_id: imageData.publicId,
+        alt_text: imageData.altText || `${pageType} ${sectionId} image`,
+        display_order: 0
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 };
 

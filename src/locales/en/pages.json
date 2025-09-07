@@ -45,7 +45,7 @@
       "gender": "Gender",
       "nickname": "Nickname",
       "breeder": "Breeder",
-      "noNewsPosts": "No news posts yet.",
+
       "newsPosts": "News Posts",
       "name": "Name",
       "monthsOld": "{{count}} months old"
@@ -76,7 +76,8 @@
       "activeDogsOnly": " (active dogs only)",
       "activeDogsPreSelected": "Active dogs are pre-selected. Inactive dogs are also visible for editing. Click to select/deselect dogs, then save to update their status.",
       "selectedCount": "{{count}} selected",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "noNewsPosts": "No news posts yet."
     }
   },
   "news": {

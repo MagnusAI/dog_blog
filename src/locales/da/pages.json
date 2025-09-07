@@ -46,7 +46,6 @@
       "gender": "Køn",
       "nickname": "Kaldenavn",
       "breeder": "Opdrætter",
-      "noNewsPosts": "Ingen releterede nyheder endnu.",
       "newsPosts": "Releterede Nyheder",
       "name": "Navn",
       "monthsOld": "{{count}} måneder gammel"
@@ -78,7 +77,8 @@
       "activeDogsOnly": " (aktive hunde kun)",
       "activeDogsPreSelected": "Aktive hunde er forvalgt. Inaktive hunde er også synlige for redigering. Klik for at vælge/fjern hunde, og gem for at opdatere deres status.",
       "selectedCount": "{{count}} valgt",
-      "tryAgain": "Prøv igen"
+      "tryAgain": "Prøv igen",
+      "noNewsPosts": "Ingen releterede nyheder endnu."
     }
   },
   "news": {

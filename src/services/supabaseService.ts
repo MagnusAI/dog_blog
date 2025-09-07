@@ -73,6 +73,7 @@ export interface Dog {
   updated_at: string;
   breed?: Breed;
   titles?: Title[];
+  profile_image?: DogImage[];
   pedigree_sire?: { parent: Dog & { titles?: Title[] } }[];
   pedigree_dam?: { parent: Dog & { titles?: Title[] } }[];
   all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed, profile_image?: DogImage[] }, relationship_type: 'SIRE' | 'DAM', generation: number, path?: string }[];
@@ -321,7 +322,8 @@ export const dogService = {
         *,
         breed:breeds(*),
         titles(*),
-        my_dogs(*)
+        my_dogs(*),
+        profile_image:dog_images!dog_id(*)
       `)
       .eq('id', id)
       .single();

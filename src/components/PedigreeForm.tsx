@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { dogService } from '../services/supabaseService';
-import type { Dog, Breed } from '../services/supabaseService';
+import type { Dog } from '../services/supabaseService';
 import { createCloudinaryUploadService, CloudinaryUploadService } from '../services/cloudinaryUploadService';
 import Button from './ui/Button';
 import Typography from './ui/Typography';
-import { BreedSelector } from './BreedSelector';
 import ClickableCloudinaryImage from './ClickableCloudinaryImage';
 
 export interface PedigreeFormProps {
@@ -22,11 +21,7 @@ interface PedigreeFormData {
   // Generation 1 (parent)
   parent?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
@@ -34,22 +29,14 @@ interface PedigreeFormData {
   // Generation 2 (grandparents)
   grandparent1?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
   };
   grandparent2?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
@@ -57,44 +44,28 @@ interface PedigreeFormData {
   // Generation 3 (great-grandparents)
   greatGrandparent1?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
   };
   greatGrandparent2?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
   };
   greatGrandparent3?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
   };
   greatGrandparent4?: {
     id: string;
-    name: string;
-    breed_id: number | null;
-    birth_date: string;
-    gender: 'M' | 'F';
-    color: string;
+    name?: string;
     image?: File;
     imageUrl?: string;
     imagePublicId?: string;
@@ -106,10 +77,6 @@ type DogFormEntry = NonNullable<PedigreeFormData[keyof PedigreeFormData]>;
 const createEmptyDogEntry = (): DogFormEntry => ({
   id: '',
   name: '',
-  breed_id: null,
-  birth_date: '',
-  gender: 'M',
-  color: '',
   imageUrl: '',
   imagePublicId: ''
 });
@@ -121,7 +88,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
   onCancel
 }) => {
   const [formData, setFormData] = useState<PedigreeFormData>({});
-  const [breeds, setBreeds] = useState<Breed[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -151,10 +117,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
 
   const loadInitialData = async () => {
     try {
-      // Load breeds
-      const breedsData = await dogService.getBreeds();
-      setBreeds(breedsData);
-
       // Load current pedigree data using path-based system
       if (currentDog.all_ancestors) {
         const basePath = isEditingFatherLine ? '0' : '1';
@@ -184,10 +146,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.parent = {
             id: parent.parent.id,
             name: parent.parent.name,
-            breed_id: parent.parent.breed_id,
-            birth_date: parent.parent.birth_date || '',
-            gender: parent.parent.gender,
-            color: parent.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -203,10 +161,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.grandparent1 = {
             id: grandparent1.parent.id,
             name: grandparent1.parent.name,
-            breed_id: grandparent1.parent.breed_id,
-            birth_date: grandparent1.parent.birth_date || '',
-            gender: grandparent1.parent.gender,
-            color: grandparent1.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -222,10 +176,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.grandparent2 = {
             id: grandparent2.parent.id,
             name: grandparent2.parent.name,
-            breed_id: grandparent2.parent.breed_id,
-            birth_date: grandparent2.parent.birth_date || '',
-            gender: grandparent2.parent.gender,
-            color: grandparent2.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -241,10 +191,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.greatGrandparent1 = {
             id: greatGrandparent1.parent.id,
             name: greatGrandparent1.parent.name,
-            breed_id: greatGrandparent1.parent.breed_id,
-            birth_date: greatGrandparent1.parent.birth_date || '',
-            gender: greatGrandparent1.parent.gender,
-            color: greatGrandparent1.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -260,10 +206,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.greatGrandparent2 = {
             id: greatGrandparent2.parent.id,
             name: greatGrandparent2.parent.name,
-            breed_id: greatGrandparent2.parent.breed_id,
-            birth_date: greatGrandparent2.parent.birth_date || '',
-            gender: greatGrandparent2.parent.gender,
-            color: greatGrandparent2.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -279,10 +221,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.greatGrandparent3 = {
             id: greatGrandparent3.parent.id,
             name: greatGrandparent3.parent.name,
-            breed_id: greatGrandparent3.parent.breed_id,
-            birth_date: greatGrandparent3.parent.birth_date || '',
-            gender: greatGrandparent3.parent.gender,
-            color: greatGrandparent3.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -298,10 +236,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           newFormData.greatGrandparent4 = {
             id: greatGrandparent4.parent.id,
             name: greatGrandparent4.parent.name,
-            breed_id: greatGrandparent4.parent.breed_id,
-            birth_date: greatGrandparent4.parent.birth_date || '',
-            gender: greatGrandparent4.parent.gender,
-            color: greatGrandparent4.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -317,7 +251,7 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
     }
   };
 
-  const handleInputChange = (
+  const handleInputChange = async (
     dogKey: keyof PedigreeFormData,
     field: keyof DogFormEntry,
     value: any
@@ -329,6 +263,33 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         [field]: value
       }
     }));
+
+    // Auto-fill dog name and image when ID is entered
+    if (field === 'id' && value && value.trim()) {
+      try {
+        const existingDog = await dogService.getDog(value.trim());
+        if (existingDog) {
+          // Get profile image if available
+          let profileImage: any = null;
+          if (Array.isArray(existingDog.profile_image)) {
+            profileImage = existingDog.profile_image.find((img: any) => img.is_profile) || existingDog.profile_image[0];
+          }
+          
+          setFormData(prev => ({
+            ...prev,
+            [dogKey]: {
+              ...(prev[dogKey] || createEmptyDogEntry()),
+              name: existingDog.name,
+              imageUrl: profileImage?.image_url,
+              imagePublicId: profileImage?.image_public_id
+            }
+          }));
+        }
+      } catch (error) {
+        // Dog doesn't exist, that's fine - we'll create it later
+        console.log(`Dog with ID ${value} doesn't exist yet, will be created on save`);
+      }
+    }
 
     // Clear error for this field
     const errorKey = `${dogKey}.${field}`;
@@ -362,15 +323,9 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
 
     // Validate each dog entry that has data
     Object.entries(formData).forEach(([dogKey, dogData]) => {
-      if (dogData) {
-        if (!dogData.name.trim()) {
-          newErrors[`${dogKey}.name`] = 'Name is required';
-        }
+      if (dogData && dogData.id.trim()) {
         if (!dogData.id.trim()) {
-          newErrors[`${dogKey}.id`] = 'ID is required';
-        }
-        if (!dogData.breed_id) {
-          newErrors[`${dogKey}.breed_id`] = 'Breed is required';
+          newErrors[`${dogKey}.id`] = 'Parent ID is required';
         }
       }
     });
@@ -396,25 +351,24 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
       
       // Process each dog entry
       for (const [dogKey, dogData] of Object.entries(formData)) {
-        if (!dogData || !dogData.id || !dogData.name) continue;
+        if (!dogData || !dogData.id.trim()) continue;
         
         try {
-          // Create or update the dog record first (if it doesn't exist)
+          // Check if dog exists, create if it doesn't
           let existingDog;
           try {
             existingDog = await dogService.getDog(dogData.id);
           } catch (error) {
-            // Dog doesn't exist, create it
+            // Dog doesn't exist, create it with placeholder data
             const newDog = {
               id: dogData.id,
-              name: dogData.name,
-              breed_id: dogData.breed_id!,
-              gender: dogData.gender,
-              birth_date: dogData.birth_date || undefined,
-              color: dogData.color || undefined,
+              name: dogData.name || `Unknown Dog (${dogData.id})`,
+              breed_id: 1, // Default breed ID - you might want to make this configurable
+              gender: 'M' as 'M' | 'F', // Default to Male
               is_deceased: false
             };
             existingDog = await dogService.createDog(newDog);
+            console.log(`Created new dog: ${dogData.id}`);
           }
           
           // Upload image if provided
@@ -486,192 +440,136 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
     const dogData = dog || createEmptyDogEntry();
     
     return (
-      <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
         <Typography variant="h5" weight="semibold" className="text-gray-800">
           {title}
         </Typography>
         
-        {/* Image Upload Section */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <div className="flex gap-6">
+          {/* Photo Section */}
           <div className="flex-shrink-0">
-            <Typography variant="body" weight="medium" className="mb-2">
-              Dog Photo
-            </Typography>
-            <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white">
-              {dogData.image ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={URL.createObjectURL(dogData.image)}
-                    alt={`${dogData.name || 'Dog'} preview`}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleImageRemove(dogKey)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : dogData.imagePublicId ? (
-                <div className="relative w-full h-full">
-                  <ClickableCloudinaryImage
-                    publicId={dogData.imagePublicId}
-                    width={96}
-                    height={96}
-                    alt={`${dogData.name || 'Dog'} photo`}
-                    crop="fill"
-                    className="rounded-lg"
-                    disableEnlarge={true}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleImageRemove(dogKey)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : dogData.imageUrl ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={dogData.imageUrl}
-                    alt={`${dogData.name || 'Dog'} photo`}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleImageRemove(dogKey)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <Typography variant="caption" color="muted" className="text-xs">
-                    Add Photo
-                  </Typography>
-                </div>
-              )}
+            <div className="relative">
+              <div 
+                className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 relative group cursor-pointer hover:border-gray-400 hover:bg-gray-100 transition-colors"
+                onClick={() => document.getElementById(`photo-input-${dogKey}`)?.click()}
+              >
+                {dogData.image ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={URL.createObjectURL(dogData.image)}
+                      alt={`${dogData.name || 'Dog'} preview`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleImageRemove(dogKey);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : dogData.imagePublicId ? (
+                  <div className="relative w-full h-full">
+                    <ClickableCloudinaryImage
+                      publicId={dogData.imagePublicId}
+                      width={128}
+                      height={128}
+                      alt={`${dogData.name || 'Dog'} photo`}
+                      crop="fill"
+                      className="rounded-lg"
+                      disableEnlarge={true}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleImageRemove(dogKey);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : dogData.imageUrl ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={dogData.imageUrl}
+                      alt={`${dogData.name || 'Dog'} photo`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleImageRemove(dogKey);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <Typography variant="caption" color="muted" className="text-xs">
+                      Click to Add Photo
+                    </Typography>
+                  </div>
+                )}
+              </div>
+              <input
+                id={`photo-input-${dogKey}`}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(dogKey, file);
+                }}
+                className="hidden"
+              />
             </div>
-            <input
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleImageUpload(dogKey, file);
-              }}
-              className="mt-2 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
           </div>
           
-          <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Name */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Name *</Typography>
-                </label>
-                <input
-                  type="text"
-                  value={dogData.name}
-                  onChange={(e) => handleInputChange(dogKey, 'name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors[`${dogKey}.name`] ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter dog name"
-                />
-                {errors[`${dogKey}.name`] && (
-                  <Typography variant="caption" color="danger" className="mt-1">
-                    {errors[`${dogKey}.name`]}
-                  </Typography>
-                )}
-              </div>
+          {/* Form Fields */}
+          <div className="flex-1 space-y-4">
+            {/* Parent ID */}
+            <div>
+              <label className="block mb-2">
+                <Typography variant="body" weight="medium">Parent ID *</Typography>
+              </label>
+              <input
+                type="text"
+                value={dogData.id}
+                onChange={(e) => handleInputChange(dogKey, 'id', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors[`${dogKey}.id`] ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter parent dog ID"
+              />
+              {errors[`${dogKey}.id`] && (
+                <Typography variant="caption" color="danger" className="mt-1">
+                  {errors[`${dogKey}.id`]}
+                </Typography>
+              )}
+            </div>
 
-              {/* ID */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Registration ID *</Typography>
-                </label>
-                <input
-                  type="text"
-                  value={dogData.id}
-                  onChange={(e) => handleInputChange(dogKey, 'id', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors[`${dogKey}.id`] ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter registration ID"
-                />
-                {errors[`${dogKey}.id`] && (
-                  <Typography variant="caption" color="danger" className="mt-1">
-                    {errors[`${dogKey}.id`]}
-                  </Typography>
-                )}
-              </div>
-
-              {/* Breed */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Breed *</Typography>
-                </label>
-                <BreedSelector
-                  breeds={breeds}
-                  selectedBreedId={dogData.breed_id}
-                  onSelect={(breedId: any) => handleInputChange(dogKey, 'breed_id', breedId)}
-                  className={errors[`${dogKey}.breed_id`] ? 'border-red-500' : ''}
-                />
-                {errors[`${dogKey}.breed_id`] && (
-                  <Typography variant="caption" color="danger" className="mt-1">
-                    {errors[`${dogKey}.breed_id`]}
-                  </Typography>
-                )}
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Gender</Typography>
-                </label>
-                <select
-                  value={dogData.gender}
-                  onChange={(e) => handleInputChange(dogKey, 'gender', e.target.value as 'M' | 'F')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
-                </select>
-              </div>
-
-              {/* Birth Date */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Birth Date</Typography>
-                </label>
-                <input
-                  type="date"
-                  value={dogData.birth_date}
-                  onChange={(e) => handleInputChange(dogKey, 'birth_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Color */}
-              <div>
-                <label className="block mb-2">
-                  <Typography variant="body" weight="medium">Color</Typography>
-                </label>
-                <input
-                  type="text"
-                  value={dogData.color}
-                  onChange={(e) => handleInputChange(dogKey, 'color', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter color description"
-                />
-              </div>
+            {/* Dog Name (optional, for display) */}
+            <div>
+              <label className="block mb-2">
+                <Typography variant="body" weight="medium">Dog Name (optional)</Typography>
+              </label>
+              <input
+                type="text"
+                value={dogData.name || ''}
+                onChange={(e) => handleInputChange(dogKey, 'name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter dog name (will be auto-filled if dog exists)"
+              />
             </div>
           </div>
         </div>

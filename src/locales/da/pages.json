@@ -184,12 +184,12 @@
       "indoorFacilities": "Indendørs Faciliteter",
       "dkkCertified": "DKK Certificeret",
       "passionateBreeding": "Passioneret Avl",
-      "norfolkSpecialists": "Norfolk Specialister"
+      "specialists": "Specialist"
     },
     "messages": {
       "dkkDescription": "Certificeret af Dansk Kennel Klub",
       "passionDescription": "Avl med kærlighed og omsorg",
-      "norfolkDescription": "Specialiseret i Norfolk Terriers",
+      "description": "Specialiseret i Terriers",
       "contactEncouragement": "Vi er altid glade for at besvare spørgsmål om vores avlsprogram, kommende kuld eller give information om vores hunde."
     }
   }

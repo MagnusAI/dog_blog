@@ -1,34 +1,12 @@
-import { useState, useEffect } from 'react';
 import Typography from '../components/ui/Typography';
 import Button from '../components/ui/Button';
-import { contentService } from '../services/supabaseService';
-import type { ContentSection } from '../services/supabaseService';
-import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import CloudinaryImage from '../components/CloudinaryImage';
-import { dog } from '@cloudinary/url-gen/qualifiers/focusOn';
+import { face } from '@cloudinary/url-gen/qualifiers/focusOn';
+import dkkLogo from '../assets/dkk_uddannet.png';
 
 function ContactPage() {
-  const { user } = useAuth();
   const { t } = useTranslation('pages');
-  const [contactContent, setContactContent] = useState<ContentSection | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadContactData();
-  }, []);
-
-  const loadContactData = async () => {
-    try {
-      // Load contact content from CMS
-      const content = await contentService.getContentByKey('contact_info');
-      setContactContent(content);
-    } catch (error) {
-      console.error('Error loading contact data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEmailClick = () => {
     window.location.href = 'mailto:tinearnild@hotmail.com';
@@ -41,48 +19,44 @@ function ContactPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <Typography variant="h1" weight="bold" className="text-4xl md:text-6xl text-gray-900 mb-4">
-            {t('contact.header.title')}
-          </Typography>
-          <Typography variant="h3" className="text-gray-600 max-w-3xl mx-auto text-xl md:text-2xl">
-            {t('contact.header.subtitle')}
-          </Typography>
-        </div>
+
 
         {/* Contact Information Section */}
         <div className="mb-16">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="mb-8">
               <Typography variant="h2" weight="bold" className="text-3xl md:text-4xl text-gray-900">
                 {t('contact.sections.contactInfo')}
               </Typography>
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.location.href = '/admin/content/edit/contact_info'}
-                  className="text-gray-500 hover:text-gray-700 border-gray-300"
-                >
-                  ✏️ {t('actions.editContent', 'common')}
-                </Button>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {/* Contact Details */}
               <div className="space-y-8">
-                <div>
-                  <Typography variant="h4" weight="semibold" className="text-gray-900 mb-4">
-                    {t('contact.labels.breeder')}
-                  </Typography>
-                  <Typography variant="h3" weight="bold" className="text-2xl text-gray-900 mb-2">
-                    Tine Arnild
-                  </Typography>
-                  <Typography variant="body" className="text-gray-600">
-                    {t('contact.labels.kennelOwner')}
-                  </Typography>
+                {/* Kennel Owner Section */}
+                <div className="text-start">
+                  <div className="mb-6">
+                    <CloudinaryImage
+                      publicId="kennel-owner/tine-arnild"
+                      width={200}
+                      height={200}
+                      alt="Tine Arnild - Kennel Owner"
+                      className="w-48 h-48 md:w-56 md:h-56 object-cover rounded-lg shadow-lg mx-auto"
+                      crop="fill"
+                      gravity={face()}
+                    />
+                  </div>
+                  <div>
+                    <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
+                      {t('contact.labels.breeder')}
+                    </Typography>
+                    <Typography variant="h3" weight="bold" className="text-2xl text-gray-900 mb-2">
+                      Tine Arnild
+                    </Typography>
+                    <Typography variant="body" className="text-gray-600">
+                      {t('contact.labels.kennelOwner')}
+                    </Typography>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -97,7 +71,7 @@ function ContactPage() {
                       <Button
                         variant="ghost"
                         onClick={handleEmailClick}
-                        className="text-blue-600 hover:text-blue-800 p-0 h-auto font-medium"
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto font-medium pl-0 pr-0"
                       >
                         tinearnild@hotmail.com
                       </Button>
@@ -115,24 +89,13 @@ function ContactPage() {
                       <Button
                         variant="ghost"
                         onClick={handlePhoneClick}
-                        className="text-green-600 hover:text-green-800 p-0 h-auto font-medium"
+                        className="text-green-600 hover:text-green-800 p-0 h-auto font-medium pl-0 pr-0"
                       >
                         +45 27 74 11 40
                       </Button>
                     </div>
                   </div>
                 </div>
-
-                {/* Content from CMS */}
-                {contactContent && (
-                  <div className="prose prose-lg max-w-none">
-                    {contactContent.content.split('\n\n').map((paragraph, index) => (
-                      <Typography key={index} variant="body" className="text-lg text-gray-600 leading-relaxed mb-4">
-                        {paragraph}
-                      </Typography>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Kennel Images */}
@@ -146,8 +109,8 @@ function ContactPage() {
                   <div className="relative">
                     <CloudinaryImage
                       publicId="kennel-environment/kennel-main"
-                      width={600}
-                      height={400}
+                      width={1200}
+                      height={800}
                       alt="Kennel Speedex main facility"
                       className="w-full h-64 object-cover rounded-lg shadow-md"
                       crop="fill"
@@ -204,8 +167,8 @@ function ContactPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-blue-600 text-2xl">🏆</span>
+                <div className="w-16 h-16 bg-beige-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <img src={dkkLogo} alt="DKK" className="w-16 h-16" />
                 </div>
                 <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
                   {t('contact.labels.dkkCertified')}
@@ -232,10 +195,10 @@ function ContactPage() {
                   <span className="text-purple-600 text-2xl">🐕</span>
                 </div>
                 <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                  {t('contact.labels.norfolkSpecialists')}
+                  {t('contact.labels.specialists')}
                 </Typography>
                 <Typography variant="body" color="secondary">
-                  {t('contact.messages.norfolkDescription')}
+                  {t('contact.messages.description')}
                 </Typography>
               </div>
             </div>

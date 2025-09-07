@@ -182,12 +182,12 @@
       "indoorFacilities": "Indoor Facilities",
       "dkkCertified": "DKK Certified",
       "passionateBreeding": "Passionate Breeding",
-      "norfolkSpecialists": "Norfolk Specialists"
+      "specialists": "Specialists"
     },
     "messages": {
       "dkkDescription": "Certified by Danish Kennel Club",
       "passionDescription": "Breeding with love and care",
-      "norfolkDescription": "Specialized in Norfolk Terriers",
+      "description": "Specialized in Terriers",
       "contactEncouragement": "We're always happy to answer questions about our breeding program, upcoming litters, or provide information about our dogs."
     }
   }

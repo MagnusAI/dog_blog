@@ -3,6 +3,8 @@ import { dogService } from '../services/supabaseService';
 import type { Dog, Breed, DogImage } from '../services/supabaseService';
 import Button from './ui/Button';
 import Typography from './ui/Typography';
+import PersonSelector from './PersonSelector';
+import PersonManager from './PersonManager';
 import { BreedManager } from './BreedManager';
 import { BreedSelector } from './BreedSelector';
 import ImageUploadComponent from './ImageUploadComponent';
@@ -24,7 +26,6 @@ interface FormData {
   is_deceased: boolean;
   color: string;
   owner_person_id: string;
-  original_dog_id: string;
 }
 
 const initialFormData: FormData = {
@@ -37,8 +38,7 @@ const initialFormData: FormData = {
   death_date: '',
   is_deceased: false,
   color: '',
-  owner_person_id: '',
-  original_dog_id: ''
+  owner_person_id: ''
 };
 
 export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => {
@@ -49,6 +49,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showBreedManager, setShowBreedManager] = useState(false);
+  const [showPersonManager, setShowPersonManager] = useState(false);
   const [checkingExistingDog, setCheckingExistingDog] = useState(false);
   const [existingDogFound, setExistingDogFound] = useState<Dog | null>(null);
   const [dogIdTimeout, setDogIdTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -92,8 +93,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
             death_date: dogData.death_date || '',
             is_deceased: dogData.is_deceased,
             color: dogData.color || '',
-            owner_person_id: dogData.owner_person_id || '',
-            original_dog_id: dogData.original_dog_id || ''
+            owner_person_id: dogData.owner_person_id || ''
           };
           console.log('Setting form data:', newFormData);
           setFormData(newFormData);
@@ -163,8 +163,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         death_date: formData.death_date || undefined,
         nickname: formData.nickname || undefined,
         color: formData.color || undefined,
-        owner_person_id: formData.owner_person_id || undefined,
-        original_dog_id: formData.original_dog_id || undefined
+        owner_person_id: formData.owner_person_id || undefined
       };
 
       let savedDog: Dog;
@@ -274,8 +273,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
           death_date: existingDog.death_date || '',
           is_deceased: existingDog.is_deceased,
           color: existingDog.color || '',
-          owner_person_id: existingDog.owner_person_id || '',
-          original_dog_id: existingDog.original_dog_id || ''
+          owner_person_id: existingDog.owner_person_id || ''
         }));
         
         console.log('Found existing dog:', existingDog);
@@ -291,8 +289,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
           death_date: '',
           is_deceased: false,
           color: '',
-          owner_person_id: '',
-          original_dog_id: ''
+          owner_person_id: ''
         }));
       }
     } catch (error) {
@@ -576,31 +573,13 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
                 </div>
               )}
 
-              {/* Owner Person ID */}
+              {/* Owner Person */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Owner Person ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.owner_person_id}
-                  onChange={(e) => handleInputChange('owner_person_id', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md"
-                  placeholder="Owner identifier"
-                />
-              </div>
-
-              {/* Original Dog ID */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Original Dog ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.original_dog_id}
-                  onChange={(e) => handleInputChange('original_dog_id', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md"
-                  placeholder="For tracking lineage changes"
+                <PersonSelector
+                  label="Owner"
+                  selectedPersonId={formData.owner_person_id || null}
+                  onSelect={(personId) => handleInputChange('owner_person_id', personId)}
+                  onAddNewPerson={() => setShowPersonManager(true)}
                 />
               </div>
             </div>
@@ -635,6 +614,21 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
             isModal={true}
             onBreedAdded={handleBreedAdded}
             onClose={() => setShowBreedManager(false)}
+          />
+        </div>
+      )}
+
+      {/* Person Manager Modal */}
+      {showPersonManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <PersonManager
+            isModal={true}
+            presetId={formData.owner_person_id || ''}
+            onPersonAdded={(p) => {
+              handleInputChange('owner_person_id', p.id);
+              setShowPersonManager(false);
+            }}
+            onClose={() => setShowPersonManager(false)}
           />
         </div>
       )}

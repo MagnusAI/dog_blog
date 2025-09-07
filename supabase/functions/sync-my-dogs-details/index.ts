@@ -1,5 +1,5 @@
 // Edge Function for syncing specific dogs from my_dogs table with DKK database
-// Uses stored session cookies and syncs dog details + basic pedigree relationships
+// Uses stored session cookies and syncs dog details + basic pedigree relationships + breeder information
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore
@@ -25,6 +25,7 @@ interface DbDog {
   color?: string;
   owner_person_id?: string;
   original_dog_id?: string;
+  breeder_id?: string;
 }
 
 interface DbBreed {
@@ -33,6 +34,14 @@ interface DbBreed {
   fci_number?: string;
   club_id?: string;
   club_name?: string;
+}
+
+interface DbPerson {
+  id: string;
+  name: string;
+  type?: string;
+  notes?: string;
+  is_active?: boolean;
 }
 
 interface DbPedigreeRelationship {
@@ -53,6 +62,11 @@ interface SyncStats {
   dogsUpdated: number;
   pedigreeProcessed: number;
   pedigreeCreated: number;
+  personsProcessed: number;
+  personsCreated: number;
+  personsUpdated: number;
+  breedersProcessed: number;
+  breedersNotFound: number;
   errors: string[];
   dogNotFoundCount: number;
   dogAccessDeniedCount: number;
@@ -69,11 +83,13 @@ interface SyncResult {
 class MyDogsSyncer {
   private supabase: any;
   private dogDetailsUrl: string;
+  private breederUrl: string;
   private stats: SyncStats;
 
   constructor(supabaseUrl: string, supabaseServiceKey: string) {
     this.supabase = createClient(supabaseUrl, supabaseServiceKey);
     this.dogDetailsUrl = "https://www.hundeweb.dk/dkk-hundedatabase-backend/rest/hund";
+    this.breederUrl = "https://www.hundeweb.dk/dkk-hundedatabase-backend/rest/hund/kullOppdretter";
     this.stats = {
       breedsProcessed: 0,
       breedsCreated: 0,
@@ -83,6 +99,11 @@ class MyDogsSyncer {
       dogsUpdated: 0,
       pedigreeProcessed: 0,
       pedigreeCreated: 0,
+      personsProcessed: 0,
+      personsCreated: 0,
+      personsUpdated: 0,
+      breedersProcessed: 0,
+      breedersNotFound: 0,
       errors: [],
       dogNotFoundCount: 0,
       dogAccessDeniedCount: 0
@@ -182,6 +203,65 @@ class MyDogsSyncer {
     return details;
   }
 
+  async fetchBreederInfo(kullId: string, session: SessionRecord): Promise<any> {
+    const url = `${this.breederUrl}?kullId=${encodeURIComponent(kullId)}`;
+    console.log(`Fetching breeder info for kullId: ${kullId}`);
+    
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "accept": "*/*",
+          "accept-language": "en-US,en;q=0.9",
+          "priority": "u=1, i",
+          "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+          "Cookie": session.cookies,
+          "Referer": "https://www.hundeweb.dk/hundedatabase/hund"
+        },
+        mode: "cors",
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        const responseText = await response.text();
+        console.error(`Error ${response.status} ${response.statusText}:`, responseText.substring(0, 500));
+
+        if (responseText.includes('redirectUrl') && responseText.includes('cas/login')) {
+          await this.invalidateSession(session.session_id);
+          throw new Error(`Session expired. Redirect to login page detected.`);
+        }
+
+        if (response.status === 404) {
+          this.stats.breedersNotFound++;
+          console.log(`Breeder info not found for kullId: ${kullId}`);
+          return { error: 'BREEDER_NOT_FOUND', status: 404 };
+        }
+        
+        if (response.status === 403 || response.status === 401) {
+          console.log(`Access denied for breeder info kullId: ${kullId}`);
+          return { error: 'ACCESS_DENIED', status: response.status };
+        }
+
+        throw new Error(`Failed to fetch breeder info: ${response.status} ${response.statusText}`);
+      }
+
+      const breederInfo = await response.json();
+      console.log(`Successfully fetched breeder info for kullId: ${kullId}`);
+      return breederInfo;
+
+    } catch (error) {
+      console.error(`Error fetching breeder info for kullId ${kullId}:`, error);
+      this.stats.errors.push(`Breeder fetch error for kullId ${kullId}: ${error.message}`);
+      return { error: 'FETCH_ERROR', details: error.message };
+    }
+  }
+
   private mapDogData(dogDetails: any): DbDog {
     return {
       id: dogDetails.hundId,
@@ -194,7 +274,8 @@ class MyDogsSyncer {
       is_deceased: dogDetails.doed || false,
       color: dogDetails.farge || undefined,
       owner_person_id: dogDetails.personIdHovedeier || undefined,
-      original_dog_id: dogDetails.opprinneligHundId || undefined
+      original_dog_id: dogDetails.opprinneligHundId || undefined,
+      breeder_id: undefined // Will be set after breeder sync
     };
   }
 
@@ -204,6 +285,22 @@ class MyDogsSyncer {
       fci_number: breedDetails.fciNr || undefined,
       club_id: breedDetails.klubbId || undefined,
       club_name: breedDetails.klubbNavn || undefined
+    };
+  }
+
+  private mapPersonData(breederInfo: any): DbPerson {
+    // Create a notes string with all the additional information
+    const notesArray: string[] = [];
+    if (breederInfo.webUrl) notesArray.push(`Website: ${breederInfo.webUrl}`);
+    if (breederInfo.utdannelse) notesArray.push('Has breeding education');
+    if (breederInfo.masterclass) notesArray.push('Has masterclass certification');
+
+    return {
+      id: breederInfo.id,
+      name: breederInfo.navn,
+      type: 'breeder',
+      notes: notesArray.length > 0 ? notesArray.join('\n') : undefined,
+      is_active: true
     };
   }
 
@@ -248,11 +345,51 @@ class MyDogsSyncer {
     }
   }
 
-  async syncDog(dogDetails: any, breedId: number): Promise<void> {
+  async syncPerson(breederInfo: any): Promise<void> {
+    try {
+      this.stats.personsProcessed++;
+      const personData = this.mapPersonData(breederInfo);
+
+      const { data: existingPerson, error: findError } = await this.supabase
+        .from('persons')
+        .select('id')
+        .eq('id', personData.id)
+        .single();
+
+      if (findError && findError.code !== 'PGRST116') {
+        throw findError;
+      }
+
+      if (existingPerson) {
+        const { error: updateError } = await this.supabase
+          .from('persons')
+          .update(personData)
+          .eq('id', personData.id);
+
+        if (updateError) throw updateError;
+        this.stats.personsUpdated++;
+        console.log(`Updated person: ${personData.id} - ${personData.name}`);
+      } else {
+        const { error: insertError } = await this.supabase
+          .from('persons')
+          .insert(personData);
+
+        if (insertError) throw insertError;
+        this.stats.personsCreated++;
+        console.log(`Created person: ${personData.id} - ${personData.name}`);
+      }
+    } catch (error) {
+      this.stats.errors.push(`Person sync error for ${breederInfo.id}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async syncDog(dogDetails: any, breedId: number, breederId?: string): Promise<void> {
     try {
       this.stats.dogsProcessed++;
       const dogData = this.mapDogData(dogDetails);
       dogData.breed_id = breedId;
+      dogData.breeder_id = breederId;
 
       const { data: existingDog, error: findError } = await this.supabase
         .from('dogs')
@@ -448,13 +585,40 @@ class MyDogsSyncer {
             processedBreeds.set(breedName, breedId);
           }
 
+          // Sync breeder information if kullId is available
+          let breederId: string | undefined = undefined;
+          if (dogDetails.kullId) {
+            this.stats.breedersProcessed++;
+            console.log(`Processing breeder for kullId: ${dogDetails.kullId}`);
+            
+            // Add delay before breeder fetch to be respectful
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            
+            const breederInfo = await this.fetchBreederInfo(dogDetails.kullId, session);
+            
+            if (!breederInfo.error && breederInfo.hovedOppdretter) {
+              try {
+                await this.syncPerson(breederInfo.hovedOppdretter);
+                breederId = breederInfo.hovedOppdretter.id;
+                console.log(`Successfully synced breeder: ${breederId} - ${breederInfo.hovedOppdretter.navn}`);
+              } catch (error) {
+                console.error(`Failed to sync breeder for kullId ${dogDetails.kullId}:`, error);
+                this.stats.errors.push(`Breeder sync error for kullId ${dogDetails.kullId}: ${error.message}`);
+              }
+            } else {
+              console.log(`No breeder info found or error for kullId: ${dogDetails.kullId}`);
+            }
+          } else {
+            console.log(`No kullId available for dog: ${dogId}`);
+          }
+
           // Sync dog details
-          await this.syncDog(dogDetails, breedId);
+          await this.syncDog(dogDetails, breedId, breederId);
 
           // Sync basic pedigree (mother and father only)
           await this.syncBasicPedigree(dogDetails);
 
-          console.log(`Successfully synced dog: ${dogId} - ${dogDetails.navn}`);
+          console.log(`Successfully synced dog: ${dogId} - ${dogDetails.navn}${breederId ? ` (breeder: ${breederId})` : ''}`);
           
           // Add delay to be respectful to the server
           await new Promise((resolve) => setTimeout(resolve, 500));

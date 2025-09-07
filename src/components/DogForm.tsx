@@ -50,6 +50,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showBreedManager, setShowBreedManager] = useState(false);
   const [showPersonManager, setShowPersonManager] = useState(false);
+  const [personRefreshTrigger, setPersonRefreshTrigger] = useState(0);
   const [checkingExistingDog, setCheckingExistingDog] = useState(false);
   const [existingDogFound, setExistingDogFound] = useState<Dog | null>(null);
   const [dogIdTimeout, setDogIdTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -580,6 +581,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
                   selectedPersonId={formData.owner_person_id || null}
                   onSelect={(personId) => handleInputChange('owner_person_id', personId)}
                   onAddNewPerson={() => setShowPersonManager(true)}
+                  refreshTrigger={personRefreshTrigger}
                 />
               </div>
             </div>
@@ -626,6 +628,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
             presetId={formData.owner_person_id || ''}
             onPersonAdded={(p) => {
               handleInputChange('owner_person_id', p.id);
+              setPersonRefreshTrigger(prev => prev + 1); // Trigger refresh
               setShowPersonManager(false);
             }}
             onClose={() => setShowPersonManager(false)}

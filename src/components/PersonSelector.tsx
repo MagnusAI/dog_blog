@@ -10,6 +10,7 @@ interface PersonSelectorProps {
   onAddNewPerson?: () => void;
   error?: string;
   className?: string;
+  refreshTrigger?: number; // Add refresh trigger prop
 }
 
 export const PersonSelector: React.FC<PersonSelectorProps> = ({
@@ -18,7 +19,8 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
   onSelect,
   onAddNewPerson,
   error,
-  className
+  className,
+  refreshTrigger
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -36,7 +38,7 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
       }
     };
     load();
-  }, []);
+  }, [refreshTrigger]); // Add refreshTrigger as dependency
 
   const filteredPersons = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();

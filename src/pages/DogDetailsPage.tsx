@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { dogService } from '../services/supabaseService';
-import type { Dog, DogImage } from '../services/supabaseService';
+import { dogService, personService } from '../services/supabaseService';
+import type { Dog, DogImage, Person } from '../services/supabaseService';
 import Button from '../components/ui/Button';
 import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
@@ -22,6 +22,7 @@ function DogDetailsPage() {
   const { t } = useTranslation('pages');
   const [dog, setDog] = useState<Dog | null>(null);
   const [profileImage, setProfileImage] = useState<DogImage | null>(null);
+  const [owner, setOwner] = useState<Person | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -65,6 +66,19 @@ function DogDetailsPage() {
         } catch (error) {
           console.info('Profile image not available for this dog');
           setProfileImage(null);
+        }
+
+        // Load owner information if available
+        if (dogData.owner_person_id) {
+          try {
+            const ownerData = await personService.getPersonById(dogData.owner_person_id);
+            setOwner(ownerData);
+          } catch (error) {
+            console.info('Owner information not available for this dog');
+            setOwner(null);
+          }
+        } else {
+          setOwner(null);
         }
       } else {
         setError(t('dogs.messages.dogNotFound'));
@@ -515,7 +529,9 @@ function DogDetailsPage() {
             {dog.owner_person_id && (
               <div>
                 <Typography variant="caption" color="muted">{t('dogs.labels.owner')}</Typography>
-                <Typography variant="body">{dog.owner_person_id}</Typography>
+                <Typography variant="body">
+                  {owner ? owner.name : dog.owner_person_id}
+                </Typography>
               </div>
             )}
           </div>

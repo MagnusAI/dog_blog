@@ -161,5 +161,34 @@
       "deleteSuccess": "Section deleted successfully",
       "saveSuccess": "Section saved successfully"
     }
+  },
+  "contact": {
+    "header": {
+      "title": "Contact Us",
+      "subtitle": "Get in touch with Kennel Speedex"
+    },
+    "sections": {
+      "contactInfo": "Contact Information",
+      "kennelEnvironment": "Our Kennel Environment",
+      "additionalInfo": "Why Choose Kennel Speedex?"
+    },
+    "labels": {
+      "breeder": "Breeder",
+      "kennelOwner": "Kennel Owner",
+      "email": "Email",
+      "phone": "Phone",
+      "mainFacility": "Main Facility",
+      "outdoorArea": "Outdoor Area",
+      "indoorFacilities": "Indoor Facilities",
+      "dkkCertified": "DKK Certified",
+      "passionateBreeding": "Passionate Breeding",
+      "norfolkSpecialists": "Norfolk Specialists"
+    },
+    "messages": {
+      "dkkDescription": "Certified by Danish Kennel Club",
+      "passionDescription": "Breeding with love and care",
+      "norfolkDescription": "Specialized in Norfolk Terriers",
+      "contactEncouragement": "We're always happy to answer questions about our breeding program, upcoming litters, or provide information about our dogs."
+    }
   }
 }

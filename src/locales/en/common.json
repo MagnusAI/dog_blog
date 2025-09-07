@@ -3,7 +3,8 @@
     "home": "Home",
     "dogs": "Dogs",
     "news": "News",
-    "puppies": "Puppies"
+    "puppies": "Puppies",
+    "contact": "Contact"
   },
   "actions": {
     "edit": "Edit",

@@ -163,5 +163,34 @@
       "deleteSuccess": "Sektion slettet succesfuldt",
       "saveSuccess": "Sektion gemt succesfuldt"
     }
+  },
+  "contact": {
+    "header": {
+      "title": "Kontakt Os",
+      "subtitle": "Kom i kontakt med Kennel Speedex"
+    },
+    "sections": {
+      "contactInfo": "Kontaktoplysninger",
+      "kennelEnvironment": "Vores Kennel Miljø",
+      "additionalInfo": "Hvorfor Vælge Kennel Speedex?"
+    },
+    "labels": {
+      "breeder": "Avler",
+      "kennelOwner": "Kennel Ejer",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "mainFacility": "Hovedfacilitet",
+      "outdoorArea": "Udendørs Område",
+      "indoorFacilities": "Indendørs Faciliteter",
+      "dkkCertified": "DKK Certificeret",
+      "passionateBreeding": "Passioneret Avl",
+      "norfolkSpecialists": "Norfolk Specialister"
+    },
+    "messages": {
+      "dkkDescription": "Certificeret af Dansk Kennel Klub",
+      "passionDescription": "Avl med kærlighed og omsorg",
+      "norfolkDescription": "Specialiseret i Norfolk Terriers",
+      "contactEncouragement": "Vi er altid glade for at besvare spørgsmål om vores avlsprogram, kommende kuld eller give information om vores hunde."
+    }
   }
 }

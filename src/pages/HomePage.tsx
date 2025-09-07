@@ -100,7 +100,7 @@ function HomePage() {
             <div className="space-y-12">
               {/* Highlighted News Skeleton */}
               <HighlightedNewsPostSkeleton />
-              
+
               {/* Regular News Post Skeletons */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 place-items-center">
                 <NewsPostSkeleton size="md" />
@@ -203,10 +203,10 @@ function HomePage() {
 
                   <div className="text-center">
                     <Typography variant="h4" weight="semibold" className="text-gray-900 mb-2">
-                      Norfolk Terriers
+                      Primært fokus
                     </Typography>
                     <Typography variant="body" color="secondary">
-                      Primært fokus
+                      Norfolk Terriers
                     </Typography>
                   </div>
                 </div>

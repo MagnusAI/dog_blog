@@ -4,7 +4,7 @@ import AppBar from "./components/ui/AppBar";
 import Button from "./components/ui/Button";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
-import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContentManagementPage, ContentEditPage, TitlesEditPage, LoginPage, PedigreeFormPage } from './pages';
+import { HomePage, DogsPage, DogFormPage, DogDetailsPage, NewsPage, NewsFormPage, PuppiesPage, ContactPage, ContentManagementPage, ContentEditPage, TitlesEditPage, LoginPage, PedigreeFormPage } from './pages';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -16,7 +16,8 @@ function AppContent() {
     { label: t('navigation.home'), href: "#/" },
     { label: t('navigation.dogs'), href: "#/dogs" },
     { label: t('navigation.news'), href: "#/news" },
-    { label: t('navigation.puppies'), href: "#/puppies" }
+    { label: t('navigation.puppies'), href: "#/puppies" },
+    { label: t('navigation.contact'), href: "#/contact" }
   ];
 
   const handleLoginClick = () => {
@@ -97,6 +98,7 @@ function AppContent() {
           </ProtectedRoute>
         } />
         <Route path="/puppies" element={<PuppiesPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/admin/content" element={
           <ProtectedRoute>
             <ContentManagementPage />

@@ -306,18 +306,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
     handleInputChange(dogKey, 'image', file);
   };
 
-  const handleImageRemove = (dogKey: keyof PedigreeFormData) => {
-    setFormData(prev => ({
-      ...prev,
-      [dogKey]: prev[dogKey] ? {
-        ...prev[dogKey],
-        image: undefined,
-        imageUrl: '',
-        imagePublicId: ''
-      } : undefined
-    }));
-  };
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -454,25 +442,20 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
                 onClick={() => document.getElementById(`photo-input-${dogKey}`)?.click()}
               >
                 {dogData.image ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full group">
                     <img
                       src={URL.createObjectURL(dogData.image)}
                       alt={`${dogData.name || 'Dog'} preview`}
                       className="w-full h-full object-cover rounded-lg"
                     />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleImageRemove(dogKey);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                    >
-                      ✕
-                    </button>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Typography variant="body" className="text-white font-medium">
+                        Upload
+                      </Typography>
+                    </div>
                   </div>
                 ) : dogData.imagePublicId ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full group">
                     <ClickableCloudinaryImage
                       publicId={dogData.imagePublicId}
                       width={128}
@@ -482,37 +465,27 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
                       className="rounded-lg"
                       disableEnlarge={true}
                     />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleImageRemove(dogKey);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                    >
-                      ✕
-                    </button>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Typography variant="body" className="text-white font-medium">
+                        Upload
+                      </Typography>
+                    </div>
                   </div>
                 ) : dogData.imageUrl ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full group">
                     <img
                       src={dogData.imageUrl}
                       alt={`${dogData.name || 'Dog'} photo`}
                       className="w-full h-full object-cover rounded-lg"
                     />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleImageRemove(dogKey);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                    >
-                      ✕
-                    </button>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Typography variant="body" className="text-white font-medium">
+                        Upload
+                      </Typography>
+                    </div>
                   </div>
                 ) : (
-                  <div className="text-center">
+                  <div className="text-center place-items-center">
                     <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>

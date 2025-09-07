@@ -35,7 +35,7 @@ function AppContent() {
 
   const actionItem = (
     <div className="flex items-center space-x-3">
-      {user ? (
+      {user && (
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">
             {user.email}
@@ -44,10 +44,6 @@ function AppContent() {
             {t('actions.logout')}
           </Button>
         </div>
-      ) : (
-        <Button variant="primary" size="sm" onClick={handleLoginClick}>
-          {t('actions.login')}
-        </Button>
       )}
     </div>
   );

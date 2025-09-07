@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { dogService, personService } from '../services/supabaseService';
-import type { Dog, DogImage, Person } from '../services/supabaseService';
+import { dogService, personService, newsService } from '../services/supabaseService';
+import type { Dog, DogImage, Person, NewsPost as NewsPostType } from '../services/supabaseService';
 import Button from '../components/ui/Button';
 import Typography from '../components/ui/Typography';
 import Badge from '../components/ui/Badge';
@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { DogForm } from '../components/DogForm';
 import { useTranslation } from '../contexts/LanguageContext';
 import { ProfilePictureSkeleton } from '../components/skeletons';
+import NewsPost from '../components/NewsPost';
 
 import ClickableCloudinaryImage from '../components/ClickableCloudinaryImage';
 
@@ -24,6 +25,7 @@ function DogDetailsPage() {
   const [profileImage, setProfileImage] = useState<DogImage | null>(null);
   const [owner, setOwner] = useState<Person | null>(null);
   const [breeder, setBreeder] = useState<Person | null>(null);
+  const [newsPosts, setNewsPosts] = useState<NewsPostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -93,6 +95,17 @@ function DogDetailsPage() {
           }
         } else {
           setBreeder(null);
+        }
+
+        // Load news posts that feature this dog
+        try {
+          console.log('Fetching news posts for dog ID:', decodedDogId);
+          const newsData = await newsService.getNewsPostsByDogId(decodedDogId);
+          console.log('Found news posts:', newsData);
+          setNewsPosts(newsData);
+        } catch (error) {
+          console.error('Error fetching news posts:', error);
+          setNewsPosts([]);
         }
       } else {
         setError(t('dogs.messages.dogNotFound'));
@@ -688,6 +701,39 @@ function DogDetailsPage() {
             </div>
           );
         })()}
+      </div>
+
+      {/* News Posts Section */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between mb-6">
+          <Typography variant="h4">{t('dogs.sections.newsPosts')}</Typography>
+        </div>
+        
+        {newsPosts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {newsPosts.map((post) => (
+              <NewsPost
+                key={post.id}
+                imageUrl={post.image_url || ''}
+                imageAlt={post.image_alt || post.title}
+                imagePublicId={post.image_public_id}
+                fallbackImageUrl={post.fallback_image_url}
+                date={post.published_date}
+                title={post.title}
+                content={post.content.replace(/<[^>]*>/g, '')}
+                taggedDogs={post.tagged_dogs?.map(dog => dog.id) || []}
+                size="sm"
+                dateFormat="short"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Typography variant="body" color="secondary">
+              {t('dogs.messages.noNewsPosts')}
+            </Typography>
+          </div>
+        )}
       </div>
 
       {/* Edit Form Modal - Only shown when editing */}

@@ -25,7 +25,8 @@
       "basicInfo": "Grundlæggende Information",
       "titlesAchievements": "Titler & Præstationer",
       "pedigree": "Stamtavle (3 Generationer)",
-      "offspring": "Afkom"
+      "offspring": "Afkom",
+      "newsPosts": "Releterede Nyheder"
     },
     "labels": {
       "breed": "Race",
@@ -51,7 +52,8 @@
       "editTitles": "Rediger Titler",
       "editFatherLine": "Rediger Fars Linje",
       "editMotherLine": "Rediger Mors Linje",
-      "backToDogs": "Tilbage til Hunde"
+      "backToDogs": "Tilbage til Hunde",
+      "viewAllNews": "Se Alle Nyheder"
     },
     "messages": {
       "noTitles": "Ingen titler tilføjet endnu.",

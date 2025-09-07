@@ -68,6 +68,7 @@ export interface Dog {
   is_deceased: boolean;
   color?: string;
   owner_person_id?: string;
+  breeder_id?: string;
   original_dog_id?: string;
   created_at: string;
   updated_at: string;

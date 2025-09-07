@@ -43,7 +43,8 @@
       "unknown": "Ukendt",
       "owner": "Ejer",
       "gender": "Køn",
-      "nickname": "Kaldenavn"
+      "nickname": "Kaldenavn",
+      "breeder": "Opdrætter"
     },
     "actions": {
       "editDog": "Rediger Hund",

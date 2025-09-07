@@ -40,7 +40,11 @@
       "female": "Female",
       "deceased": "Deceased",
       "yearsOld": "{{count}} years old",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "owner": "Owner",
+      "gender": "Gender",
+      "nickname": "Nickname",
+      "breeder": "Breeder"
     },
     "actions": {
       "editDog": "Edit Dog",

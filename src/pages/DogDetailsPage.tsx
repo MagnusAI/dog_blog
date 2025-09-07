@@ -23,6 +23,7 @@ function DogDetailsPage() {
   const [dog, setDog] = useState<Dog | null>(null);
   const [profileImage, setProfileImage] = useState<DogImage | null>(null);
   const [owner, setOwner] = useState<Person | null>(null);
+  const [breeder, setBreeder] = useState<Person | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -79,6 +80,19 @@ function DogDetailsPage() {
           }
         } else {
           setOwner(null);
+        }
+
+        // Load breeder information if available
+        if (dogData.breeder_id) {
+          try {
+            const breederData = await personService.getPersonById(dogData.breeder_id);
+            setBreeder(breederData);
+          } catch (error) {
+            console.info('Breeder information not available for this dog');
+            setBreeder(null);
+          }
+        } else {
+          setBreeder(null);
         }
       } else {
         setError(t('dogs.messages.dogNotFound'));
@@ -531,6 +545,14 @@ function DogDetailsPage() {
                 <Typography variant="caption" color="muted">{t('dogs.labels.owner')}</Typography>
                 <Typography variant="body">
                   {owner ? owner.name : dog.owner_person_id}
+                </Typography>
+              </div>
+            )}
+            {dog.breeder_id && (
+              <div>
+                <Typography variant="caption" color="muted">{t('dogs.labels.breeder')}</Typography>
+                <Typography variant="body">
+                  {breeder ? breeder.name : dog.breeder_id}
                 </Typography>
               </div>
             )}

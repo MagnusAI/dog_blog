@@ -26,6 +26,7 @@ interface FormData {
   is_deceased: boolean;
   color: string;
   owner_person_id: string;
+  breeder_id: string;
 }
 
 const initialFormData: FormData = {
@@ -38,7 +39,8 @@ const initialFormData: FormData = {
   death_date: '',
   is_deceased: false,
   color: '',
-  owner_person_id: ''
+  owner_person_id: '',
+  breeder_id: ''
 };
 
 export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => {
@@ -50,6 +52,7 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showBreedManager, setShowBreedManager] = useState(false);
   const [showPersonManager, setShowPersonManager] = useState(false);
+  const [personManagerField, setPersonManagerField] = useState<'owner' | 'breeder' | null>(null);
   const [personRefreshTrigger, setPersonRefreshTrigger] = useState(0);
   const [checkingExistingDog, setCheckingExistingDog] = useState(false);
   const [existingDogFound, setExistingDogFound] = useState<Dog | null>(null);
@@ -94,7 +97,8 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
             death_date: dogData.death_date || '',
             is_deceased: dogData.is_deceased,
             color: dogData.color || '',
-            owner_person_id: dogData.owner_person_id || ''
+            owner_person_id: dogData.owner_person_id || '',
+            breeder_id: dogData.breeder_id || ''
           };
           console.log('Setting form data:', newFormData);
           setFormData(newFormData);
@@ -164,7 +168,8 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         death_date: formData.death_date || undefined,
         nickname: formData.nickname || undefined,
         color: formData.color || undefined,
-        owner_person_id: formData.owner_person_id || undefined
+        owner_person_id: formData.owner_person_id || undefined,
+        breeder_id: formData.breeder_id || undefined
       };
 
       let savedDog: Dog;
@@ -274,7 +279,8 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
           death_date: existingDog.death_date || '',
           is_deceased: existingDog.is_deceased,
           color: existingDog.color || '',
-          owner_person_id: existingDog.owner_person_id || ''
+          owner_person_id: existingDog.owner_person_id || '',
+          breeder_id: existingDog.breeder_id || ''
         }));
         
         console.log('Found existing dog:', existingDog);
@@ -290,7 +296,8 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
           death_date: '',
           is_deceased: false,
           color: '',
-          owner_person_id: ''
+          owner_person_id: '',
+          breeder_id: ''
         }));
       }
     } catch (error) {
@@ -580,7 +587,24 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
                   label="Owner"
                   selectedPersonId={formData.owner_person_id || null}
                   onSelect={(personId) => handleInputChange('owner_person_id', personId)}
-                  onAddNewPerson={() => setShowPersonManager(true)}
+                  onAddNewPerson={() => {
+                    setPersonManagerField('owner');
+                    setShowPersonManager(true);
+                  }}
+                  refreshTrigger={personRefreshTrigger}
+                />
+              </div>
+
+              {/* Breeder Person */}
+              <div>
+                <PersonSelector
+                  label="Breeder"
+                  selectedPersonId={formData.breeder_id || null}
+                  onSelect={(personId) => handleInputChange('breeder_id', personId)}
+                  onAddNewPerson={() => {
+                    setPersonManagerField('breeder');
+                    setShowPersonManager(true);
+                  }}
                   refreshTrigger={personRefreshTrigger}
                 />
               </div>
@@ -625,13 +649,23 @@ export const DogForm: React.FC<DogFormProps> = ({ dogId, onSave, onCancel }) => 
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <PersonManager
             isModal={true}
-            presetId={formData.owner_person_id || ''}
+            presetId={personManagerField === 'owner' ? (formData.owner_person_id || '') : 
+                      personManagerField === 'breeder' ? (formData.breeder_id || '') : ''}
             onPersonAdded={(p) => {
-              handleInputChange('owner_person_id', p.id);
+              // Update the appropriate field based on which field triggered the modal
+              if (personManagerField === 'owner') {
+                handleInputChange('owner_person_id', p.id);
+              } else if (personManagerField === 'breeder') {
+                handleInputChange('breeder_id', p.id);
+              }
               setPersonRefreshTrigger(prev => prev + 1); // Trigger refresh
               setShowPersonManager(false);
+              setPersonManagerField(null);
             }}
-            onClose={() => setShowPersonManager(false)}
+            onClose={() => {
+              setShowPersonManager(false);
+              setPersonManagerField(null);
+            }}
           />
         </div>
       )}

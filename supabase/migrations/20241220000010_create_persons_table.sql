@@ -1,3 +1,6 @@
+-- Enable pg_trgm extension for fuzzy text searching
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Create persons table for mapping IDs to names (owners, breeders, etc.)
 CREATE TABLE IF NOT EXISTS persons (
   id VARCHAR(50) PRIMARY KEY,

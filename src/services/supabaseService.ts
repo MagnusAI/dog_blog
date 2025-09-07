@@ -1038,18 +1038,13 @@ export const newsService = {
 
   // Get news posts that feature a specific dog
   async getNewsPostsByDogId(dogId: string): Promise<NewsPost[]> {
-    console.log('Querying news posts for dog ID:', dogId);
-    
     // First, get all news_post_ids where this dog is tagged
     const { data: taggedPosts, error: taggedError } = await supabase
       .from('news_posts_dogs')
       .select('news_post_id')
       .eq('dog_id', dogId);
 
-    console.log('Tagged posts lookup result:', { taggedPosts, taggedError });
-
     if (taggedError) {
-      console.error('Tagged posts query error:', taggedError);
       throw taggedError;
     }
 
@@ -1060,7 +1055,6 @@ export const newsService = {
 
     // Extract the news_post_ids
     const newsPostIds = taggedPosts.map(tp => tp.news_post_id);
-    console.log('Found news post IDs:', newsPostIds);
 
     // Now fetch the actual news posts
     const { data, error } = await supabase
@@ -1075,8 +1069,6 @@ export const newsService = {
       .in('id', newsPostIds)
       .order('published_date', { ascending: false });
 
-    console.log('News posts query result:', { data, error });
-
     if (error) {
       console.error('News posts query error:', error);
       throw error;
@@ -1088,7 +1080,6 @@ export const newsService = {
       tagged_dogs: post.tagged_dogs?.map((td: any) => td.dog).filter(Boolean) || []
     })) || [];
     
-    console.log('Final transformed result:', result);
     return result;
   }
 };

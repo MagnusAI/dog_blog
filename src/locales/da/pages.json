@@ -45,7 +45,10 @@
       "owner": "Ejer",
       "gender": "Køn",
       "nickname": "Kaldenavn",
-      "breeder": "Opdrætter"
+      "breeder": "Opdrætter",
+      "noNewsPosts": "Ingen releterede nyheder endnu.",
+      "newsPosts": "Releterede Nyheder",
+      "name": "Navn"
     },
     "actions": {
       "editDog": "Rediger Hund",

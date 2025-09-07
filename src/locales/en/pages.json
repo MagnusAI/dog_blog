@@ -44,7 +44,10 @@
       "owner": "Owner",
       "gender": "Gender",
       "nickname": "Nickname",
-      "breeder": "Breeder"
+      "breeder": "Breeder",
+      "noNewsPosts": "No news posts yet.",
+      "newsPosts": "News Posts",
+      "name": "Name"
     },
     "actions": {
       "editDog": "Edit Dog",

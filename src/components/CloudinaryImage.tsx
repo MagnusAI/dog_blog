@@ -119,7 +119,6 @@ const CloudinaryImage = ({
       if (gravity !== undefined) {
         resizeTransform = (resizeTransform as any).gravity(autoGravity().autoFocus(focusOn(gravity)));
       } else {
-        console.log('Using faces() gravity');
         resizeTransform = (resizeTransform as any).gravity(autoGravity().autoFocus(focusOn(faces())));
       }
     }

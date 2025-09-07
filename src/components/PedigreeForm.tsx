@@ -131,11 +131,6 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         
         const basePath = isEditingFatherLine ? '0' : '1';
         
-        // Debug logging
-        console.log('PedigreeForm - All ancestors:', sortedAncestors);
-        console.log('PedigreeForm - Base path:', basePath);
-        console.log('PedigreeForm - Available paths:', sortedAncestors.map(a => a.path));
-        
         // Find parent (generation 1)
         const parent = sortedAncestors.find(a => a.path === basePath);
 

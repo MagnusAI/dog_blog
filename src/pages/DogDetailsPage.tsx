@@ -99,9 +99,7 @@ function DogDetailsPage() {
 
         // Load news posts that feature this dog
         try {
-          console.log('Fetching news posts for dog ID:', decodedDogId);
           const newsData = await newsService.getNewsPostsByDogId(decodedDogId);
-          console.log('Found news posts:', newsData);
           setNewsPosts(newsData);
         } catch (error) {
           console.error('Error fetching news posts:', error);
@@ -215,14 +213,6 @@ function DogDetailsPage() {
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
 
-    // Debug logging
-    console.log('All ancestors:', dog.all_ancestors);
-    console.log('Filtered ancestors (generation <= 3):', filteredAncestors);
-    const fatherPaths = filteredAncestors.filter(a => a.path?.startsWith('0')).map(a => ({ path: a.path, name: a.parent.name }));
-    console.log('Father line paths found:', fatherPaths);
-    console.log('Expected father paths: 0, 00, 01, 000, 001, 010, 011');
-    console.log('Missing father paths:', ['0', '00', '01', '000', '001', '010', '011'].filter(expected => !fatherPaths.some(found => found.path === expected)));
-
     // Get the father (path "0")
     const father = filteredAncestors.find(a => a.path === '0');
     if (!father) return null;
@@ -263,12 +253,6 @@ function DogDetailsPage() {
 
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
-
-    // Debug logging
-    const motherPaths = filteredAncestors.filter(a => a.path?.startsWith('1')).map(a => ({ path: a.path, name: a.parent.name }));
-    console.log('Mother line paths found:', motherPaths);
-    console.log('Expected mother paths: 1, 10, 11, 100, 101, 110, 111');
-    console.log('Missing mother paths:', ['1', '10', '11', '100', '101', '110', '111'].filter(expected => !motherPaths.some(found => found.path === expected)));
 
     // Get the mother (path "1")
     const mother = filteredAncestors.find(a => a.path === '1');

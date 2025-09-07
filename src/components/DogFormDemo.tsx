@@ -24,8 +24,6 @@ export const DogFormDemo: React.FC = () => {
   };
 
   const handleDogSaved = (dog: Dog) => {
-    console.log('Dog saved:', dog);
-    
     // Update local state (in a real app, you might refetch from the server)
     if (mode === 'create') {
       setSavedDogs(prev => [...prev, dog]);

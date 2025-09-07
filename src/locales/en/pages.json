@@ -47,7 +47,8 @@
       "breeder": "Breeder",
       "noNewsPosts": "No news posts yet.",
       "newsPosts": "News Posts",
-      "name": "Name"
+      "name": "Name",
+      "monthsOld": "{{count}} months old"
     },
     "actions": {
       "editDog": "Edit Dog",

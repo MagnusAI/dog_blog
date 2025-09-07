@@ -48,7 +48,8 @@
       "breeder": "Opdrætter",
       "noNewsPosts": "Ingen releterede nyheder endnu.",
       "newsPosts": "Releterede Nyheder",
-      "name": "Navn"
+      "name": "Navn",
+      "monthsOld": "{{count}} måneder gammel"
     },
     "actions": {
       "editDog": "Rediger Hund",

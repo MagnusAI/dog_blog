@@ -153,6 +153,11 @@ function DogDetailsPage() {
     if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) {
       return t('dogs.labels.yearsOld', { count: years - 1 });
     }
+
+    if (years === 0) {
+      return t('dogs.labels.monthsOld', { count: months });
+    }
+
     return t('dogs.labels.yearsOld', { count: years });
   };
 

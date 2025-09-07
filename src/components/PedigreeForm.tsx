@@ -119,20 +119,35 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
     try {
       // Load current pedigree data using path-based system
       if (currentDog.all_ancestors) {
+        // Sort ancestors by generation and path for consistent ordering
+        const sortedAncestors = [...currentDog.all_ancestors].sort((a, b) => {
+          // First sort by generation
+          if (a.generation !== b.generation) {
+            return a.generation - b.generation;
+          }
+          // Then sort by path (lexicographically)
+          return (a.path || '').localeCompare(b.path || '');
+        });
+        
         const basePath = isEditingFatherLine ? '0' : '1';
         
+        // Debug logging
+        console.log('PedigreeForm - All ancestors:', sortedAncestors);
+        console.log('PedigreeForm - Base path:', basePath);
+        console.log('PedigreeForm - Available paths:', sortedAncestors.map(a => a.path));
+        
         // Find parent (generation 1)
-        const parent = currentDog.all_ancestors.find(a => a.path === basePath);
+        const parent = sortedAncestors.find(a => a.path === basePath);
 
         // Find grandparents (generation 2) - father and mother of the parent
-        const grandparent1 = currentDog.all_ancestors.find(a => a.path === basePath + '0'); // Father's father or Mother's father
-        const grandparent2 = currentDog.all_ancestors.find(a => a.path === basePath + '1'); // Father's mother or Mother's mother
+        const grandparent1 = sortedAncestors.find(a => a.path === basePath + '0'); // Father's father or Mother's father
+        const grandparent2 = sortedAncestors.find(a => a.path === basePath + '1'); // Father's mother or Mother's mother
 
         // Find great-grandparents (generation 3) - 4 great-grandparents
-        const greatGrandparent1 = currentDog.all_ancestors.find(a => a.path === basePath + '00'); // Father's father's father or Mother's father's father
-        const greatGrandparent2 = currentDog.all_ancestors.find(a => a.path === basePath + '01'); // Father's father's mother or Mother's father's mother
-        const greatGrandparent3 = currentDog.all_ancestors.find(a => a.path === basePath + '10'); // Father's mother's father or Mother's mother's father
-        const greatGrandparent4 = currentDog.all_ancestors.find(a => a.path === basePath + '11'); // Father's mother's mother or Mother's mother's mother
+        const greatGrandparent1 = sortedAncestors.find(a => a.path === basePath + '00'); // Father's father's father or Mother's father's father
+        const greatGrandparent2 = sortedAncestors.find(a => a.path === basePath + '01'); // Father's father's mother or Mother's father's mother
+        const greatGrandparent3 = sortedAncestors.find(a => a.path === basePath + '10'); // Father's mother's father or Mother's mother's father
+        const greatGrandparent4 = sortedAncestors.find(a => a.path === basePath + '11'); // Father's mother's mother or Mother's mother's mother
 
         const newFormData: PedigreeFormData = {};
 

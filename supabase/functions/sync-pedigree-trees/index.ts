@@ -324,167 +324,169 @@ class PedigreeFetcher {
         return 'DK'; // Default to Denmark
     }
 
-    // Helper method to determine relationship type from sti path
-    private determineRelationshipFromSti(sti: string): { relationshipType: 'SIRE' | 'DAM', generation: number } {
-        const generation = sti.length;
-        
-        if (generation === 0) {
-            throw new Error("Cannot determine relationship for empty sti (child itself)");
-        }
-        
-        // The relationship type is determined by the last character in the path
-        // 0 = father/sire, 1 = mother/dam
-        const lastChar = sti[sti.length - 1];
-        const relationshipType: 'SIRE' | 'DAM' = lastChar === '0' ? 'SIRE' : 'DAM';
-        
-        return { relationshipType, generation };
+   // Helper method to determine relationship type from sti path
+   private determineRelationshipFromSti(sti: string): { relationshipType: 'SIRE' | 'DAM', generation: number } {
+    const generation = sti.length;
+    
+    if (generation === 0) {
+        throw new Error("Cannot determine relationship for empty sti (child itself)");
     }
     
-    // Helper method to determine gender from sti path
-    private determineGenderFromSti(sti: string): 'M' | 'F' {
-        if (sti.length === 0) {
-            return 'M'; // Default for child
-        }
-        
-        // Gender is determined by the last character in the path
-        // 0 = male (father), 1 = female (mother)
-        const lastChar = sti[sti.length - 1];
-        return lastChar === '0' ? 'M' : 'F';
+    // The relationship type is determined by the last character in the path
+    // 0 = father/sire, 1 = mother/dam
+    const lastChar = sti[sti.length - 1];
+    const relationshipType: 'SIRE' | 'DAM' = lastChar === '0' ? 'SIRE' : 'DAM';
+    
+    return { relationshipType, generation };
+}
+
+// Helper method to determine gender from sti path
+private determineGenderFromSti(sti: string): 'M' | 'F' {
+    if (sti.length === 0) {
+        return 'M'; // Default for child
     }
+    
+    // Gender is determined by the last character in the path
+    // 0 = male (father), 1 = female (mother)
+    const lastChar = sti[sti.length - 1];
+    return lastChar === '0' ? 'M' : 'F';
+}
 
-    async createAncestorDog(pedigreeHund: PedigreeHund): Promise<void> {
-        try {
-            // Check if dog already exists
-            const { data: existingDog, error: checkError } = await this.supabase
-                .from('dogs')
-                .select('id')
-                .eq('id', pedigreeHund.hundId)
-                .single();
+async createAncestorDog(pedigreeHund: PedigreeHund): Promise<void> {
+    try {
+        // Check if dog already exists
+        const { data: existingDog, error: checkError } = await this.supabase
+            .from('dogs')
+            .select('id')
+            .eq('id', pedigreeHund.hundId)
+            .single();
 
-            if (checkError && checkError.code !== 'PGRST116') {
-                throw checkError;
-            }
+        if (checkError && checkError.code !== 'PGRST116') {
+            throw checkError;
+        }
 
-            if (existingDog) {
-                console.log(`Dog ${pedigreeHund.hundId} already exists, skipping creation`);
-                return;
-            }
+        if (existingDog) {
+            console.log(`Dog ${pedigreeHund.hundId} already exists, skipping creation`);
+            return;
+        }
 
-            // Determine gender from sti path
-            const gender = this.determineGenderFromSti(pedigreeHund.sti);
+        // Determine gender from sti path
+        const gender = this.determineGenderFromSti(pedigreeHund.sti);
 
-            const ancestorDog = {
-                id: pedigreeHund.hundId,
-                name: pedigreeHund.navn,
-                nickname: undefined,
-                gender: gender,
-                breed_id: 1, // Default breed - would need better logic to determine actual breed
-                birth_date: undefined,
-                death_date: undefined,
-                is_deceased: false,
-                color: pedigreeHund.farge || undefined,
-                owner_person_id: undefined,
-                original_dog_id: undefined
-            };
+        const ancestorDog = {
+            id: pedigreeHund.hundId,
+            name: pedigreeHund.navn,
+            nickname: undefined,
+            gender: gender,
+            breed_id: 1, // Default breed - would need better logic to determine actual breed
+            birth_date: undefined,
+            death_date: undefined,
+            is_deceased: false,
+            color: pedigreeHund.farge || undefined,
+            owner_person_id: undefined,
+            original_dog_id: undefined
+        };
 
-            const { error: insertError } = await this.supabase
-                .from('dogs')
-                .insert(ancestorDog);
+        const { error: insertError } = await this.supabase
+            .from('dogs')
+            .insert(ancestorDog);
 
-            if (insertError) {
-                throw insertError;
-            }
+        if (insertError) {
+            throw insertError;
+        }
 
-            this.stats.ancestorsCreated++;
-            console.log(`Created ancestor dog: ${pedigreeHund.hundId} - ${pedigreeHund.navn} (${gender}, sti: ${pedigreeHund.sti})`);
+        this.stats.ancestorsCreated++;
+        console.log(`Created ancestor dog: ${pedigreeHund.hundId} - ${pedigreeHund.navn} (${gender}, sti: ${pedigreeHund.sti})`);
 
-            // Add titles if available
-            if (pedigreeHund.tittel && pedigreeHund.tittel.trim()) {
-                const titles = this.parseTitles(pedigreeHund.hundId, pedigreeHund.tittel);
-                for (const title of titles) {
-                    // Check if title already exists
-                    const { data: existingTitle } = await this.supabase
+        // Add titles if available
+        if (pedigreeHund.tittel && pedigreeHund.tittel.trim()) {
+            const titles = this.parseTitles(pedigreeHund.hundId, pedigreeHund.tittel);
+            for (const title of titles) {
+                // Check if title already exists
+                const { data: existingTitle } = await this.supabase
+                    .from('titles')
+                    .select('id')
+                    .eq('dog_id', title.dog_id)
+                    .eq('title_code', title.title_code)
+                    .single();
+
+                if (!existingTitle) {
+                    const { error: titleError } = await this.supabase
                         .from('titles')
-                        .select('id')
-                        .eq('dog_id', title.dog_id)
-                        .eq('title_code', title.title_code)
-                        .single();
+                        .insert(title);
 
-                    if (!existingTitle) {
-                        const { error: titleError } = await this.supabase
-                            .from('titles')
-                            .insert(title);
-
-                        if (!titleError) {
-                            this.stats.titlesCreated++;
-                        }
+                    if (!titleError) {
+                        this.stats.titlesCreated++;
                     }
                 }
-                console.log(`Added ${titles.length} titles for ${pedigreeHund.hundId}`);
             }
-
-        } catch (error) {
-            this.stats.errors.push(`Error creating ancestor ${pedigreeHund.hundId}: ${error.message}`);
-            console.error(`Error creating ancestor ${pedigreeHund.hundId}:`, error);
+            console.log(`Added ${titles.length} titles for ${pedigreeHund.hundId}`);
         }
+
+    } catch (error) {
+        this.stats.errors.push(`Error creating ancestor ${pedigreeHund.hundId}: ${error.message}`);
+        console.error(`Error creating ancestor ${pedigreeHund.hundId}:`, error);
     }
+}
 
-    async createPedigreeRelationship(childDogId: string, pedigreeHund: PedigreeHund): Promise<void> {
-        try {
-            if (pedigreeHund.sti.length === 0) {
-                return; // Skip child itself
-            }
-            
-            if (pedigreeHund.sti.length > 4) {
-                return; // Limit to 4 generations
-            }
+async createPedigreeRelationship(childDogId: string, pedigreeHund: PedigreeHund): Promise<void> {
+    try {
+        if (pedigreeHund.sti.length === 0) {
+            return; // Skip child itself
+        }
+        
+        if (pedigreeHund.sti.length > 4) {
+            return; // Limit to 4 generations
+        }
 
-            const { relationshipType, generation } = this.determineRelationshipFromSti(pedigreeHund.sti);
+        const { relationshipType, generation } = this.determineRelationshipFromSti(pedigreeHund.sti);
 
-            const relationship = {
-                dog_id: childDogId,
-                parent_id: pedigreeHund.hundId,
-                relationship_type: relationshipType,
-                generation: generation,
-                path: pedigreeHund.sti  // Store the sti value in the path column
-            };
+        const relationship = {
+            dog_id: childDogId,
+            parent_id: pedigreeHund.hundId,
+            relationship_type: relationshipType,
+            generation: generation,
+            path: pedigreeHund.sti  // Store the sti value in the path column
+        };
 
-            // Check if relationship already exists first, then insert or skip
-            const { data: existingRelationship, error: checkError } = await this.supabase
+        console.log(`Creating relationship with path: "${pedigreeHund.sti}" for ${pedigreeHund.hundId}`);
+
+        // Check if relationship already exists first, then insert or skip
+        const { data: existingRelationship, error: checkError } = await this.supabase
+            .from('pedigree_relationships')
+            .select('id')
+            .eq('dog_id', relationship.dog_id)
+            .eq('parent_id', relationship.parent_id)
+            .eq('relationship_type', relationship.relationship_type)
+            .eq('generation', relationship.generation)
+            .eq('path', relationship.path)
+            .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+            throw checkError;
+        }
+
+        if (!existingRelationship) {
+            const { error } = await this.supabase
                 .from('pedigree_relationships')
-                .select('id')
-                .eq('dog_id', relationship.dog_id)
-                .eq('parent_id', relationship.parent_id)
-                .eq('relationship_type', relationship.relationship_type)
-                .eq('generation', relationship.generation)
-                .eq('path', relationship.path)
-                .single();
+                .insert(relationship);
 
-            if (checkError && checkError.code !== 'PGRST116') {
-                throw checkError;
+            if (error) {
+                throw error;
             }
-
-            if (!existingRelationship) {
-                const { error } = await this.supabase
-                    .from('pedigree_relationships')
-                    .insert(relationship);
-
-                if (error) {
-                    throw error;
-                }
-            } else {
-                console.log(`Relationship already exists, skipping: ${relationship.dog_id} -> ${relationship.parent_id}`);
-                return; // Don't increment the counter for skipped relationships
-            }
-
-            this.stats.relationshipsCreated++;
-            console.log(`Created relationship: ${childDogId} -> ${pedigreeHund.hundId} (${relationshipType}, gen ${generation}, path: ${pedigreeHund.sti})`);
-
-        } catch (error) {
-            this.stats.errors.push(`Error creating relationship ${childDogId} -> ${pedigreeHund.hundId}: ${error.message}`);
-            console.error(`Error creating relationship:`, error);
+        } else {
+            console.log(`Relationship already exists, skipping: ${relationship.dog_id} -> ${relationship.parent_id}`);
+            return; // Don't increment the counter for skipped relationships
         }
+        
+        this.stats.relationshipsCreated++;
+        console.log(`Created relationship: ${childDogId} -> ${pedigreeHund.hundId} (${relationshipType}, gen ${generation}, path: ${pedigreeHund.sti})`);
+
+    } catch (error) {
+        this.stats.errors.push(`Error creating relationship ${childDogId} -> ${pedigreeHund.hundId}: ${error.message}`);
+        console.error(`Error creating relationship:`, error);
     }
+}
 
     // Optional helper method to decode a path for debugging/display purposes
     private decodePath(sti: string): string {

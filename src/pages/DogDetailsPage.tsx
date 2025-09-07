@@ -45,6 +45,17 @@ function DogDetailsPage() {
       const decodedDogId = decodeDogId(id);
       const dogData = await dogService.getDogById(decodedDogId);
       if (dogData) {
+        // Sort ancestors by generation and path for consistent ordering
+        if (dogData.all_ancestors) {
+          dogData.all_ancestors.sort((a, b) => {
+            // First sort by generation
+            if (a.generation !== b.generation) {
+              return a.generation - b.generation;
+            }
+            // Then sort by path (lexicographically)
+            return (a.path || '').localeCompare(b.path || '');
+          });
+        }
         setDog(dogData);
 
         // Load profile image if available
@@ -155,6 +166,14 @@ function DogDetailsPage() {
 
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
+    
+    // Debug logging
+    console.log('All ancestors:', dog.all_ancestors);
+    console.log('Filtered ancestors (generation <= 3):', filteredAncestors);
+    const fatherPaths = filteredAncestors.filter(a => a.path?.startsWith('0')).map(a => ({ path: a.path, name: a.parent.name }));
+    console.log('Father line paths found:', fatherPaths);
+    console.log('Expected father paths: 0, 00, 01, 000, 001, 010, 011');
+    console.log('Missing father paths:', ['0', '00', '01', '000', '001', '010', '011'].filter(expected => !fatherPaths.some(found => found.path === expected)));
 
     // Get the father (path "0")
     const father = filteredAncestors.find(a => a.path === '0');
@@ -162,7 +181,7 @@ function DogDetailsPage() {
 
     // Build the tree recursively using path-based navigation
     const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
-      const ancestor = filteredAncestors?.find(a => a.path === path);
+      const ancestor = filteredAncestors.find(a => a.path === path);
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];
@@ -196,6 +215,12 @@ function DogDetailsPage() {
 
     const generationLimit = 3;
     const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
+    
+    // Debug logging
+    const motherPaths = filteredAncestors.filter(a => a.path?.startsWith('1')).map(a => ({ path: a.path, name: a.parent.name }));
+    console.log('Mother line paths found:', motherPaths);
+    console.log('Expected mother paths: 1, 10, 11, 100, 101, 110, 111');
+    console.log('Missing mother paths:', ['1', '10', '11', '100', '101', '110', '111'].filter(expected => !motherPaths.some(found => found.path === expected)));
 
     // Get the mother (path "1")
     const mother = filteredAncestors.find(a => a.path === '1');
@@ -203,7 +228,7 @@ function DogDetailsPage() {
 
     // Build the tree recursively using path-based navigation
     const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
-      const ancestor = filteredAncestors?.find(a => a.path === path);
+      const ancestor = filteredAncestors.find(a => a.path === path);
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];

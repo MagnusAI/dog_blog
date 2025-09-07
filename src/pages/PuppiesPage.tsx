@@ -176,16 +176,13 @@ function PuppiesPage() {
                             {renderTextContent(contactTextContent.content)}
                         </div>
 
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
-                            <Typography variant="body" className="text-lg text-gray-700">
-                                {t('common.email', 'common')}:
-                            </Typography>
+                        <div className="flex w-full justify-center">
                             <Button
-                                variant="ghost"
-                                onClick={() => window.location.href = 'mailto:tinearnild@hotmail.com'}
-                                className="text-gray-900 border-gray-300 hover:bg-gray-100 px-6 py-3"
+                                variant="primary"
+                                onClick={() => navigate('/contact')}
+                                className="px-6 py-3"
                             >
-                                tinearnild@hotmail.com
+                                {t('common.contact', 'common')}
                             </Button>
                         </div>
                     </div>

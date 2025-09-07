@@ -35,7 +35,8 @@
     "required": "Required",
     "optional": "Optional",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "contact": "Contact"
   },
   "language": {
     "danish": "Dansk",

@@ -39,7 +39,7 @@ function HomePage() {
 
       // Load featured dogs (first 4 dogs)
       const myDogs = await dogService.getMyDogs();
-      const featured = myDogs.slice(0, 4);
+      const featured = myDogs.filter(myDog => myDog.is_active).sort((a, b) => new Date(b.dog?.created_at || '').getTime() - new Date(a.dog?.created_at || '').getTime()).slice(0, 4);
       setFeaturedDogs(featured);
 
       // Load profile images for featured dogs

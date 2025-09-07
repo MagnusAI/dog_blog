@@ -41,6 +41,7 @@ interface DbPedigreeRelationship {
   parent_id: string;
   relationship_type: 'SIRE' | 'DAM';
   generation: number;
+  path: string;
 }
 
 interface SyncStats {
@@ -295,7 +296,8 @@ class MyDogsSyncer {
           dog_id: dogId,
           parent_id: dogDetails.farHundId,
           relationship_type: 'SIRE',
-          generation: 1
+          generation: 1,
+          path: '0'  // SIRE at generation 1 = path "0"
         });
       }
 
@@ -304,7 +306,8 @@ class MyDogsSyncer {
           dog_id: dogId,
           parent_id: dogDetails.morHundId,
           relationship_type: 'DAM',
-          generation: 1
+          generation: 1,
+          path: '1'  // DAM at generation 1 = path "1"
         });
       }
 
@@ -321,15 +324,35 @@ class MyDogsSyncer {
       for (const relationship of relationships) {
         this.stats.pedigreeProcessed++;
 
-        const { error: insertError } = await this.supabase
+        // Check if relationship already exists first, then insert or skip
+        const { data: existingRelationship, error: checkError } = await this.supabase
           .from('pedigree_relationships')
-          .insert(relationship);
+          .select('id')
+          .eq('dog_id', relationship.dog_id)
+          .eq('parent_id', relationship.parent_id)
+          .eq('relationship_type', relationship.relationship_type)
+          .eq('generation', relationship.generation)
+          .eq('path', relationship.path)
+          .single();
 
-        if (insertError) {
-          this.stats.errors.push(`Pedigree sync error for ${dogId} (${relationship.relationship_type}): ${insertError.message}`);
+        if (checkError && checkError.code !== 'PGRST116') {
+          this.stats.errors.push(`Pedigree check error for ${dogId} (${relationship.relationship_type}): ${checkError.message}`);
+          continue;
+        }
+
+        if (!existingRelationship) {
+          const { error: insertError } = await this.supabase
+            .from('pedigree_relationships')
+            .insert(relationship);
+
+          if (insertError) {
+            this.stats.errors.push(`Pedigree sync error for ${dogId} (${relationship.relationship_type}): ${insertError.message}`);
+          } else {
+            this.stats.pedigreeCreated++;
+            console.log(`Created pedigree relationship: ${dogId} -> ${relationship.parent_id} (${relationship.relationship_type}, path: ${relationship.path})`);
+          }
         } else {
-          this.stats.pedigreeCreated++;
-          console.log(`Created pedigree relationship: ${dogId} -> ${relationship.parent_id} (${relationship.relationship_type})`);
+          console.log(`Pedigree relationship already exists, skipping: ${dogId} -> ${relationship.parent_id} (${relationship.relationship_type})`);
         }
       }
     } catch (error) {

@@ -39,11 +39,6 @@ interface PedigreeTreeResponse {
     innavlKoeffisientProsent: number;
 }
 
-interface MyDog {
-    dog_id: string;
-    is_active: boolean;
-}
-
 interface DogWithParents {
     id: string;
     name: string;
@@ -92,10 +87,10 @@ class PedigreeFetcher {
 
     async invalidateSession(sessionId: string): Promise<void> {
         await this.supabase
-          .from('scraper_sessions')
-          .update({ is_active: false })
-          .eq('session_id', sessionId);
-      }
+            .from('scraper_sessions')
+            .update({ is_active: false })
+            .eq('session_id', sessionId);
+    }
 
     async getValidSession(sessionId?: string): Promise<SessionRecord | null> {
         try {
@@ -266,7 +261,7 @@ class PedigreeFetcher {
                 if (responseText.includes('redirectUrl') && responseText.includes('cas/login')) {
                     await this.invalidateSession(session.session_id);
                     throw new Error(`Session expired. Redirect to login page detected.`);
-                  }
+                }
 
                 throw new Error(`Failed to fetch pedigree tree: ${response.status} ${response.statusText}`);
             }
@@ -329,6 +324,34 @@ class PedigreeFetcher {
         return 'DK'; // Default to Denmark
     }
 
+    // Helper method to determine relationship type from sti path
+    private determineRelationshipFromSti(sti: string): { relationshipType: 'SIRE' | 'DAM', generation: number } {
+        const generation = sti.length;
+        
+        if (generation === 0) {
+            throw new Error("Cannot determine relationship for empty sti (child itself)");
+        }
+        
+        // The relationship type is determined by the last character in the path
+        // 0 = father/sire, 1 = mother/dam
+        const lastChar = sti[sti.length - 1];
+        const relationshipType: 'SIRE' | 'DAM' = lastChar === '0' ? 'SIRE' : 'DAM';
+        
+        return { relationshipType, generation };
+    }
+    
+    // Helper method to determine gender from sti path
+    private determineGenderFromSti(sti: string): 'M' | 'F' {
+        if (sti.length === 0) {
+            return 'M'; // Default for child
+        }
+        
+        // Gender is determined by the last character in the path
+        // 0 = male (father), 1 = female (mother)
+        const lastChar = sti[sti.length - 1];
+        return lastChar === '0' ? 'M' : 'F';
+    }
+
     async createAncestorDog(pedigreeHund: PedigreeHund): Promise<void> {
         try {
             // Check if dog already exists
@@ -347,18 +370,8 @@ class PedigreeFetcher {
                 return;
             }
 
-            // Create new ancestor dog - we need to determine breed and gender
-            // For now, use default breed (1) and try to determine gender from lineage position
-            let gender = 'M'; // Default male
-            // If path starts with '0', it's typically father's side (male lineage)
-            // If path starts with '1', it's typically mother's side (female lineage)
-            // But this is not always reliable, so we'll use a simple heuristic
-            if (pedigreeHund.sti.length > 0) {
-                // For generation 1: '0' = sire (male), '1' = dam (female)
-                // For higher generations, alternate based on path pattern
-                const lastChar = pedigreeHund.sti[pedigreeHund.sti.length - 1];
-                gender = lastChar === '0' ? 'M' : 'F';
-            }
+            // Determine gender from sti path
+            const gender = this.determineGenderFromSti(pedigreeHund.sti);
 
             const ancestorDog = {
                 id: pedigreeHund.hundId,
@@ -383,7 +396,7 @@ class PedigreeFetcher {
             }
 
             this.stats.ancestorsCreated++;
-            console.log(`Created ancestor dog: ${pedigreeHund.hundId} - ${pedigreeHund.navn} (${gender})`);
+            console.log(`Created ancestor dog: ${pedigreeHund.hundId} - ${pedigreeHund.navn} (${gender}, sti: ${pedigreeHund.sti})`);
 
             // Add titles if available
             if (pedigreeHund.tittel && pedigreeHund.tittel.trim()) {
@@ -418,45 +431,76 @@ class PedigreeFetcher {
 
     async createPedigreeRelationship(childDogId: string, pedigreeHund: PedigreeHund): Promise<void> {
         try {
-            const generation = pedigreeHund.sti.length;
-            if (generation === 0 || generation > 4) return; // Skip child itself and limit generations
-
-            // Determine relationship type based on path
-            let relationshipType: 'SIRE' | 'DAM';
-
-            if (generation === 1) {
-                // Direct parent: '0' = SIRE, '1' = DAM
-                relationshipType = pedigreeHund.sti === '0' ? 'SIRE' : 'DAM';
-            } else {
-                // For higher generations, determine by first character of path
-                relationshipType = pedigreeHund.sti.startsWith('0') ? 'SIRE' : 'DAM';
+            if (pedigreeHund.sti.length === 0) {
+                return; // Skip child itself
             }
+            
+            if (pedigreeHund.sti.length > 4) {
+                return; // Limit to 4 generations
+            }
+
+            const { relationshipType, generation } = this.determineRelationshipFromSti(pedigreeHund.sti);
 
             const relationship = {
                 dog_id: childDogId,
                 parent_id: pedigreeHund.hundId,
                 relationship_type: relationshipType,
-                generation: generation
+                generation: generation,
+                path: pedigreeHund.sti  // Store the sti value in the path column
             };
 
-            // Use upsert to handle potential duplicates
-            const { error } = await this.supabase
+            // Check if relationship already exists first, then insert or skip
+            const { data: existingRelationship, error: checkError } = await this.supabase
                 .from('pedigree_relationships')
-                .upsert(relationship, {
-                    onConflict: 'dog_id,parent_id,relationship_type,generation'
-                });
+                .select('id')
+                .eq('dog_id', relationship.dog_id)
+                .eq('parent_id', relationship.parent_id)
+                .eq('relationship_type', relationship.relationship_type)
+                .eq('generation', relationship.generation)
+                .eq('path', relationship.path)
+                .single();
 
-            if (error) {
-                throw error;
+            if (checkError && checkError.code !== 'PGRST116') {
+                throw checkError;
+            }
+
+            if (!existingRelationship) {
+                const { error } = await this.supabase
+                    .from('pedigree_relationships')
+                    .insert(relationship);
+
+                if (error) {
+                    throw error;
+                }
+            } else {
+                console.log(`Relationship already exists, skipping: ${relationship.dog_id} -> ${relationship.parent_id}`);
+                return; // Don't increment the counter for skipped relationships
             }
 
             this.stats.relationshipsCreated++;
-            console.log(`Created relationship: ${childDogId} -> ${pedigreeHund.hundId} (${relationshipType}, gen ${generation})`);
+            console.log(`Created relationship: ${childDogId} -> ${pedigreeHund.hundId} (${relationshipType}, gen ${generation}, path: ${pedigreeHund.sti})`);
 
         } catch (error) {
             this.stats.errors.push(`Error creating relationship ${childDogId} -> ${pedigreeHund.hundId}: ${error.message}`);
             console.error(`Error creating relationship:`, error);
         }
+    }
+
+    // Optional helper method to decode a path for debugging/display purposes
+    private decodePath(sti: string): string {
+        if (sti.length === 0) return "self";
+        
+        const pathSegments: string[] = [];
+        
+        for (let i = 0; i < sti.length; i++) {
+            if (sti[i] === '0') {
+                pathSegments.push('father');
+            } else {
+                pathSegments.push('mother');
+            }
+        }
+        
+        return pathSegments.join('_');
     }
 
     async processPedigreeTree(childDogId: string, pedigreeTree: PedigreeTreeResponse): Promise<void> {

@@ -20,10 +20,6 @@ function AppContent() {
     { label: t('navigation.contact'), href: "#/contact" }
   ];
 
-  const handleLoginClick = () => {
-    navigate('/login');
-  };
-
   const handleLogoutClick = async () => {
     try {
       await signOut();

@@ -430,7 +430,7 @@ export const dogService = {
   ): Promise<PedigreeRelationship> {
     const { data, error } = await supabase
       .from('pedigree_relationships')
-      .insert(relationship)
+      .upsert(relationship, { onConflict: 'dog_id,parent_id,relationship_type,generation,path' })
       .select()
       .single();
 

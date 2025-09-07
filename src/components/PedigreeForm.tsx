@@ -129,17 +129,19 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
   const isEditingFatherLine = pedigreeType === 'father';
   const lineTitle = isEditingFatherLine ? "Father's Line" : "Mother's Line";
 
-  // Helper function to get generation from dog key
-  const getGenerationFromDogKey = (dogKey: string): number => {
+  // Helper function to get path from dog key
+  const getPathFromDogKey = (dogKey: string): string => {
+    const basePath = isEditingFatherLine ? '0' : '1';
+    
     switch (dogKey) {
-      case 'parent': return 1;
-      case 'grandparent1':
-      case 'grandparent2': return 2;
-      case 'greatGrandparent1':
-      case 'greatGrandparent2':
-      case 'greatGrandparent3':
-      case 'greatGrandparent4': return 3;
-      default: return 0;
+      case 'parent': return basePath;
+      case 'grandparent1': return basePath + '0';
+      case 'grandparent2': return basePath + '1';
+      case 'greatGrandparent1': return basePath + '00';
+      case 'greatGrandparent2': return basePath + '01';
+      case 'greatGrandparent3': return basePath + '10';
+      case 'greatGrandparent4': return basePath + '11';
+      default: return '';
     }
   };
 
@@ -153,24 +155,22 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
       const breedsData = await dogService.getBreeds();
       setBreeds(breedsData);
 
-      // Load current pedigree data
+      // Load current pedigree data using path-based system
       if (currentDog.all_ancestors) {
-        const relationshipType = isEditingFatherLine ? 'SIRE' : 'DAM';
+        const basePath = isEditingFatherLine ? '0' : '1';
         
         // Find parent (generation 1)
-        const parent = currentDog.all_ancestors.find(
-          a => a.generation === 1 && a.relationship_type === relationshipType
-        );
+        const parent = currentDog.all_ancestors.find(a => a.path === basePath);
 
-        // Find grandparents (generation 2) - we'll take up to 2
-        const grandparents = currentDog.all_ancestors
-          .filter(a => a.generation === 2 && a.relationship_type === relationshipType)
-          .slice(0, 2);
+        // Find grandparents (generation 2) - father and mother of the parent
+        const grandparent1 = currentDog.all_ancestors.find(a => a.path === basePath + '0'); // Father's father or Mother's father
+        const grandparent2 = currentDog.all_ancestors.find(a => a.path === basePath + '1'); // Father's mother or Mother's mother
 
-        // Find great-grandparents (generation 3) - we'll take up to 4
-        const greatGrandparents = currentDog.all_ancestors
-          .filter(a => a.generation === 3 && a.relationship_type === relationshipType)
-          .slice(0, 4);
+        // Find great-grandparents (generation 3) - 4 great-grandparents
+        const greatGrandparent1 = currentDog.all_ancestors.find(a => a.path === basePath + '00'); // Father's father's father or Mother's father's father
+        const greatGrandparent2 = currentDog.all_ancestors.find(a => a.path === basePath + '01'); // Father's father's mother or Mother's father's mother
+        const greatGrandparent3 = currentDog.all_ancestors.find(a => a.path === basePath + '10'); // Father's mother's father or Mother's mother's father
+        const greatGrandparent4 = currentDog.all_ancestors.find(a => a.path === basePath + '11'); // Father's mother's mother or Mother's mother's mother
 
         const newFormData: PedigreeFormData = {};
 
@@ -193,115 +193,115 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           };
         }
 
-        if (grandparents[0]) {
+        if (grandparent1) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(grandparents[0].parent.profile_image)) {
-            profileImage = grandparents[0].parent.profile_image.find(img => img.is_profile) || grandparents[0].parent.profile_image[0];
+          if (Array.isArray(grandparent1.parent.profile_image)) {
+            profileImage = grandparent1.parent.profile_image.find(img => img.is_profile) || grandparent1.parent.profile_image[0];
           }
           
           newFormData.grandparent1 = {
-            id: grandparents[0].parent.id,
-            name: grandparents[0].parent.name,
-            breed_id: grandparents[0].parent.breed_id,
-            birth_date: grandparents[0].parent.birth_date || '',
-            gender: grandparents[0].parent.gender,
-            color: grandparents[0].parent.color || '',
+            id: grandparent1.parent.id,
+            name: grandparent1.parent.name,
+            breed_id: grandparent1.parent.breed_id,
+            birth_date: grandparent1.parent.birth_date || '',
+            gender: grandparent1.parent.gender,
+            color: grandparent1.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
         }
 
-        if (grandparents[1]) {
+        if (grandparent2) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(grandparents[1].parent.profile_image)) {
-            profileImage = grandparents[1].parent.profile_image.find(img => img.is_profile) || grandparents[1].parent.profile_image[0];
+          if (Array.isArray(grandparent2.parent.profile_image)) {
+            profileImage = grandparent2.parent.profile_image.find(img => img.is_profile) || grandparent2.parent.profile_image[0];
           }
           
           newFormData.grandparent2 = {
-            id: grandparents[1].parent.id,
-            name: grandparents[1].parent.name,
-            breed_id: grandparents[1].parent.breed_id,
-            birth_date: grandparents[1].parent.birth_date || '',
-            gender: grandparents[1].parent.gender,
-            color: grandparents[1].parent.color || '',
+            id: grandparent2.parent.id,
+            name: grandparent2.parent.name,
+            breed_id: grandparent2.parent.breed_id,
+            birth_date: grandparent2.parent.birth_date || '',
+            gender: grandparent2.parent.gender,
+            color: grandparent2.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
         }
 
-        if (greatGrandparents[0]) {
+        if (greatGrandparent1) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(greatGrandparents[0].parent.profile_image)) {
-            profileImage = greatGrandparents[0].parent.profile_image.find(img => img.is_profile) || greatGrandparents[0].parent.profile_image[0];
+          if (Array.isArray(greatGrandparent1.parent.profile_image)) {
+            profileImage = greatGrandparent1.parent.profile_image.find(img => img.is_profile) || greatGrandparent1.parent.profile_image[0];
           }
           
           newFormData.greatGrandparent1 = {
-            id: greatGrandparents[0].parent.id,
-            name: greatGrandparents[0].parent.name,
-            breed_id: greatGrandparents[0].parent.breed_id,
-            birth_date: greatGrandparents[0].parent.birth_date || '',
-            gender: greatGrandparents[0].parent.gender,
-            color: greatGrandparents[0].parent.color || '',
+            id: greatGrandparent1.parent.id,
+            name: greatGrandparent1.parent.name,
+            breed_id: greatGrandparent1.parent.breed_id,
+            birth_date: greatGrandparent1.parent.birth_date || '',
+            gender: greatGrandparent1.parent.gender,
+            color: greatGrandparent1.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
         }
 
-        if (greatGrandparents[1]) {
+        if (greatGrandparent2) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(greatGrandparents[1].parent.profile_image)) {
-            profileImage = greatGrandparents[1].parent.profile_image.find(img => img.is_profile) || greatGrandparents[1].parent.profile_image[0];
+          if (Array.isArray(greatGrandparent2.parent.profile_image)) {
+            profileImage = greatGrandparent2.parent.profile_image.find(img => img.is_profile) || greatGrandparent2.parent.profile_image[0];
           }
           
           newFormData.greatGrandparent2 = {
-            id: greatGrandparents[1].parent.id,
-            name: greatGrandparents[1].parent.name,
-            breed_id: greatGrandparents[1].parent.breed_id,
-            birth_date: greatGrandparents[1].parent.birth_date || '',
-            gender: greatGrandparents[1].parent.gender,
-            color: greatGrandparents[1].parent.color || '',
+            id: greatGrandparent2.parent.id,
+            name: greatGrandparent2.parent.name,
+            breed_id: greatGrandparent2.parent.breed_id,
+            birth_date: greatGrandparent2.parent.birth_date || '',
+            gender: greatGrandparent2.parent.gender,
+            color: greatGrandparent2.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
         }
 
-        if (greatGrandparents[2]) {
+        if (greatGrandparent3) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(greatGrandparents[2].parent.profile_image)) {
-            profileImage = greatGrandparents[2].parent.profile_image.find(img => img.is_profile) || greatGrandparents[2].parent.profile_image[0];
+          if (Array.isArray(greatGrandparent3.parent.profile_image)) {
+            profileImage = greatGrandparent3.parent.profile_image.find(img => img.is_profile) || greatGrandparent3.parent.profile_image[0];
           }
           
           newFormData.greatGrandparent3 = {
-            id: greatGrandparents[2].parent.id,
-            name: greatGrandparents[2].parent.name,
-            breed_id: greatGrandparents[2].parent.breed_id,
-            birth_date: greatGrandparents[2].parent.birth_date || '',
-            gender: greatGrandparents[2].parent.gender,
-            color: greatGrandparents[2].parent.color || '',
+            id: greatGrandparent3.parent.id,
+            name: greatGrandparent3.parent.name,
+            breed_id: greatGrandparent3.parent.breed_id,
+            birth_date: greatGrandparent3.parent.birth_date || '',
+            gender: greatGrandparent3.parent.gender,
+            color: greatGrandparent3.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
         }
 
-        if (greatGrandparents[3]) {
+        if (greatGrandparent4) {
           // Get profile image if available
           let profileImage;
-          if (Array.isArray(greatGrandparents[3].parent.profile_image)) {
-            profileImage = greatGrandparents[3].parent.profile_image.find(img => img.is_profile) || greatGrandparents[3].parent.profile_image[0];
+          if (Array.isArray(greatGrandparent4.parent.profile_image)) {
+            profileImage = greatGrandparent4.parent.profile_image.find(img => img.is_profile) || greatGrandparent4.parent.profile_image[0];
           }
           
           newFormData.greatGrandparent4 = {
-            id: greatGrandparents[3].parent.id,
-            name: greatGrandparents[3].parent.name,
-            breed_id: greatGrandparents[3].parent.breed_id,
-            birth_date: greatGrandparents[3].parent.birth_date || '',
-            gender: greatGrandparents[3].parent.gender,
-            color: greatGrandparents[3].parent.color || '',
+            id: greatGrandparent4.parent.id,
+            name: greatGrandparent4.parent.name,
+            breed_id: greatGrandparent4.parent.breed_id,
+            birth_date: greatGrandparent4.parent.birth_date || '',
+            gender: greatGrandparent4.parent.gender,
+            color: greatGrandparent4.parent.color || '',
             imageUrl: profileImage?.image_url,
             imagePublicId: profileImage?.image_public_id
           };
@@ -447,17 +447,18 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
           }
           
           // Create pedigree relationship
-          const generation = getGenerationFromDogKey(dogKey);
-          if (generation > 0) {
+          const path = getPathFromDogKey(dogKey);
+          if (path) {
             const relationshipData = {
               dog_id: currentDog.id,
               parent_id: dogData.id,
               relationship_type: relationshipType as 'SIRE' | 'DAM',
-              generation: generation
+              generation: path.length,
+              path: path
             };
             
             await dogService.addPedigreeRelationship(relationshipData);
-            console.log(`Created pedigree relationship: ${dogData.name} as ${relationshipType} generation ${generation}`);
+            console.log(`Created pedigree relationship: ${dogData.name} at path ${path} (generation ${path.length})`);
           }
           
         } catch (error) {
@@ -711,12 +712,12 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {renderDogSection(
             'grandparent1',
-            isEditingFatherLine ? '👴 Paternal Grandfather' : '👵 Maternal Grandmother',
+            isEditingFatherLine ? '👴 Paternal Grandfather (Father\'s Father)' : '👴 Maternal Grandfather (Mother\'s Father)',
             formData.grandparent1
           )}
           {renderDogSection(
             'grandparent2',
-            isEditingFatherLine ? '👵 Paternal Grandmother' : '👴 Maternal Grandfather',
+            isEditingFatherLine ? '👵 Paternal Grandmother (Father\'s Mother)' : '👵 Maternal Grandmother (Mother\'s Mother)',
             formData.grandparent2
           )}
         </div>
@@ -725,22 +726,22 @@ export const PedigreeForm: React.FC<PedigreeFormProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {renderDogSection(
             'greatGrandparent1',
-            'Great-Grandparent 1 (Generation 3)',
+            isEditingFatherLine ? '👴 Great-Grandfather (Father\'s Father\'s Father)' : '👴 Great-Grandfather (Mother\'s Father\'s Father)',
             formData.greatGrandparent1
           )}
           {renderDogSection(
             'greatGrandparent2',
-            'Great-Grandparent 2 (Generation 3)',
+            isEditingFatherLine ? '👵 Great-Grandmother (Father\'s Father\'s Mother)' : '👵 Great-Grandmother (Mother\'s Father\'s Mother)',
             formData.greatGrandparent2
           )}
           {renderDogSection(
             'greatGrandparent3',
-            'Great-Grandparent 3 (Generation 3)',
+            isEditingFatherLine ? '👴 Great-Grandfather (Father\'s Mother\'s Father)' : '👴 Great-Grandfather (Mother\'s Mother\'s Father)',
             formData.greatGrandparent3
           )}
           {renderDogSection(
             'greatGrandparent4',
-            'Great-Grandparent 4 (Generation 3)',
+            isEditingFatherLine ? '👵 Great-Grandmother (Father\'s Mother\'s Mother)' : '👵 Great-Grandmother (Mother\'s Mother\'s Mother)',
             formData.greatGrandparent4
           )}
         </div>

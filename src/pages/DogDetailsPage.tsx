@@ -153,87 +153,104 @@ function DogDetailsPage() {
   const buildFatherTree = (): TreeNode<PedigreeData> | null => {
     if (!dog?.all_ancestors) return null;
 
-    // Get the father (generation 1, SIRE)
-    const father = dog.all_ancestors.find(a => a.generation === 1 && a.relationship_type === 'SIRE');
+    // Get the father (path "0")
+    const father = dog.all_ancestors.find(a => a.path === '0');
     if (!father) return null;
 
-    // Get all paternal ancestors (assuming the first half are paternal lineage)
-    const paternalAncestors = dog.all_ancestors.filter(a => a.generation >= 2).slice(0, Math.floor(dog.all_ancestors.filter(a => a.generation >= 2).length / 2));
+    // Build the tree recursively using path-based navigation
+    const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
+      const ancestor = dog.all_ancestors?.find(a => a.path === path);
+      if (!ancestor) return null;
 
-    // Build children for the father
-    const fatherChildren: TreeNode<PedigreeData>[] = [];
+      const children: TreeNode<PedigreeData>[] = [];
+      
+      // Add father (append "0" to current path)
+      const fatherPath = path + '0';
+      const fatherChild = buildTreeFromPath(fatherPath);
+      if (fatherChild) {
+        children.push(fatherChild);
+      }
 
-    // Add generation 2 (grandparents)
-    const generation2Paternal = paternalAncestors.filter(a => a.generation === 2).slice(0, 2);
-    generation2Paternal.forEach(grandparent => {
-      const generation3Children = paternalAncestors
-        .filter(a => a.generation === 3)
-        .slice(0, 2)
-        .map(greatGrandparent => ({
-          data: dogToPedigreeData(greatGrandparent.parent, getRelationLabel(greatGrandparent.relationship_type, 3)),
-          children: []
-        }));
+      // Add mother (append "1" to current path)
+      const motherPath = path + '1';
+      const motherChild = buildTreeFromPath(motherPath);
+      if (motherChild) {
+        children.push(motherChild);
+      }
 
-      fatherChildren.push({
-        data: dogToPedigreeData(grandparent.parent, getRelationLabel(grandparent.relationship_type, 2)),
-        children: generation3Children
-      });
-    });
-
-    return {
-      data: dogToPedigreeData(father.parent, 'Father'),
-      children: fatherChildren
+      return {
+        data: dogToPedigreeData(ancestor.parent, getRelationLabel(ancestor.path || '')),
+        children
+      };
     };
+
+    return buildTreeFromPath('0');
   };
 
   // Build multi-generation pedigree tree for mother's line  
   const buildMotherTree = (): TreeNode<PedigreeData> | null => {
     if (!dog?.all_ancestors) return null;
 
-    // Get the mother (generation 1, DAM)
-    const mother = dog.all_ancestors.find(a => a.generation === 1 && a.relationship_type === 'DAM');
+    // Get the mother (path "1")
+    const mother = dog.all_ancestors.find(a => a.path === '1');
     if (!mother) return null;
 
-    // Get all maternal ancestors (assuming the second half are maternal lineage)
-    const allGenerationTwoPlusAncestors = dog.all_ancestors.filter(a => a.generation >= 2);
-    const maternalAncestors = allGenerationTwoPlusAncestors.slice(Math.floor(allGenerationTwoPlusAncestors.length / 2));
+    // Build the tree recursively using path-based navigation
+    const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
+      const ancestor = dog.all_ancestors?.find(a => a.path === path);
+      if (!ancestor) return null;
 
-    // Build children for the mother
-    const motherChildren: TreeNode<PedigreeData>[] = [];
+      const children: TreeNode<PedigreeData>[] = [];
+      
+      // Add father (append "0" to current path)
+      const fatherPath = path + '0';
+      const fatherChild = buildTreeFromPath(fatherPath);
+      if (fatherChild) {
+        children.push(fatherChild);
+      }
 
-    // Add generation 2 (grandparents)
-    const generation2Maternal = maternalAncestors.filter(a => a.generation === 2).slice(0, 2);
-    generation2Maternal.forEach(grandparent => {
-      const generation3Children = maternalAncestors
-        .filter(a => a.generation === 3)
-        .slice(0, 2)
-        .map(greatGrandparent => ({
-          data: dogToPedigreeData(greatGrandparent.parent, getRelationLabel(greatGrandparent.relationship_type, 3)),
-          children: []
-        }));
+      // Add mother (append "1" to current path)
+      const motherPath = path + '1';
+      const motherChild = buildTreeFromPath(motherPath);
+      if (motherChild) {
+        children.push(motherChild);
+      }
 
-      motherChildren.push({
-        data: dogToPedigreeData(grandparent.parent, getRelationLabel(grandparent.relationship_type, 2)),
-        children: generation3Children
-      });
-    });
-
-    return {
-      data: dogToPedigreeData(mother.parent, 'Mother'),
-      children: motherChildren
+      return {
+        data: dogToPedigreeData(ancestor.parent, getRelationLabel(ancestor.path || '')),
+        children
+      };
     };
+
+    return buildTreeFromPath('1');
   };
 
-  // Helper function to get appropriate relation label
-  const getRelationLabel = (relationshipType: 'SIRE' | 'DAM', generation: number): string => {
-    if (generation === 1) {
-      return relationshipType === 'SIRE' ? 'Father' : 'Mother';
-    } else if (generation === 2) {
-      return relationshipType === 'SIRE' ? 'Grandfather' : 'Grandmother';
-    } else if (generation === 3) {
-      return relationshipType === 'SIRE' ? 'Great-Grandfather' : 'Great-Grandmother';
-    }
-    return 'Ancestor';
+  // Helper function to get appropriate relation label based on path
+  const getRelationLabel = (path: string): string => {
+    if (path === '0') return 'Father';
+    if (path === '1') return 'Mother';
+    if (path === '00') return 'Paternal Grandfather';
+    if (path === '01') return 'Paternal Grandmother';
+    if (path === '10') return 'Maternal Grandfather';
+    if (path === '11') return 'Maternal Grandmother';
+    if (path === '000') return 'Paternal Great-Grandfather (Father\'s Father\'s Father)';
+    if (path === '001') return 'Paternal Great-Grandmother (Father\'s Father\'s Mother)';
+    if (path === '010') return 'Paternal Great-Grandfather (Father\'s Mother\'s Father)';
+    if (path === '011') return 'Paternal Great-Grandmother (Father\'s Mother\'s Mother)';
+    if (path === '100') return 'Maternal Great-Grandfather (Mother\'s Father\'s Father)';
+    if (path === '101') return 'Maternal Great-Grandmother (Mother\'s Father\'s Mother)';
+    if (path === '110') return 'Maternal Great-Grandfather (Mother\'s Mother\'s Father)';
+    if (path === '111') return 'Maternal Great-Grandmother (Mother\'s Mother\'s Mother)';
+    
+    // For deeper generations, provide a more generic label
+    const generation = path.length;
+    const lastDigit = path[path.length - 1];
+    const gender = lastDigit === '0' ? 'Grandfather' : 'Grandmother';
+    
+    if (generation === 4) return `Great-Great-${gender}`;
+    if (generation === 5) return `Great-Great-Great-${gender}`;
+    
+    return `${generation}th Generation ${gender}`;
   };
 
   if (loading) {

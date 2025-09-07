@@ -75,7 +75,7 @@ export interface Dog {
   titles?: Title[];
   pedigree_sire?: { parent: Dog & { titles?: Title[] } }[];
   pedigree_dam?: { parent: Dog & { titles?: Title[] } }[];
-  all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed, profile_image?: DogImage[] }, relationship_type: 'SIRE' | 'DAM', generation: number }[];
+  all_ancestors?: { parent: Dog & { titles?: Title[], breed?: Breed, profile_image?: DogImage[] }, relationship_type: 'SIRE' | 'DAM', generation: number, path?: string }[];
   offspring_as_sire?: { offspring: Dog & { breed?: Breed } }[];
   offspring_as_dam?: { offspring: Dog & { breed?: Breed } }[];
   my_dogs?: MyDog[];
@@ -98,6 +98,7 @@ export interface PedigreeRelationship {
   parent_id: string;
   relationship_type: 'SIRE' | 'DAM';
   generation: number;
+  path?: string;
   created_at: string;
   updated_at: string;
   parent?: Dog;
@@ -284,7 +285,8 @@ export const dogService = {
             profile_image:dog_images!dog_id(*)
           ),
           relationship_type,
-          generation
+          generation,
+          path
         ),
         my_dogs(*),
         offspring_as_sire:pedigree_relationships!fk_pedigree_parent(
@@ -416,7 +418,8 @@ export const dogService = {
         parent:dogs(*)
       `)
       .eq('dog_id', dogId)
-      .order('relationship_type');
+      .order('generation')
+      .order('path');
 
     if (error) throw error;
     return data || [];

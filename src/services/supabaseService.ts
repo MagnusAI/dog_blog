@@ -485,7 +485,7 @@ export const dogService = {
           *,
           breed:breeds(*)
         )
-      `)
+      `).eq('is_active', true)
       .order('acquisition_date', { ascending: false });
 
     if (error) throw error;

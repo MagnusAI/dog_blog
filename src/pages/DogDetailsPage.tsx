@@ -153,13 +153,16 @@ function DogDetailsPage() {
   const buildFatherTree = (): TreeNode<PedigreeData> | null => {
     if (!dog?.all_ancestors) return null;
 
+    const generationLimit = 3;
+    const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
+
     // Get the father (path "0")
-    const father = dog.all_ancestors.find(a => a.path === '0');
+    const father = filteredAncestors.find(a => a.path === '0');
     if (!father) return null;
 
     // Build the tree recursively using path-based navigation
     const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
-      const ancestor = dog.all_ancestors?.find(a => a.path === path);
+      const ancestor = filteredAncestors?.find(a => a.path === path);
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];
@@ -191,13 +194,16 @@ function DogDetailsPage() {
   const buildMotherTree = (): TreeNode<PedigreeData> | null => {
     if (!dog?.all_ancestors) return null;
 
+    const generationLimit = 3;
+    const filteredAncestors = dog.all_ancestors.filter(a => a.generation <= generationLimit);
+
     // Get the mother (path "1")
-    const mother = dog.all_ancestors.find(a => a.path === '1');
+    const mother = filteredAncestors.find(a => a.path === '1');
     if (!mother) return null;
 
     // Build the tree recursively using path-based navigation
     const buildTreeFromPath = (path: string): TreeNode<PedigreeData> | null => {
-      const ancestor = dog.all_ancestors?.find(a => a.path === path);
+      const ancestor = filteredAncestors?.find(a => a.path === path);
       if (!ancestor) return null;
 
       const children: TreeNode<PedigreeData>[] = [];

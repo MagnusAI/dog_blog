@@ -125,17 +125,72 @@ function DogsPage() {
     }
   };
 
-  const getVisibleDogs = () => {
-    if (user && editMode) {
-      // Authenticated users see all dogs (active and inactive)
-      return myDogs;
-    } else {
-      // Non-authenticated users only see active dogs
-      return myDogs.filter(myDog => myDog.is_active);
-    }
+
+  const getDogsByBreed = () => {
+    const dogsToGroup = user && editMode ? myDogs : myDogs.filter(myDog => myDog.is_active);
+    
+    // Group dogs by breed first
+    const dogsByBreed: Record<string, typeof dogsToGroup> = {};
+    
+    dogsToGroup.forEach(myDog => {
+      if (myDog.dog?.breed?.name) {
+        const breedName = myDog.dog.breed.name;
+        if (!dogsByBreed[breedName]) {
+          dogsByBreed[breedName] = [];
+        }
+        dogsByBreed[breedName].push(myDog);
+      }
+    });
+
+    // Sort each breed by creation date (newest first - descending order)
+    Object.keys(dogsByBreed).forEach(breedName => {
+      dogsByBreed[breedName].sort((a, b) => {
+        const dateA = new Date(a.dog?.created_at || 0).getTime();
+        const dateB = new Date(b.dog?.created_at || 0).getTime();
+        return dateB - dateA; // Newest first (descending)
+      });
+    });
+    
+    // Define breed order with more flexible matching
+    const breedOrder = [
+      'Norfolk Terrier',
+      'Jack Russell Terrier', 
+      'Russell Terrier',
+      'West Highland White Terrier',
+      'Westie'
+    ];
+    
+    // Create a mapping function to handle breed name variations
+    const mapBreedName = (actualBreedName: string) => {
+      const lowerActual = actualBreedName.toLowerCase();
+      if (lowerActual.includes('norfolk')) return 'Norfolk Terrier';
+      if (lowerActual.includes('jack russell') || lowerActual.includes('jrt')) return 'Jack Russell Terrier';
+      if (lowerActual.includes('russell') && !lowerActual.includes('jack')) return 'Russell Terrier';
+      if (lowerActual.includes('west highland') || lowerActual.includes('westie')) return 'West Highland White Terrier';
+      return actualBreedName; // Return as-is if no match
+    };
+    
+    // Group by mapped breed names
+    const mappedDogsByBreed: Record<string, typeof dogsToGroup> = {};
+    Object.keys(dogsByBreed).forEach(actualBreedName => {
+      const mappedBreedName = mapBreedName(actualBreedName);
+      if (!mappedDogsByBreed[mappedBreedName]) {
+        mappedDogsByBreed[mappedBreedName] = [];
+      }
+      mappedDogsByBreed[mappedBreedName].push(...dogsByBreed[actualBreedName]);
+    });
+    
+    // Return breeds in the specified order, only including breeds with dogs
+    return breedOrder
+      .filter(breedName => mappedDogsByBreed[breedName] && mappedDogsByBreed[breedName].length > 0)
+      .map(breedName => ({
+        breedName,
+        dogs: mappedDogsByBreed[breedName]
+      }));
   };
 
-  const visibleDogs = getVisibleDogs();
+  const dogsByBreed = getDogsByBreed();
+  const totalVisibleDogs = dogsByBreed.reduce((total, breed) => total + breed.dogs.length, 0);
 
   if (loading) {
     return (
@@ -192,7 +247,7 @@ function DogsPage() {
         </div>
       </div>
 
-      {visibleDogs.length === 0 ? (
+      {totalVisibleDogs === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-4">
             {user ? t('dogs.messages.noDogs') : t('dogs.messages.noActiveDogs')}
@@ -207,13 +262,16 @@ function DogsPage() {
           )}
         </div>
       ) : (
-        <div>
+        <div className="space-y-8">
           <div className="text-sm text-gray-600 mb-4">
-            {visibleDogs.length !== 1 ? t('dogs.messages.dogsInYourKennel', {count: visibleDogs.length}) : t('dogs.messages.dogInYourKennel', {count: visibleDogs.length})}
+            {totalVisibleDogs !== 1 ? t('dogs.messages.dogsInYourKennel', {count: totalVisibleDogs}) : t('dogs.messages.dogInYourKennel', {count: totalVisibleDogs})}
             {!user && t('dogs.messages.activeDogsOnly')}
             {editMode && user && (
               <span className="block mt-1 text-blue-600">
                 {t('dogs.messages.activeDogsPreSelected')}
+                <span className="block mt-1 text-sm">
+                  Showing all dogs (active and inactive) for editing
+                </span>
                 {selectedDogs.size > 0 && (
                   <span className="block mt-1">
                     {t('dogs.messages.selectedCount', {count: selectedDogs.size})}
@@ -222,47 +280,60 @@ function DogsPage() {
               </span>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {visibleDogs.map((myDog) => {
-              if (!myDog.dog) return null;
-              
-              const isSelected = selectedDogs.has(myDog.id);
-              const isInactive = !myDog.is_active;
-              const isDeceased = myDog.dog.is_deceased;
-              
-              return (
-                <DogCard
-                  key={myDog.dog.id}
-                  name={myDog.dog.name}
-                  breed={myDog.dog.breed?.name || 'Unknown Breed'}
-                  imagePublicId={dogImages[myDog.dog.id]?.image_public_id}
-                  imageUrl={dogImages[myDog.dog.id]?.image_url}
-                  imageSize={266}
-                  imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
-                  imageGravity={dog()}
-                  fallbackInitials={myDog.dog.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                  subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
-                  metadata={[
-                    myDog.dog.gender === 'M' ? 'Male' : 'Female',
-                    myDog.dog.birth_date ? new Date(myDog.dog.birth_date).getFullYear().toString() : undefined,
-                    myDog.acquisition_date ? `Acquired: ${new Date(myDog.acquisition_date).toLocaleDateString()}` : undefined,
-                    isInactive ? 'Inactive' : undefined,
-                    isDeceased ? 'Deceased' : undefined
-                  ].filter((item): item is string => Boolean(item))}
-                  dogId={myDog.dog.id}
-                  onDogClick={() => handleCardClick(myDog.id, myDog.dog!.id)}
-                  className={`
-                    ${editMode ? 'cursor-pointer' : ''}
-                    ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : ''}
-                    ${isInactive ? 'opacity-60 bg-gray-50' : ''}
-                    ${isDeceased ? 'bg-red-50 border-red-200' : ''}
-                    ${isInactive && isDeceased ? 'bg-red-100' : ''}
-                    ${editMode && !isSelected ? 'hover:ring-1 hover:ring-gray-300' : ''}
-                  `}
-                />
-              );
-            })}
-          </div>
+          
+          {dogsByBreed.map(({ breedName, dogs }) => (
+            <div key={breedName} className="space-y-4">
+              <div className="border-b border-gray-200 pb-2">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {breedName}
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({dogs.length} {dogs.length === 1 ? 'dog' : 'dogs'})
+                  </span>
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {dogs.map((myDog: any) => {
+                  if (!myDog.dog) return null;
+                  
+                  const isSelected = selectedDogs.has(myDog.id);
+                  const isInactive = !myDog.is_active;
+                  const isDeceased = myDog.dog.is_deceased;
+                  
+                  return (
+                    <DogCard
+                      key={myDog.dog.id}
+                      name={myDog.dog.name}
+                      breed={myDog.dog.breed?.name || 'Unknown Breed'}
+                      imagePublicId={dogImages[myDog.dog.id]?.image_public_id}
+                      imageUrl={dogImages[myDog.dog.id]?.image_url}
+                      imageSize={266}
+                      imageAlt={dogImages[myDog.dog.id]?.alt_text || `${myDog.dog.name} - ${myDog.dog.breed?.name}`}
+                      imageGravity={dog()}
+                      fallbackInitials={myDog.dog.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      subtitle={myDog.dog.nickname ? `"${myDog.dog.nickname}"` : undefined}
+                      metadata={[
+                        myDog.dog.gender === 'M' ? 'Male' : 'Female',
+                        myDog.dog.birth_date ? new Date(myDog.dog.birth_date).getFullYear().toString() : undefined,
+                        myDog.acquisition_date ? `Acquired: ${new Date(myDog.acquisition_date).toLocaleDateString()}` : undefined,
+                        isInactive ? 'Inactive' : undefined,
+                        isDeceased ? 'Deceased' : undefined
+                      ].filter((item): item is string => Boolean(item))}
+                      dogId={myDog.dog.id}
+                      onDogClick={() => handleCardClick(myDog.id, myDog.dog!.id)}
+                      className={`
+                        ${editMode ? 'cursor-pointer' : ''}
+                        ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : ''}
+                        ${isInactive ? 'opacity-60 bg-gray-50' : ''}
+                        ${isDeceased ? 'bg-red-50 border-red-200' : ''}
+                        ${isInactive && isDeceased ? 'bg-red-100' : ''}
+                        ${editMode && !isSelected ? 'hover:ring-1 hover:ring-gray-300' : ''}
+                      `}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
